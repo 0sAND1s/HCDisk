@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>HCDisk2</ProjectName>
+    <ProjectGuid>{FFFAC5F8-0997-4B51-B0CD-DCD156F2D309}</ProjectGuid>
+    <RootNamespace>dsk</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DZ80_EXCLUDE_SCRIPT;WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>winmm.lib;kernel32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DZ80_EXCLUDE_SCRIPT;WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>winmm.lib;kernel32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="CRC.cpp" />
+    <ClCompile Include="DiskBase.cpp" />
+    <ClCompile Include="DiskImgCQM.cpp" />
+    <ClCompile Include="DiskImgRaw.cpp" />
+    <ClCompile Include="DiskImgTD0.cpp" />
+    <ClCompile Include="DiskWin32.cpp" />
+    <ClCompile Include="dsk.cpp" />
+    <ClCompile Include="edsk.cpp" />
+    <ClCompile Include="CFileArchive.cpp" />
+    <ClCompile Include="CFileArchiveTape.cpp" />
+    <ClCompile Include="CFileSystem.cpp" />
+    <ClCompile Include="CFSCobraDEVIL.cpp" />
+    <ClCompile Include="CFSCPM.cpp" />
+    <ClCompile Include="CFSCPMHC.cpp" />
+    <ClCompile Include="CFSCPMPlus3.cpp" />
+    <ClCompile Include="CFSMGT.cpp" />
+    <ClCompile Include="CFSOpus.cpp" />
+    <ClCompile Include="CFSTRD.cpp" />
+    <ClCompile Include="CFSTRDSCL.cpp" />
+    <ClCompile Include="CFile.cpp" />
+    <ClCompile Include="CFileCPM.cpp" />
+    <ClCompile Include="CFileHC.cpp" />
+    <ClCompile Include="CFilePlus3.cpp" />
+    <ClCompile Include="CFileSpectrum.cpp" />
+    <ClCompile Include="CFileTRD.cpp" />
+    <ClCompile Include="FileConverters\BasicDecoder.cpp" />
+    <ClCompile Include="FileConverters\scr2gif.c" />
+    <ClCompile Include="FileConverters\dz80\dissz80.c" />
+    <ClCompile Include="FileConverters\dz80\loadfile.c" />
+    <ClCompile Include="FileConverters\dz80\noscript.c" />
+    <ClCompile Include="FileConverters\dz80\tables.c" />
+    <ClCompile Include="Tape\tap.cpp" />
+    <ClCompile Include="Tape\Tape2Wave.cpp" />
+    <ClCompile Include="Tape\TapeBlock.cpp" />
+    <ClCompile Include="Tape\TZX.cpp" />
+    <ClCompile Include="Tape\Wave.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="td0_lzss.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CRC.h" />
+    <ClInclude Include="DiskBase.h" />
+    <ClInclude Include="DiskImgCQM.h" />
+    <ClInclude Include="DiskImgRaw.h" />
+    <ClInclude Include="DiskImgTD0.h" />
+    <ClInclude Include="DiskWin32.h" />
+    <ClInclude Include="dsk.h" />
+    <ClInclude Include="edsk.h" />
+    <ClInclude Include="CFileArchive.h" />
+    <ClInclude Include="CFileArchiveTape.h" />
+    <ClInclude Include="CFileSystem.h" />
+    <ClInclude Include="CFSCobraDEVIL.h" />
+    <ClInclude Include="CFSCPM.h" />
+    <ClInclude Include="CFSCPMHC.h" />
+    <ClInclude Include="CFSCPMPlus3.h" />
+    <ClInclude Include="CFSMGT.h" />
+    <ClInclude Include="CFSOpus.h" />
+    <ClInclude Include="CFSTRD.h" />
+    <ClInclude Include="CFSTRDSCL.h" />
+    <ClInclude Include="CFile.h" />
+    <ClInclude Include="CFileCPM.h" />
+    <ClInclude Include="CFileHC.h" />
+    <ClInclude Include="CFileIF1.h" />
+    <ClInclude Include="CFilePlus3.h" />
+    <ClInclude Include="CFileSpectrum.h" />
+    <ClInclude Include="CFileTRD.h" />
+    <ClInclude Include="FileConverters\BasicDecoder.h" />
+    <ClInclude Include="FileConverters\dz80\dissz80.h" />
+    <ClInclude Include="FileConverters\dz80\dissz80p.h" />
+    <ClInclude Include="FileConverters\dz80\dz80.h" />
+    <ClInclude Include="FileConverters\dz80\types.h" />
+    <ClInclude Include="Tape\tap.h" />
+    <ClInclude Include="Tape\Tape2Wave.h" />
+    <ClInclude Include="Tape\TapeBlock.h" />
+    <ClInclude Include="Tape\TZX.h" />
+    <ClInclude Include="Tape\Wave.h" />
+    <ClInclude Include="td0_lzss.h" />
+    <ClInclude Include="types.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="HCDisk2EN.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
