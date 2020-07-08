@@ -79,20 +79,22 @@ bool CDiskBase::WriteTrack(byte track, byte head, byte* buff)
 
 bool CDiskBase::CopyTo(CDiskBase* dest, bool formatDst)
 {
+	bool resOK = true;
 	byte* trkBuf = (byte*)malloc(DiskDefinition.SPT * DiskDefinition.SectSize + 512 * 18);
 
-	for (byte track = 0; track < DiskDefinition.TrackCnt; track++)
-		for (byte head = 0; head < DiskDefinition.SideCnt; head++)
+	for (byte track = 0; track < DiskDefinition.TrackCnt && resOK; track++)
+		for (byte head = 0; head < DiskDefinition.SideCnt && resOK; head++)
 		{
-			ReadTrack(trkBuf, track, head);
-			if (formatDst)
-				dest->FormatTrack(track, head);
-			dest->WriteTrack(track, head, trkBuf);
+			resOK = ReadTrack(trkBuf, track, head);
+			if (resOK && formatDst)
+				resOK = dest->FormatTrack(track, head);
+			if (resOK)
+				resOK = dest->WriteTrack(track, head, trkBuf);
 		}
 
 	free(trkBuf);
 
-	return true;
+	return resOK;
 }
 
 bool CDiskBase::GetDiskInfo(byte & trackCount, byte & sideCount, char* comment)

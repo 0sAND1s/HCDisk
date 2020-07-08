@@ -1481,7 +1481,7 @@ bool CopyDisk(int argc, char* argv[])
 			dst = new CDiskImgRaw(((CDiskBase*)src)->DiskDefinition);	
 
 		dst->Open((char*)dstName, CDiskBase::OPEN_MODE_CREATE);
-		bool res = ((CDiskBase*)src)->CopyTo(dst, false);		
+		bool res = ((CDiskBase*)src)->CopyTo(dst, true);		
 		delete dst;
 		
 		return res;
