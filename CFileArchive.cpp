@@ -1,4 +1,5 @@
 #include "CFileArchive.h"
+#include <algorithm> 
 
 
 const char* CFileArchive::ERROR_TYPE_MSG[] = 
@@ -185,7 +186,7 @@ bool CFileArchive::CreateFSName(CFile* file, char* fNameOut)
 		{
 			byte nLen = strlen(file->FileName);
 			//memcpy(fNameOut, file->Name, nLen > NAME_LENGHT ? NAME_LENGHT : nLen);
-			memcpy(fNameOut, file->FileName, min(nLen, NAME_LENGHT));
+			memcpy(fNameOut, file->FileName, std::min(nLen, NAME_LENGHT));
 		}
 
 		return true;

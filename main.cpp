@@ -880,11 +880,13 @@ bool TypeFile(int argc, char* argv[])
 			{
 				f->GetData(buf1);				
 				char* fntmp = _tempnam(NULL, fn);				
-				strcat(fntmp, ".gif");
-				ConvertSCR2GIF(buf1, fntmp);												
-				system(fntmp);
-				free(fntmp);	
-				remove(fntmp);
+				char gifName[MAX_PATH], gifNameQuoted[MAX_PATH];
+				sprintf(gifName, "%s.%s", fntmp, "gif");				
+				free(fntmp);
+				ConvertSCR2GIF(buf1, gifName);			
+				sprintf(gifNameQuoted, "\"%s\"", gifName);
+				system(gifNameQuoted);				
+				remove(gifName);
 			}
 			else if (isBytes)
 			{							
@@ -909,7 +911,7 @@ bool TypeFile(int argc, char* argv[])
 		}				
 		else if (asText)
 		{			
-			byte wrap = 80;
+			byte wrap = 64;
 			if (IsBasic /*&& strstr(fn, ".TAS")*/)			
 				wrap = 64;			
 			
@@ -1217,8 +1219,7 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 			
 			if (!theFS->Init())										
 			{
-				it = foundGeom.erase(it);					
-				delete theDisk;
+				it = foundGeom.erase(it);									
 			}
 			else
 				it++;								
@@ -1226,7 +1227,17 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 		else
 			it++;
 		
-		delete theFS;		
+		if (theDisk != NULL)
+		{
+			delete theDisk;
+			theDisk = NULL;
+		}
+
+		if (theFS != NULL)
+		{
+			delete theFS;
+			theFS = NULL;
+		}
 	}
 }
 
@@ -1242,7 +1253,7 @@ byte AskGeometry(vector<byte> foundGeom)
 	{
 		printf("Select FS (empty for cancel): ");																					
 		char buf[10];
-		if (gets(buf) && strlen(buf) > 0 && (fsIdx = atoi(buf)) > 0)
+		if (fgets(buf, MAX_PATH, stdin) && buf[0] != '\n' && (fsIdx = atoi(buf)) > 0)
 			bFoundSel = (fsIdx - 1 < (word)foundGeom.size());
 		else
 			bCancel = true;
@@ -1404,9 +1415,10 @@ bool Open(int argc, char* argv[])
 		return false;
 }
 
-word log2(word x)
+word log2(CFileSystem::FileSystemFeature y)
 {
 	word log2 = 0;
+	unsigned long x = (unsigned long)y;
 
 	while ((x = x >> 1) > 0)
 		log2++;
@@ -2338,7 +2350,7 @@ bool ExecCommand(char* cmd, char params[10][MAX_PATH])
 						{
 							paramMissing = true;
 							printf("The command '%s' requires a value for the parameter '%s'.\n", 
-								theCommands[cmdIdx].cmd[0], theCommands[cmdIdx].Params[0]);
+								theCommands[cmdIdx].cmd[0], theCommands[cmdIdx].Params[0].param);
 						}
 
 						if (!paramMissing)
@@ -2386,14 +2398,14 @@ int main(int argc, char * argv[])
 #endif
 
 	char params[10][MAX_PATH];	
-	char cmd[32] = "";	
+	char cmd[MAX_PATH] = "";
 	char bufc[128];	
 	memset(bufc, 0, sizeof(bufc));
 	bool exitReq = false;
 
 	printf("HCDisk 2.0, (C) George Chirtoaca, compiled on %s %s.\nType ? for help.\n", __DATE__, __TIME__);	
 		
-	const char* sep = " ";
+	const char* sep = " \n";
 	//Parse commands at command line.
 	byte argIdx = 1, argIdxCmd = 0;
 	if (argc > 1)
@@ -2426,8 +2438,8 @@ int main(int argc, char * argv[])
 		do
 		{
 			printf("%s>", theFS != NULL ? theFS->Name : "");
-			gets(bufc);
-		} while (strlen(bufc) == 0);
+			fgets(bufc, MAX_PATH, stdin);			
+		} while (bufc[0] == '\n');
 
 		char* word = strtok(bufc, sep);
 

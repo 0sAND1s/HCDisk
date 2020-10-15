@@ -1076,5 +1076,6 @@ void ConvertSCR2GIF(byte* scrBuf, const char* gifName)
 	if (ErrCode == GIF_OK && ScreenContainsFLASH)
 		ErrCode = SpectrumScreenToGIF(TRUE);
 	
-	ErrCode = _GIFClose();
+	if (ErrCode == GIF_OK)
+		ErrCode = _GIFClose();
 }
