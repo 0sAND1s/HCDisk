@@ -100,29 +100,28 @@ bool CFile::SetData(byte* buf, dword length)
 dword CFile::GetDataAsText(byte* bufOut, byte wrapOff)
 {	
 	dword txtLen = GetLength();		
-	dword o = 0, i = 0;
+	dword o = 0, i = 0, crlfIdx = 0;
 	bool eof = false;
 
 	while (i < txtLen && !eof)
 	{				
 		bufOut[o++] = buffer[i] & 0x7F;	
+		crlfIdx++;
+		if (buffer[i] == '\r' || buffer[i] == '\n')
+			crlfIdx = 0;
 
-		if (wrapOff > 0 && ((i + 1) % wrapOff == 0))
+		if (wrapOff > 0 && (crlfIdx > wrapOff) && ((i + 1) % wrapOff == 0))
 		{
 			bufOut[o++] = '\r';			
 			bufOut[o++] = '\n';			
 		}
 
-		if (buffer[i] == CFSCPM::EOF_MARKER)		
-		{
-			bufOut[o] = '\0';					
-			eof = true;
-		}
+		eof = (buffer[i] == CFSCPM::EOF_MARKER);		
 
 		i++;
 	}			
 
-	return o;
+	return o - eof;
 }
 
 bool CFile::GetFileName(char* dest)

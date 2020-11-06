@@ -679,9 +679,7 @@ bool GetFile(int argc, char* argv[])
 				if (theFS->ReadFile(f))
 				{
 					dword len = f->GetLength();					
-					byte wrap = 0;
-					if (strstr(fn, ".TAS"))
-						wrap = 64;
+					byte wrap = 0;					
 					byte* buf1 = new byte[(dword)(len * 1.33)];
 					if (asText)
 						len = f->GetDataAsText(buf1, wrap);
@@ -739,7 +737,7 @@ string Disassemble(byte* buf, word len, word addr = 0)
 		memset(d, 0, sizeof(DISZ80));
 		dZ80_SetDefaultOptions(d);		
 		d->cpuType = DCPU_Z80;		
-		d->flags |= (DISFLAG_SINGLE | DISFLAG_LABELLED | DISFLAG_ADDRDUMP | DISFLAG_OPCODEDUMP | DISFLAG_UPPER);		
+		d->flags |= (DISFLAG_SINGLE | DISFLAG_ADDRDUMP | DISFLAG_OPCODEDUMP | DISFLAG_UPPER | DISFLAG_ANYREF | DISFLAG_RELCOMMENT | DISFLAG_VERBOSE);
 
 		//Fix address.
 		byte* buf1 = new byte[64 * 1024];
@@ -851,6 +849,7 @@ bool TypeFile(int argc, char* argv[])
 
 	bool asHex = argc >= 2 && (strcmp(argv[1], "-h") == 0);	
 	bool asText = argc >= 2 && (strcmp(argv[1], "-t") == 0);
+	bool asDisasm = argc >= 2 && (strcmp(argv[1], "-d") == 0);
 	char* fname = argv[0];
 	CFile* f = theFS->FindFirst(fname);		
 	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) > 0;				
@@ -863,7 +862,7 @@ bool TypeFile(int argc, char* argv[])
 		dword len = f->GetLength();
 		byte* buf1 = new byte[theFS->GetFileSize(f, true)];
 		
-		if (!asHex && IsBasic)
+		if (!asHex && !asDisasm && IsBasic)
 		{
 			bool isProgram = false, isSCR = false, isBytes = false;		
 			CFileSpectrum* s = dynamic_cast<CFileSpectrum*>(f);				
@@ -890,13 +889,7 @@ bool TypeFile(int argc, char* argv[])
 			}
 			else if (isBytes)
 			{							
-				if (strstr(fn, ".TAS"))
-					asText = true;
-				else
-				{
-					f->GetData(buf1);												
-					TextViewer(Disassemble(buf1, (word)len, s->SpectrumStart));
-				}				
+				asDisasm = true;				
 			}
 			else
 				asText = true;
@@ -908,20 +901,29 @@ bool TypeFile(int argc, char* argv[])
 		{						
 			f->GetData(buf1);			
 			TextViewer(GetHexPrint(buf1, len));
-		}				
-		else if (asText)
+		}						
+		else if (asDisasm)
 		{			
-			byte wrap = 64;
-			if (IsBasic /*&& strstr(fn, ".TAS")*/)			
-				wrap = 64;			
-			
+			f->GetData(buf1);
+			word addr = 0;
+			if (IsBasic)
+			{
+				CFileSpectrum* s = dynamic_cast<CFileSpectrum*>(f);
+				addr = s->SpectrumStart;
+			}
+			TextViewer(Disassemble(buf1, (word)len, addr));			
+		}
+		else if (asText)
+		{
+			byte wrap = 80;
+
 			//Adjust buffer length for line wrap.
-			dword lenToSet = len + (len/wrap) * 2;		
+			dword lenToSet = len + (len / wrap) * 2;
 			byte* buf2 = new byte[lenToSet];
 
 			dword txtLen = f->GetDataAsText(buf2, wrap);
 			if (txtLen > 0)
-				buf2[txtLen - 1] = '\0';						
+				buf2[txtLen - 1] = '\0';
 			TextViewer((char*)buf2);
 			delete buf2;
 		}
@@ -1504,8 +1506,15 @@ bool CopyDisk(int argc, char* argv[])
 
 bool PutFile(int argc, char* argv[])
 {
-	char* name = (char*)argv[0];
-	char* nameDest = name;
+	char* name = (char*)argv[0];	
+
+	//Strip path from file name.
+	string nameDest(name);
+	size_t lastSlash = nameDest.find_last_of('\\');
+	if (lastSlash != string::npos)
+		nameDest = nameDest.substr(lastSlash + 1, CFSCPM::MAX_FILE_NAME_LEN + 1);
+
+	
 	char* folder = "0";
 	byte argIdx = 1;	
 
@@ -1533,7 +1542,7 @@ bool PutFile(int argc, char* argv[])
 			argIdx++;
 		}	
 
-		CFile* f = theFS->NewFile(nameDest);
+		CFile* f = theFS->NewFile((char*)nameDest.c_str());
 		theFS->SetFileFolder(f, folder);									
 		//res = f->SetFileName(nameDest);		
 		
@@ -2254,7 +2263,7 @@ static const Command theCommands[] =
 		GetFile},	
 	{{"type", "cat"}, "Display file", 
 		{{"file spec.", true, "* or *.com or readme.txt, etc"}, 
-		{"-h|-t", false, "display as hex or as text"}}, 
+		{"-h|-t|-d", false, "display as hex|text|asm"}}, 
 		TypeFile},	
 	{{"copydisk"}, "Copy current disk to another disk or image", 
 		{{"destination", true, "destination disk/image"}}, 
