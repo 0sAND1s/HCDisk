@@ -676,7 +676,7 @@ static byte _GIFCreate (char *FileName, short Width, short Height, short NumColo
   if (_Create (FileName) != GIF_OK)                                                                      /* Create file specified */
     return (GIF_ERRCREATE);
   if (GIF89a)
-  {
+  {	
     if ((_Write ("GIF89a", 6)) != GIF_OK)                                                                  /* Write GIF signature */
       return (GIF_ERRWRITE);
   }
@@ -795,7 +795,7 @@ static byte _GIFCompressImage (short StartX, short StartY, int Width, int Height
   if (StartY < 0)
     StartY = 0;
   if (GIF89a)
-  {
+  {	
     Ext.ExtensionIntroducer = 0x21;                                               /* Initiate and write graphic control extension */
     Ext.GraphicControlLabel = 0xF9;
     Ext.BlockSize = 4;
@@ -903,7 +903,7 @@ short MyGetPixel (short PixX, short PixY)
   return ((short)PreparedScreenData[PixY * 256 + PixX]);
 }
 
-byte SpectrumScreenToGIF (byte FLASHState)
+byte SpectrumScreenToGIF (byte FLASHState, byte ConvertTo89a)
 
 /**********************************************************************************************************************************/
 /* Pre   : `FLASHState' is TRUE if animated GIFs are written and this is the FLASH 1 image.                                       */
@@ -960,92 +960,92 @@ byte SpectrumScreenToGIF (byte FLASHState)
   return (_GIFCompressImage (0, 0, 256, 192, &MyGetPixel, ConvertTo89a, 32));
 }
 
-int mainSCR2GIF (int argc, char **argv)
-
-/**********************************************************************************************************************************/
-/* Pre   : None.                                                                                                                  */
-/* Post  : All SCR files specified on the command line have been converted to (animated) GIF files.                               */
-/**********************************************************************************************************************************/
-
-{
-  FILE           *InputFile;
-  char            InputFileName[256];
-  char            OutputFileName[256];
-  int             FileIndex = 0;
-  word            BIndex;
-  byte  register  ColourCount;
-  byte            ErrCode;
-  dword          *PP;                                                                                          /* Palette Pointer */
-
-  printf ("\nSCR2GIF v1.0 - Copyright (C) 1998 M. van der Heide, ThunderWare Research Center\n\n");
-  if (argc < 2)                                                                                                    /* Moron check */
-  {
-    fprintf (stderr, "Usage: scr2gif [-f] filename[.scr] ...\n");
-    fprintf (stderr, "       -f = Convert FLASHing screens to animated GIF\n");
-    exit (1);
-  }
-  if (!strcmp (argv[1], "-f") || !strcmp (argv[1], "-F"))                            /* Want animated GIFs for FLASHing screens ? */
-  {
-    if (argc < 3)                                                                                                /* (Moron check) */
-    {
-      fprintf (stderr, "Usage: scr2gif [-f] filename[.scr] ...\n");
-      fprintf (stderr, "       -f = Convert FLASHing screens to animated GIF\n");
-      exit (1);
-    }
-    Use89aForFLASH = TRUE;
-    FileIndex = 1;
-  }
-  while (++ FileIndex < argc)                                                   /* Do all SCR files specified on the command line */
-  {
-    strcpy (InputFileName, argv[FileIndex]);
-    if ((InputFile = fopen (InputFileName, "rb")) == NULL)                                            /* Try to open the SCR file */
-    {
-      strcat (InputFileName, ".scr");
-      if ((InputFile = fopen (InputFileName, "rb")) == NULL)
-      {
-        strcpy (InputFileName + strlen (InputFileName) - 3, "SCR");
-        if ((InputFile = fopen (InputFileName, "rb")) == NULL)
-        { printf ("Cannot find any file named %s, %s.scr or %s.SCR, so there!\n",
-                  argv[FileIndex], argv[FileIndex], argv[FileIndex]); exit (1); }
-      }
-    }
-    strcpy (OutputFileName, InputFileName);
-    if (!strcmp (OutputFileName + strlen (OutputFileName) - 4, ".scr"))
-      strcpy (OutputFileName + strlen (OutputFileName) - 3, "gif");                                 /* Determine output file name */
-    else if (!strcmp (OutputFileName + strlen (OutputFileName) - 4, ".SCR"))
-      strcpy (OutputFileName + strlen (OutputFileName) - 3, "GIF");                                            /* (Maintain case) */
-    else
-      strcat (OutputFileName, ".gif");
-    printf ("Converting %s to %s ... ", InputFileName, OutputFileName);
-    fflush (stdout);
-    if (fread (ScreenBuffer, 1, 6912, InputFile) != 6912)
-    { printf ("\nSorry, %s doesn't look like a SCR file to me!\n", InputFileName); fclose (InputFile); exit (1); }
-    fclose (InputFile);
-    ScreenContainsFLASH = FALSE;
-    if (Use89aForFLASH)
-      for (BIndex = 6144 ; BIndex < 6912 && !ScreenContainsFLASH ; BIndex ++)                           /* Check if there's FLASH */
-        if (*(ScreenBuffer + BIndex) & 0x80)
-          ScreenContainsFLASH = TRUE;
-    ConvertTo89a = (byte)(Use89aForFLASH && ScreenContainsFLASH);                   /* No need for animation is there's no FLASH! */
-    printf (ConvertTo89a ? "animated ... " : "single image ... ");
-    fflush (stdout);
-    if ((ErrCode = _GIFCreate (OutputFileName, 256, 192, 16, 6, ConvertTo89a)) != GIF_OK)
-    { printf ("\nCannot create GIF file (%s)\n", _GIFstrerror (ErrCode)); exit (1); }
-    PP = SpecPalette;
-    for (ColourCount = 0 ; ColourCount < 16 ; ColourCount ++, PP ++)
-      _GIFSetColour (ColourCount, (byte)(*PP & 0x000000FF), (byte)((*PP & 0x0000FF00) >> 8), (byte)((*PP & 0x00FF0000) >> 16));
-    _GIFWriteGlobalColorTable (ConvertTo89a);
-    if ((ErrCode = SpectrumScreenToGIF (FALSE)) != GIF_OK)
-    { printf ("\nCannot compress GIF image (%s)\n", _GIFstrerror (ErrCode)); _GIFClose (); unlink (OutputFileName); exit (1); }
-    if (ConvertTo89a)
-      if ((ErrCode = SpectrumScreenToGIF (TRUE)) != GIF_OK)
-      { printf ("\nCannot compress GIF image (%s)\n", _GIFstrerror (ErrCode)); _GIFClose (); unlink (OutputFileName); exit (1); }
-    if ((ErrCode = _GIFClose ()) != GIF_OK)
-    { printf ("\nCannot close GIF file (%s)\n", _GIFstrerror (ErrCode)); unlink (OutputFileName); exit (1); }
-    puts ("done");
-  }
-  return (0);
-}
+//int mainSCR2GIF (int argc, char **argv)
+//
+///**********************************************************************************************************************************/
+///* Pre   : None.                                                                                                                  */
+///* Post  : All SCR files specified on the command line have been converted to (animated) GIF files.                               */
+///**********************************************************************************************************************************/
+//
+//{
+//  FILE           *InputFile;
+//  char            InputFileName[256];
+//  char            OutputFileName[256];
+//  int             FileIndex = 0;
+//  word            BIndex;
+//  byte  register  ColourCount;
+//  byte            ErrCode;
+//  dword          *PP;                                                                                          /* Palette Pointer */
+//
+//  printf ("\nSCR2GIF v1.0 - Copyright (C) 1998 M. van der Heide, ThunderWare Research Center\n\n");
+//  if (argc < 2)                                                                                                    /* Moron check */
+//  {
+//    fprintf (stderr, "Usage: scr2gif [-f] filename[.scr] ...\n");
+//    fprintf (stderr, "       -f = Convert FLASHing screens to animated GIF\n");
+//    exit (1);
+//  }
+//  if (!strcmp (argv[1], "-f") || !strcmp (argv[1], "-F"))                            /* Want animated GIFs for FLASHing screens ? */
+//  {
+//    if (argc < 3)                                                                                                /* (Moron check) */
+//    {
+//      fprintf (stderr, "Usage: scr2gif [-f] filename[.scr] ...\n");
+//      fprintf (stderr, "       -f = Convert FLASHing screens to animated GIF\n");
+//      exit (1);
+//    }
+//    Use89aForFLASH = TRUE;
+//    FileIndex = 1;
+//  }
+//  while (++ FileIndex < argc)                                                   /* Do all SCR files specified on the command line */
+//  {
+//    strcpy (InputFileName, argv[FileIndex]);
+//    if ((InputFile = fopen (InputFileName, "rb")) == NULL)                                            /* Try to open the SCR file */
+//    {
+//      strcat (InputFileName, ".scr");
+//      if ((InputFile = fopen (InputFileName, "rb")) == NULL)
+//      {
+//        strcpy (InputFileName + strlen (InputFileName) - 3, "SCR");
+//        if ((InputFile = fopen (InputFileName, "rb")) == NULL)
+//        { printf ("Cannot find any file named %s, %s.scr or %s.SCR, so there!\n",
+//                  argv[FileIndex], argv[FileIndex], argv[FileIndex]); exit (1); }
+//      }
+//    }
+//    strcpy (OutputFileName, InputFileName);
+//    if (!strcmp (OutputFileName + strlen (OutputFileName) - 4, ".scr"))
+//      strcpy (OutputFileName + strlen (OutputFileName) - 3, "gif");                                 /* Determine output file name */
+//    else if (!strcmp (OutputFileName + strlen (OutputFileName) - 4, ".SCR"))
+//      strcpy (OutputFileName + strlen (OutputFileName) - 3, "GIF");                                            /* (Maintain case) */
+//    else
+//      strcat (OutputFileName, ".gif");
+//    printf ("Converting %s to %s ... ", InputFileName, OutputFileName);
+//    fflush (stdout);
+//    if (fread (ScreenBuffer, 1, 6912, InputFile) != 6912)
+//    { printf ("\nSorry, %s doesn't look like a SCR file to me!\n", InputFileName); fclose (InputFile); exit (1); }
+//    fclose (InputFile);
+//    ScreenContainsFLASH = FALSE;
+//    if (Use89aForFLASH)
+//      for (BIndex = 6144 ; BIndex < 6912 && !ScreenContainsFLASH ; BIndex ++)                           /* Check if there's FLASH */
+//        if (*(ScreenBuffer + BIndex) & 0x80)
+//          ScreenContainsFLASH = TRUE;
+//    ConvertTo89a = (byte)(Use89aForFLASH && ScreenContainsFLASH);                   /* No need for animation is there's no FLASH! */
+//    printf (ConvertTo89a ? "animated ... " : "single image ... ");
+//    fflush (stdout);
+//    if ((ErrCode = _GIFCreate (OutputFileName, 256, 192, 16, 6, ConvertTo89a)) != GIF_OK)
+//    { printf ("\nCannot create GIF file (%s)\n", _GIFstrerror (ErrCode)); exit (1); }
+//    PP = SpecPalette;
+//    for (ColourCount = 0 ; ColourCount < 16 ; ColourCount ++, PP ++)
+//      _GIFSetColour (ColourCount, (byte)(*PP & 0x000000FF), (byte)((*PP & 0x0000FF00) >> 8), (byte)((*PP & 0x00FF0000) >> 16));
+//    _GIFWriteGlobalColorTable (ConvertTo89a);
+//    if ((ErrCode = SpectrumScreenToGIF (FALSE)) != GIF_OK)
+//    { printf ("\nCannot compress GIF image (%s)\n", _GIFstrerror (ErrCode)); _GIFClose (); unlink (OutputFileName); exit (1); }
+//    if (ConvertTo89a)
+//      if ((ErrCode = SpectrumScreenToGIF (TRUE)) != GIF_OK)
+//      { printf ("\nCannot compress GIF image (%s)\n", _GIFstrerror (ErrCode)); _GIFClose (); unlink (OutputFileName); exit (1); }
+//    if ((ErrCode = _GIFClose ()) != GIF_OK)
+//    { printf ("\nCannot close GIF file (%s)\n", _GIFstrerror (ErrCode)); unlink (OutputFileName); exit (1); }
+//    puts ("done");
+//  }
+//  return (0);
+//}
 
 void ConvertSCR2GIF(byte* scrBuf, const char* gifName)
 {
@@ -1071,10 +1071,10 @@ void ConvertSCR2GIF(byte* scrBuf, const char* gifName)
 		ErrCode = _GIFWriteGlobalColorTable(ScreenContainsFLASH);
 
 	if (ErrCode == GIF_OK)
-		ErrCode = SpectrumScreenToGIF(FALSE);
+		ErrCode = SpectrumScreenToGIF(FALSE, ScreenContainsFLASH);
 
 	if (ErrCode == GIF_OK && ScreenContainsFLASH)
-		ErrCode = SpectrumScreenToGIF(TRUE);
+		ErrCode = SpectrumScreenToGIF(TRUE, ScreenContainsFLASH);
 	
 	if (ErrCode == GIF_OK)
 		ErrCode = _GIFClose();
