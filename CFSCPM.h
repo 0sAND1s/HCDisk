@@ -83,7 +83,8 @@ public:
 			f->SetData(data, len);
 		return f; 
 	};
-	virtual CFile* FindFirst(char* pattern = "*");		
+	virtual CFile* FindFirst(char* pattern = "*");
+	virtual CFile* FindFirst(char* pattern, bool includeDeleted);
 	virtual CFile* FindNext();		
 	virtual bool WriteFile(CFileCPM* file);
 	virtual bool WriteFile(CFile* file) { return this->WriteFile((CFileCPM*)file);};
@@ -112,7 +113,8 @@ protected:
 	byte CPM_AUInExt;				
 	typedef std::vector<CFileCPM> CPMFileListType;
 	CPMFileListType CPM_FileList;	
-	string CWD;
+	byte CWD;
+	bool includeDeletedFiles = false;
 
 	//Translate a linear sector count to head/track/sector.
 	bool LinearSect2HTS(word sectCnt, byte & head, byte & track, byte & sect);			

@@ -112,6 +112,7 @@ ls dir  - List directory
 - [<folder><\>file spec.]: filespec: *.com or 1\*, etc - folder for CPM can be specified with back slash
 - [-sn|-ss|-st]: Sort by name|size|type
 - [-ne]: Don't show extended info, faster - doesn't access the file header, and it's faster for physical disks
+- [-del]: Include deleted files in listing. 
 
 	Example of Spectrum +3 disk catalog. Other file systems for Spectrum look similar. Information displayed is:
 file index, file folder (for CPM), file name and extension, file size on disk, file attributes (if available for the file system). 

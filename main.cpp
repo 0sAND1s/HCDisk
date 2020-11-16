@@ -523,6 +523,8 @@ bool Cat(int argc, char* argv[])
 	string wildCard = "*";
 	bool bExtendedCat = true;
 	byte sortType = ST_NONE;
+	bool includeDeleted = false;
+
 	for (byte ai = 0; ai < argc; ai++)
 	{
 		string a = (char*)argv[ai];
@@ -534,6 +536,8 @@ bool Cat(int argc, char* argv[])
 			sortType = ST_TYPE;
 		else if (a == "-ne")
 			bExtendedCat = false;
+		else if (a == "-del")
+			includeDeleted = true;
 		else
 			wildCard = a;
 	}	
@@ -561,7 +565,7 @@ bool Cat(int argc, char* argv[])
 	printf("------------------------------------------------------------------------------\n");	
 	
 	list<CFile*> lstAllFiles;
-	CFile* f = theFS->FindFirst((char*)wildCard.c_str());
+	CFile* f = theFS->FindFirst((char*)wildCard.c_str(), includeDeleted);
 	while (f != NULL)
 	{
 		lstAllFiles.push_back(f);
@@ -1621,10 +1625,15 @@ bool DeleteFiles(int argc, char* argv[])
 		f = theFS->FindNext();
 	}
 
-	char msg[32];
-	sprintf(msg, "Delete %d files?", fCnt);
-	if (Confirm(msg))
-		return theFS->Delete(fspec);	
+	if (fCnt > 0)
+	{
+		char msg[32];
+		sprintf(msg, "Delete %d files?", fCnt);
+		if (Confirm(msg))
+			return theFS->Delete(fspec);
+		else
+			return false;
+	}
 	else
 		return false;
 }

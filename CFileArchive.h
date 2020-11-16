@@ -67,6 +67,7 @@ public:
 	virtual bool Init() = 0;					
 	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL) { return NULL; };
 	virtual CFile* FindFirst(char* pattern) = 0;
+	virtual CFile* FindFirst(char* pattern, bool includeDeleted) { return FindFirst(pattern); };
 	virtual CFile* FindNext() = 0;
 	virtual dword GetFileSize(CFile* file, bool onDisk = false);			
 	virtual FileSystemFeature GetFSFeatures() { return FSFeatures; };

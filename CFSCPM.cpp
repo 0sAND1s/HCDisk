@@ -160,63 +160,61 @@ bool CFSCPM::ReadDirectory()
 		CPM_FileList = CPMFileListType();		
 		for (word entIdx = 0; entIdx < FSParams.DirEntryCount; entIdx++)
 		{
-			if (DirEntries[entIdx].UsrCode != Disk->DiskDefinition.Filler)		
-			{								
-				CFileCPM f = CFileCPM(this);				
-				f.User = DirEntries[entIdx].UsrCode;
-				CreateFileName(DirEntries[entIdx].FileName, &f);				
+			
+			CFileCPM f = CFileCPM(this);				
+			f.User = DirEntries[entIdx].UsrCode;
+			CreateFileName(DirEntries[entIdx].FileName, &f);				
 				
-				CPMFileListType::iterator fit = find(CPM_FileList.begin(), CPM_FileList.end(), f);
-				if (fit != CPM_FileList.end())
-				{
-					f = *fit;
-				}
-				else //New file.
-				{
-					f.FileBlocks = vector<word>();
-					f.User = DirEntries[entIdx].UsrCode;
-					f.Idx = Idx++;	
-					f.fs = this;
-				}
-
-				//File directory entries.
-				//Must sort dir entries by index, because they may lay on disk in random order.
-				//Rares Atodiresei says BDOS re-scans the dir from the beginning for each FindNext().				
-				vector<word>::iterator it = f.FileDirEntries.begin();
-				bool mustInsert = false;
-				while (it != f.FileDirEntries.end() && !mustInsert)
-				{					
-					if (DirEntries[*it].ExtIdx > DirEntries[entIdx].ExtIdx)													
-						mustInsert = true;						
-					else
-						it++;									
-				}
-				
-				if (!mustInsert)
-					f.FileDirEntries.push_back(entIdx);
-				else
-					f.FileDirEntries.insert(it, entIdx);								
-				
-				if (fit != CPM_FileList.end())
-				{
-					//Also move file in the file list where the file dir entry with index 0 is found.
-					if (!mustInsert)
-						*fit = f;
-					else
-					{
-						CPM_FileList.erase(fit);
-						CPM_FileList.push_back(f);	
-					}
-				}
-				else				
-					CPM_FileList.push_back(f);									
-
-				FS_DirEntryMap[entIdx] = true;
-			}
-			else
+			CPMFileListType::iterator fit = find(CPM_FileList.begin(), CPM_FileList.end(), f);
+			if (fit != CPM_FileList.end())
 			{
-				FS_DirEntryMap[entIdx] = false;
+				f = *fit;
 			}
+			else //New file.
+			{
+				f.FileBlocks = vector<word>();
+				f.User = DirEntries[entIdx].UsrCode;
+				f.Idx = Idx++;	
+				f.fs = this;
+			}
+
+			//File directory entries.
+			//Must sort dir entries by index, because they may lay on disk in random order.
+			//Rares Atodiresei says BDOS re-scans the dir from the beginning for each FindNext().				
+			vector<word>::iterator it = f.FileDirEntries.begin();
+			bool mustInsert = false;
+			while (it != f.FileDirEntries.end() && !mustInsert)
+			{					
+				if (DirEntries[*it].ExtIdx > DirEntries[entIdx].ExtIdx)													
+					mustInsert = true;						
+				else
+					it++;									
+			}
+				
+			if (!mustInsert)
+				f.FileDirEntries.push_back(entIdx);
+			else
+				f.FileDirEntries.insert(it, entIdx);								
+				
+			if (fit != CPM_FileList.end())
+			{
+				//Also move file in the file list where the file dir entry with index 0 is found.
+				if (!mustInsert)
+					*fit = f;
+				else
+				{
+					CPM_FileList.erase(fit);
+					CPM_FileList.push_back(f);	
+				}
+			}
+			else				
+				CPM_FileList.push_back(f);									
+
+			if (DirEntries[entIdx].UsrCode != DEL_MARKER)
+				FS_DirEntryMap[entIdx] = true;
+			else
+				FS_DirEntryMap[entIdx] = false;
+			
 		}
 
 		//File blocks.
@@ -259,11 +257,13 @@ CFile* CFSCPM::FindFirst(char* pattern)
 	}
 	*/
 	
-	CWD = "";
+	CWD = 0;
+	includeDeletedFiles = false;
+
 	char* fld = strrchr(pattern, '\\');
 	if (fld != NULL)
 	{
-		CWD = string(pattern).substr(0, fld - pattern);
+		CWD = atoi(string(pattern).substr(0, fld - pattern).c_str());
 		strcpy(CPM_FindPattern, string(pattern).substr(fld - pattern + 1).c_str());
 	}
 	else
@@ -272,21 +272,38 @@ CFile* CFSCPM::FindFirst(char* pattern)
 	return FindNext();
 }
 
+CFile* CFSCPM::FindFirst(char* pattern, bool includeDeleted)
+{
+	CPM_FindIdx = 0;
+	CWD = 0;
+	includeDeletedFiles = includeDeleted;
+
+	char* fld = strrchr(pattern, '\\');
+	if (fld != NULL)
+	{
+		CWD = atoi(string(pattern).substr(0, fld - pattern).c_str());
+		strcpy(CPM_FindPattern, string(pattern).substr(fld - pattern + 1).c_str());
+	}
+	else
+		strcpy(CPM_FindPattern, pattern);
+
+	return FindNext();
+}
+
 
 CFile* CFSCPM::FindNext()
 {	
 	bool bNameMatch = false, bDirMatch = false;		
-	CFileCPM* file = NULL;
+	CFileCPM* file = NULL;	
 	
 	for (word fnIdx = CPM_FindIdx; fnIdx < CPM_FileList.size() && !(bNameMatch && bDirMatch); fnIdx++)
 	{		
-		bNameMatch = WildCmp(CPM_FindPattern, CPM_FileList[fnIdx].FileName);		
-		if (CWD != "")
-		{
-			string dir;
-			dir += CPM_FileList[fnIdx].User + '0';
-			bDirMatch = (CWD == dir);
-		}
+		bNameMatch = WildCmp(CPM_FindPattern, CPM_FileList[fnIdx].FileName);						
+
+		if (CWD > 0)
+			bDirMatch = CPM_FileList[fnIdx].User == CWD;
+		else if (!includeDeletedFiles)
+			bDirMatch = CPM_FileList[fnIdx].User != DEL_MARKER;
 		else
 			bDirMatch = true;
 
@@ -428,7 +445,7 @@ bool CFSCPM::Delete(char* fnames)
 	while (f != NULL)
 	{		
 		for (word entIdx = 0; entIdx < f->FileDirEntries.size(); entIdx++)
-			this->DirEntries[f->FileDirEntries[entIdx]].UsrCode = Disk->DiskDefinition.Filler;		
+			this->DirEntries[f->FileDirEntries[entIdx]].UsrCode = DEL_MARKER;		
 
 		f = dynamic_cast<CFileCPM*>(FindNext());
 	}
@@ -557,16 +574,20 @@ bool CFSCPM::SetAttributes(char* filespec, FileAttributes toSet, FileAttributes 
 bool CFSCPM::GetFileFolder(CFile* file, char* folderName)
 {
 	if (file != NULL && folderName != NULL)			
-		sprintf(folderName, "%c", '0' + ((CFileCPM*)file)->User);	
+		sprintf(folderName, "%i", ((CFileCPM*)file)->User);	
 	
 	return file != NULL && folderName != NULL;
 }
 
 bool CFSCPM::SetFileFolder(CFile* file, char* folderName)
 {
-	if (file != NULL && folderName != NULL && strlen(folderName) == 1 &&
-		isdigit(folderName[0]))
-		((CFileCPM*)file)->User = folderName[0] - '0';
+	byte user = 0;
+	if (file != NULL && folderName != NULL)
+	{
+		user = atoi(folderName);
+		if (user >=0 && user <= 15)
+			((CFileCPM*)file)->User = user;
+	}
 
 	return file != NULL && folderName != NULL;
 }
