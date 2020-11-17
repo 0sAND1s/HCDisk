@@ -160,61 +160,64 @@ bool CFSCPM::ReadDirectory()
 		CPM_FileList = CPMFileListType();		
 		for (word entIdx = 0; entIdx < FSParams.DirEntryCount; entIdx++)
 		{
-			
-			CFileCPM f = CFileCPM(this);				
-			f.User = DirEntries[entIdx].UsrCode;
-			CreateFileName(DirEntries[entIdx].FileName, &f);				
-				
-			CPMFileListType::iterator fit = find(CPM_FileList.begin(), CPM_FileList.end(), f);
-			if (fit != CPM_FileList.end())
+			//Identify a valid directory entry, even if deleted.
+			if (memchr(DirEntries[entIdx].FileName, DEL_MARKER, CFileCPM::MAX_FILE_NAME_LEN) == NULL 
+				&& DirEntries[entIdx].RecCnt > 0 && DirEntries[entIdx].RecCnt != DEL_MARKER)
 			{
-				f = *fit;
-			}
-			else //New file.
-			{
-				f.FileBlocks = vector<word>();
+				CFileCPM f = CFileCPM(this);
 				f.User = DirEntries[entIdx].UsrCode;
-				f.Idx = Idx++;	
-				f.fs = this;
-			}
+				CreateFileName(DirEntries[entIdx].FileName, &f);
 
-			//File directory entries.
-			//Must sort dir entries by index, because they may lay on disk in random order.
-			//Rares Atodiresei says BDOS re-scans the dir from the beginning for each FindNext().				
-			vector<word>::iterator it = f.FileDirEntries.begin();
-			bool mustInsert = false;
-			while (it != f.FileDirEntries.end() && !mustInsert)
-			{					
-				if (DirEntries[*it].ExtIdx > DirEntries[entIdx].ExtIdx)													
-					mustInsert = true;						
-				else
-					it++;									
-			}
-				
-			if (!mustInsert)
-				f.FileDirEntries.push_back(entIdx);
-			else
-				f.FileDirEntries.insert(it, entIdx);								
-				
-			if (fit != CPM_FileList.end())
-			{
-				//Also move file in the file list where the file dir entry with index 0 is found.
-				if (!mustInsert)
-					*fit = f;
-				else
+				CPMFileListType::iterator fit = find(CPM_FileList.begin(), CPM_FileList.end(), f);
+				if (fit != CPM_FileList.end())
 				{
-					CPM_FileList.erase(fit);
-					CPM_FileList.push_back(f);	
+					f = *fit;
 				}
-			}
-			else				
-				CPM_FileList.push_back(f);									
+				else //New file.
+				{
+					f.FileBlocks = vector<word>();
+					f.User = DirEntries[entIdx].UsrCode;
+					f.Idx = Idx++;
+					f.fs = this;
+				}
 
-			if (DirEntries[entIdx].UsrCode != DEL_MARKER)
-				FS_DirEntryMap[entIdx] = true;
-			else
-				FS_DirEntryMap[entIdx] = false;
-			
+				//File directory entries.
+				//Must sort dir entries by index, because they may lay on disk in random order.
+				//Rares Atodiresei says BDOS re-scans the dir from the beginning for each FindNext().				
+				vector<word>::iterator it = f.FileDirEntries.begin();
+				bool mustInsert = false;
+				while (it != f.FileDirEntries.end() && !mustInsert)
+				{
+					if (DirEntries[*it].ExtIdx > DirEntries[entIdx].ExtIdx)
+						mustInsert = true;
+					else
+						it++;
+				}
+
+				if (!mustInsert)
+					f.FileDirEntries.push_back(entIdx);
+				else
+					f.FileDirEntries.insert(it, entIdx);
+
+				if (fit != CPM_FileList.end())
+				{
+					//Also move file in the file list where the file dir entry with index 0 is found.
+					if (!mustInsert)
+						*fit = f;
+					else
+					{
+						CPM_FileList.erase(fit);
+						CPM_FileList.push_back(f);
+					}
+				}
+				else
+					CPM_FileList.push_back(f);
+
+				if (DirEntries[entIdx].UsrCode != DEL_MARKER)
+					FS_DirEntryMap[entIdx] = true;
+				else
+					FS_DirEntryMap[entIdx] = false;
+			}
 		}
 
 		//File blocks.
@@ -229,13 +232,40 @@ bool CFSCPM::ReadDirectory()
 				while (auNo > 0 && auNo < (word)FS_BlockMap.size() && auIdx < CPM_AUInExt)
 				{	
 					fIt->FileBlocks.push_back(auNo);
-					FS_BlockMap[auNo] = true;
+					//Don't count blocks for deleted files.					
+					FS_BlockMap[auNo] = fIt->User != DEL_MARKER;
+					
 					auIdx++;
 					auNo = GetAUNoFromExt(*fDirEntIdx, auIdx);
 				}
 				fDirEntIdx++;
 			}			
 			fIt++;
+		}		
+
+		//Remove from list deleted files that are have overwritten blocks, leave only the ones that can be recovered.
+		fIt = CPM_FileList.begin();				
+		while (fIt != CPM_FileList.end())
+		{
+			if (fIt->User == DEL_MARKER)
+			{				
+				std::vector<word>::iterator usedBlock = fIt->FileBlocks.begin();
+				while (usedBlock != fIt->FileBlocks.end())
+				{
+					//If the block is already used by undeleted file, skip it from the deleted file blocks.					
+					if (FS_BlockMap[*usedBlock] == true)
+					{
+						usedBlock = fIt->FileBlocks.erase(usedBlock);
+					}
+					else
+						usedBlock++;
+				}				
+			}
+
+			if (fIt->FileBlocks.size() == 0)
+				fIt = CPM_FileList.erase(fIt);
+			else
+				fIt++;
 		}		
 	}		
 	
@@ -303,7 +333,9 @@ CFile* CFSCPM::FindNext()
 		if (CWD > 0)
 			bDirMatch = CPM_FileList[fnIdx].User == CWD;
 		else if (!includeDeletedFiles)
+		{
 			bDirMatch = CPM_FileList[fnIdx].User != DEL_MARKER;
+		}
 		else
 			bDirMatch = true;
 

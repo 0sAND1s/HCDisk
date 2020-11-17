@@ -99,8 +99,7 @@ public:
 	virtual bool Seek(byte trackNo);
 	virtual bool ReadSectors(byte * buff, byte track, byte side, byte sector, byte sectCnt);
 	virtual bool WriteSectors(byte track, byte side, byte sector, byte sectCnt, byte * buff);
-	virtual bool FormatTrack(byte track, byte side);
-	void SetInterleave(byte sectIDs[]);
+	virtual bool FormatTrack(byte track, byte side);	
 	virtual bool GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescType sectors[]);
 	bool GetDiskInfo(byte & trackCount, byte & sideCount);
 };
