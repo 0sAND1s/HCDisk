@@ -13,12 +13,13 @@
 
 bool CFileArchiveTape::Init()
 {	
+	theTap = NULL;
 	if (strstr(Name, ".TAP"))
 		theTap = new CTapFile();	
 	else if (strstr(Name, ".TZX"))
 		theTap = new CTZXFile();	
 
-	bool res = theTap->Open(Name);
+	bool res = theTap != NULL && theTap->Open(Name);
 	
 	if (res)
 	{

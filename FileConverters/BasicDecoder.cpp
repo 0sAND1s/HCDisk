@@ -6,8 +6,10 @@
 #include <streambuf>
 #include <algorithm>
 #include <iostream>
+#include <list>
 
 using namespace Basic;
+using namespace std;
 
 bool Basic::BasicLine::GetLine(byte* buf, word len)
 {
@@ -274,6 +276,7 @@ bool Basic::BasicDecoder::DecodeVariables(byte* buf, word len, ostream& str)
 		}
 	}	
 
+	str << endl;
 	return res;
 }
 
@@ -314,4 +317,47 @@ double Basic::BasicDecoder::FPSpecToDouble (SpectrumFPType *FPNumber)
 		FPValue = Power * (1 + Result);
 	}
 	return (FPValue);
+}
+
+list<std::string> Basic::BasicDecoder::GetLoadingBlocks(byte* buf, word progLen)
+{
+	list<std::string> res;	
+	word lineSize = 0;
+	word bufPos = 0;	
+
+	do
+	{
+		lineSize = GetLine(buf + bufPos, progLen - bufPos);
+
+		if (lineBuf[0] != BK_REM)
+		{
+			std::vector<byte>::iterator loadPos = find(lineBuf.begin(), lineBuf.end(), BK_LOAD);
+			std::vector<byte>::iterator loadEnd = find(loadPos, lineBuf.end(), ':');
+
+			while (loadPos != lineBuf.end())
+			{
+				std::vector<byte>::iterator loadIt = loadEnd - 1;
+				string blockName;
+
+				while (loadIt != loadPos && *loadIt != '"')
+				{
+					loadIt--;
+				}
+				loadIt--;
+				while (loadIt != loadPos && *loadIt != '"')
+				{
+					blockName.insert(blockName.begin(), *loadIt);
+					loadIt--;
+				}
+				res.push_back(blockName);
+
+				loadPos = find(loadEnd, lineBuf.end(), BK_LOAD);
+				loadEnd = find(loadPos, lineBuf.end(), ':');
+			}			
+		}	
+		
+		bufPos += lineSize;
+	} while (lineSize > 0 && bufPos < progLen);	
+	
+	return res;
 }

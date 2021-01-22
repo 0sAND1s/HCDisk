@@ -2,6 +2,8 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <string>
+#include <list>
 
 #include "..\types.h"
 
@@ -391,6 +393,7 @@ namespace Basic
 		bool DecodeLine(ostream& str);		
 		bool DecodeVariables(byte* buf, word len, ostream& str);
 		static word GetVarSize(byte* buf, word len);
+		list<std::string> GetLoadingBlocks(byte* buf, word progLen);
 		
 		ostream& operator>>(ostream&);
 	};

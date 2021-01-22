@@ -59,7 +59,7 @@ public:
 	} FSFeatures;	
 
 
-	char Name[32];
+	char Name[260];
 
 	CFileArchive(char* name = NULL);	
 	virtual ~CFileArchive();		

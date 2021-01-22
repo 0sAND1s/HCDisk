@@ -55,6 +55,7 @@ using namespace std;
 
 CDiskBase* theDisk = NULL;
 CFileArchive* theFS = NULL;
+char path[MAX_PATH];
 
 typedef enum
 {
@@ -726,6 +727,17 @@ string DecodeBASIC(byte* buf, word progLen, word varLen = 0)
 	if (varLen > 0)	
 		BasDec.DecodeVariables(&buf[bufPos], varLen, res);	
 
+	//Display block names for blocks loaded by this BASIC block.
+	list<string> blocks = BasDec.GetLoadingBlocks(buf, progLen - varLen);
+	list<string>::iterator blIt = blocks.begin();
+	if (blIt != blocks.end())
+	{
+		res << "Loading these blocks: ";
+		while (blIt != blocks.end())
+			res << '"' << *blIt++ << "\" ";
+		res << endl;
+	}
+	
 	return res.str();
 }
 
@@ -1274,7 +1286,7 @@ byte AskGeometry(vector<byte> foundGeom)
 
 bool Open(int argc, char* argv[])
 {
-	char* path = argv[0];	
+	strcpy(path, argv[0]);	
 	//CDiskBase* theDisk = NULL;
 	FS theDiskDesc;
 	word fsIdx = 0;	
@@ -1439,7 +1451,7 @@ bool Stat(int argc, char* argv[])
 
 	word feat = theFS->GetFSFeatures();
 
-	printf("Storage: %s, File system: %s\n", StorageTypeNames[storType], theFS->Name);
+	printf("Storage: %s, File system: %s, Path: %s\n", StorageTypeNames[storType], theFS->Name, path);
 	if (feat & CFileSystem::FSFT_DISK)
 	{
 		CFileSystem* fs = dynamic_cast<CFileSystem*>(theFS);
