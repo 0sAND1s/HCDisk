@@ -30,7 +30,7 @@
     <ClCompile Include="DiskImgRaw.cpp">
       <Filter>Disk</Filter>
     </ClCompile>
-    <ClCompile Include="DiskWin32.cpp">
+    <ClCompile Include="DiskWin32LowLevel.cpp">
       <Filter>Disk</Filter>
     </ClCompile>
     <ClCompile Include="dsk.cpp">
@@ -133,6 +133,9 @@
     <ClCompile Include="td0_lzss.cpp">
       <Filter>Disk</Filter>
     </ClCompile>
+    <ClCompile Include="DiskWin32Native.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DiskBase.h">
@@ -144,7 +147,7 @@
     <ClInclude Include="DiskImgRaw.h">
       <Filter>Disk</Filter>
     </ClInclude>
-    <ClInclude Include="DiskWin32.h">
+    <ClInclude Include="DiskWin32LowLevel.h">
       <Filter>Disk</Filter>
     </ClInclude>
     <ClInclude Include="dsk.h">
@@ -245,6 +248,9 @@
       <Filter>Disk</Filter>
     </ClInclude>
     <ClInclude Include="td0_lzss.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="DiskWin32Native.h">
       <Filter>Disk</Filter>
     </ClInclude>
   </ItemGroup>

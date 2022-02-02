@@ -22,12 +22,12 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -69,6 +69,10 @@
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -97,7 +101,8 @@
     <ClCompile Include="DiskImgCQM.cpp" />
     <ClCompile Include="DiskImgRaw.cpp" />
     <ClCompile Include="DiskImgTD0.cpp" />
-    <ClCompile Include="DiskWin32.cpp" />
+    <ClCompile Include="DiskWin32LowLevel.cpp" />
+    <ClCompile Include="DiskWin32Native.cpp" />
     <ClCompile Include="dsk.cpp" />
     <ClCompile Include="edsk.cpp" />
     <ClCompile Include="CFileArchive.cpp" />
@@ -132,12 +137,13 @@
     <ClCompile Include="td0_lzss.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DiskWin32Native.h" />
     <ClInclude Include="CRC.h" />
     <ClInclude Include="DiskBase.h" />
     <ClInclude Include="DiskImgCQM.h" />
     <ClInclude Include="DiskImgRaw.h" />
     <ClInclude Include="DiskImgTD0.h" />
-    <ClInclude Include="DiskWin32.h" />
+    <ClInclude Include="DiskWin32LowLevel.h" />
     <ClInclude Include="dsk.h" />
     <ClInclude Include="edsk.h" />
     <ClInclude Include="CFileArchive.h" />

@@ -35,8 +35,11 @@ File systems based on CPM are read-write, the others are read only (for now).
 - SCL (read only) - Russian emulators
 - TD0 - Teledisk by Sydex
 - Tape images: TAP, TZX
-	Note: For accessing floppy disks in physical drive, you need Simon Owen's fdrawcmd driver: 
-http://simonowen.com/fdrawcmd/ .
+	
+	Note: For accessing floppy disks in physical drive for all supported formats, you need Simon Owen's fdrawcmd driver: http://simonowen.com/fdrawcmd/ .
+	For standard geometries supported by Windows, the standard Windows driver is now used (added in January 2022). This also works with USB floppy drives for modern computers without a floppy controller.
+	The geometries supported by Windows are using sector size of 512 bytes and also 40 and 80 tracks, with 8, 9, 15 and 18 sectors per track, single or dual sided. The USB floppy drives only support 80x2x9 DD and 80x2x18 HD TxHxS.
+	
 
 	It also includes file conversion for Spectrum Specific files, to be viewed on PC:
 - converts Spectrum BASIC programs to BASIC source code 
@@ -226,11 +229,7 @@ disks, like the tape images, SCL images, or in the future, file archive (ZIP, et
 the original author and include the changes you added to the code, when you release your code.
 
 7. What other features are planned?
-- Add write support for the read-only file systems
-- Support for more disk images: Teledisk (TD0), Universal Disk Image (UDI), etc
 - Add support for serial transfer using the PC COM port and IF1 compatible Spectrum interfaces
-- Add physical disk format support, automatic calculation of GAP.
-- Add boot track read/write support, to be able to re-create system disks from files
-- Add support for the FAT file system, and others, Spectrum specific
+- Add support for the FAT file system
 - Add file system configuration in external config. file, to be able to add varations of a file system without recompiling
-- Add support for BASIC keywords in Spectrum based file system file names
+- Add write support for the current read-only file systems
