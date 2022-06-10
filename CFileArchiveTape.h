@@ -21,32 +21,36 @@ class CFileArchiveTape: public CFileArchive
 public:
 	CFileArchiveTape(char* name): CFileArchive(name) 
 	{
-		FSFeatures = (FileSystemFeature)(FSFT_ZXSPECTRUM_FILES | FSFT_CASE_SENSITIVE_FILENAMES);
+		FSFeatures = (FileSystemFeature)(FSFT_TAPE | FSFT_ZXSPECTRUM_FILES | FSFT_CASE_SENSITIVE_FILENAMES);
 		NAME_LENGHT = 10;
 		EXT_LENGTH = 0;
+		theTap = NULL;
 	};
 
 	virtual ~CFileArchiveTape()
 	{
 		Close();
 	}
-
+	
 	virtual bool Init();
+	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL);
+	virtual bool WriteFile(CFile*);
 	virtual bool Open(char* name, bool create = false);
 	virtual CFile* FindFirst(char* pattern);
 	virtual CFile* FindNext();		
 	virtual bool AddFile(CFileSpectrumTape* fSpec);
 	virtual bool Close();
-	virtual bool ReadFile(CFile* file);	
+	virtual bool ReadFile(CFile* file);		
 
 	CTapFile* theTap;
 protected:	
 	word CurIdx;	
-	char FindPattern[MAX_FILE_NAME_LEN];
+	char FindPattern[MAX_FILE_NAME_LEN];	
 	CFileSpectrumTape* GetBlock();
 	CFileSpectrumTape* TapeBlock2FileSpectrum(CTapeBlock* tbHdr, CTapeBlock* tbData);
 	bool FileSpectrum2TapeBlock(CFileSpectrumTape* fSpec, CTapeBlock& tbHdr, CTapeBlock& tbData);	
-	vector<CFileSpectrumTape> TapeFiles;
+	vector<CFileSpectrumTape*> TapeFiles;
+	FileNameType blankNameTemplate = "noname%02d";
 };
 
 class CFileSpectrumTape: public CFileSpectrum, public CFile
@@ -54,7 +58,17 @@ class CFileSpectrumTape: public CFileSpectrum, public CFile
 public:
 	virtual bool SetFileName(char* src)
 	{
+		//Trim according to tape block lenght.
+		//src[CTapeBlock::TAP_FILENAME_LEN] = 0;
 		return CFileArchive::TrimEnd(src) && CFile::SetFileName(src);
+	}
+
+	virtual bool GetFileName(char* dest, bool trim = true)
+	{
+		bool res = CFile::GetFileName(dest, trim);
+		//Trim according to tape block lenght.
+		dest[CTapeBlock::TAP_FILENAME_LEN] = 0;
+		return res;
 	}
 	
 	CFileSpectrumTape()
@@ -65,13 +79,21 @@ public:
 	{
 	}
 
+	CFileSpectrumTape(const CFileSpectrumTape& src)
+	{
+		*(CFile*)this = src;
+		*(CFileSpectrum*)this = src;
+	}	
+
 	~CFileSpectrumTape()
 	{
+		/*
 		if (this->buffer != NULL)
 		{
 			delete buffer;
 			buffer = NULL;
 		}
+		*/
 	}
 
 	virtual dword GetLength()
@@ -79,6 +101,6 @@ public:
 		return SpectrumLength;
 	}
 	
-	virtual bool Read() {return true; };	
+	virtual bool Read() {return true; };		
 };
 #endif//CFILE_ARCHIVE_TAPE_H

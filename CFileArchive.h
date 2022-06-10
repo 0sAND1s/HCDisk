@@ -15,6 +15,7 @@ class CFileArchive
 	friend class CFile;
 public:
 	static const byte MAX_FILE_NAME_LEN = 11;	
+	//accomodate . before extension and ending 0 (8.3\0).
 	typedef char FileNameType[MAX_FILE_NAME_LEN+2];			
 
 	enum ErrorType
@@ -55,7 +56,8 @@ public:
 		FSFT_FILE_ATTRIBUTES	= 8,	//FS supports file attributes
 		FSFT_FOLDERS			= 16,	//FS supports folders
 		FSFT_TIMESTAMPS			= 32,	//FS supports file timestamps (CPM 3.0, FAT, etc)
-		FSFT_CASE_SENSITIVE_FILENAMES = 64
+		FSFT_CASE_SENSITIVE_FILENAMES = 64,
+		FSFT_TAPE				= 128
 	} FSFeatures;	
 
 

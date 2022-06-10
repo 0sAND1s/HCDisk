@@ -96,6 +96,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="COM4HC.CPP" />
     <ClCompile Include="CRC.cpp" />
     <ClCompile Include="DiskBase.cpp" />
     <ClCompile Include="DiskImgCQM.cpp" />
@@ -137,6 +138,7 @@
     <ClCompile Include="td0_lzss.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="com4hc.h" />
     <ClInclude Include="DiskWin32Native.h" />
     <ClInclude Include="CRC.h" />
     <ClInclude Include="DiskBase.h" />

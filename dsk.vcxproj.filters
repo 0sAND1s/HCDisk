@@ -19,6 +19,9 @@
     <Filter Include="Tape">
       <UniqueIdentifier>{904ffdd7-c369-486a-993d-60c9c9ad707d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="COM">
+      <UniqueIdentifier>{c3616e7a-ea3c-4bbd-a232-d283b3da0218}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DiskBase.cpp">
@@ -136,6 +139,9 @@
     <ClCompile Include="DiskWin32Native.cpp">
       <Filter>Disk</Filter>
     </ClCompile>
+    <ClCompile Include="COM4HC.CPP">
+      <Filter>COM</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DiskBase.h">
@@ -252,6 +258,9 @@
     </ClInclude>
     <ClInclude Include="DiskWin32Native.h">
       <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="com4hc.h">
+      <Filter>COM</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

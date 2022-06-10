@@ -1,6 +1,7 @@
 #include "CFSCPMHC.h"
 #include "CFileHC.h"
 #include "CFileIF1.h"
+#include "CFileArchiveTape.h"
 #include <algorithm>
 
 bool CFSCPMHC::IsCharValidForFilename(char c)
@@ -44,6 +45,7 @@ CFile* CFSCPMHC::FindNext()
 CFile* CFSCPMHC::NewFile(char* name, long len, byte* data)
 {
 	CFileHC* f = new CFileHC(this);
+	f->User = 0;
 	memset(&f->IF1Header, 0, sizeof(f->IF1Header));
 	f->SetFileName(name);
 	if (data != NULL && len > 0)
@@ -53,36 +55,41 @@ CFile* CFSCPMHC::NewFile(char* name, long len, byte* data)
 
 bool CFSCPMHC::WriteFile(CFile* file)
 {
-	bool res = true;
-	CFileHC* f = (CFileHC*)file;
-	f->User = 0;
+	bool res = true;	
+	CFileHC* fHC = (CFileHC*)file;	
+	CFileSpectrum* fs = (CFileSpectrum*)fHC;
+	fHC->User = 0;
 
-	if (f->GetType() != CFileSpectrum::SPECTRUM_UNTYPED)
+	if (fs->GetType() != CFileSpectrum::SPECTRUM_UNTYPED)
 	{
-		f->IF1Header.Type = (byte)f->SpectrumType;
-		f->IF1Header.Length = f->SpectrumLength;
-		if (f->SpectrumType == CFileSpectrum::SPECTRUM_PROGRAM)
+		//Set HC file header according to the CFileSpectrum members.
+		fHC->IF1Header.Type = (byte)fs->SpectrumType;
+		fHC->IF1Header.Length = fs->SpectrumLength;
+		if (fs->SpectrumType == CFileSpectrum::SPECTRUM_PROGRAM)
 		{
-			f->IF1Header.ProgLineNumber = f->SpectrumStart;
-			f->IF1Header.ProgLen = f->SpectrumLength - f->SpectrumVarLength;		
+			fHC->IF1Header.ProgLineNumber = fs->SpectrumStart;
+			fHC->IF1Header.ProgLen = fs->SpectrumLength - fs->SpectrumVarLength;		
 		}
-		else if (f->SpectrumType == CFileSpectrum::SPECTRUM_BYTES)
-			f->IF1Header.CodeStart = f->SpectrumStart;	
-		else if (f->SpectrumType == CFileSpectrum::SPECTRUM_CHAR_ARRAY ||
-			f->SpectrumType == CFileSpectrum::SPECTRUM_NUMBER_ARRAY)
-			f->IF1Header.VarName = f->SpectrumArrayVarName;
+		else if (fs->SpectrumType == CFileSpectrum::SPECTRUM_BYTES)
+			fHC->IF1Header.CodeStart = fs->SpectrumStart;	
+		else if (fs->SpectrumType == CFileSpectrum::SPECTRUM_CHAR_ARRAY ||
+			fHC->SpectrumType == CFileSpectrum::SPECTRUM_NUMBER_ARRAY)
+			fHC->IF1Header.VarName = fs->SpectrumArrayVarName;
 
-		byte* newBuf = new byte[f->Length + sizeof(CFileIF1::CFileIF1Header)];
-		memcpy(newBuf, &f->IF1Header, sizeof(CFileIF1::CFileIF1Header));
-		memcpy(newBuf + sizeof(CFileIF1::CFileIF1Header), f->buffer, f->Length);	
-		delete f->buffer;
-		f->SetData(newBuf, f->Length + sizeof(CFileIF1::CFileIF1Header));
-		res = CFSCPM::WriteFile(f);
-		delete newBuf;
+		byte* newBuf = new byte[fs->SpectrumLength + sizeof(CFileIF1::CFileIF1Header)];
+		memcpy(newBuf, &fHC->IF1Header, sizeof(CFileIF1::CFileIF1Header));
+		file->GetData(newBuf + sizeof(CFileIF1::CFileIF1Header));			
+		fHC->SetData(newBuf, fs->SpectrumLength + sizeof(CFileIF1::CFileIF1Header));
+		res = CFSCPM::WriteFile(fHC);		
+		delete[] newBuf;		
 	}
 	else
 	{
-		res = CFSCPM::WriteFile(f);
+		byte* newBuf = new byte[file->GetLength()];		
+		file->GetData(newBuf);
+		fHC->SetData(newBuf, file->GetLength());
+		res = CFSCPM::WriteFile(fHC);
+		delete[] newBuf;				
 	}
 	
 	return res;

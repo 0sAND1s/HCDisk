@@ -31,7 +31,7 @@ public:
 	virtual bool SetData(byte* buf, dword length);
 
 	//Returns the internal file name.
-	virtual bool GetFileName(char* dest);
+	virtual bool GetFileName(char* dest, bool trim = true);
 	virtual bool GetFileName(char* name, char* ext);
 	virtual bool SetFileName(char* src);
 	virtual bool SetFileName(char* name, char* ext);	

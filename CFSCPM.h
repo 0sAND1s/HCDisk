@@ -127,7 +127,7 @@ protected:
 	virtual bool ReadDirectory();	
 	virtual bool WriteDirectory();
 	virtual bool CreateFSName(CFile* file, char* fNameOut);
-	static int FileDirEntSorter(word dirEnt1, word dirEnt2);
+	//static int FileDirEntSorter(word dirEnt1, word dirEnt2);
 	virtual bool OpenFile(CFile* file);
 	virtual bool CFSCPM::CloseFile(CFile* file);
 };

@@ -11,24 +11,6 @@
 using namespace Basic;
 using namespace std;
 
-bool Basic::BasicLine::GetLine(byte* buf, word len)
-{
-	lineNumber = *((byte*)buf+1) + 256 * *(byte*)buf;
-	lineLen = *((word*)buf + 1);
-
-	//if (lineNumber > 9999)
-	//	return false;
-
-	/*
-	if (lineLen == 0)
-		return false;
-	*/
-
-	memcpy(lineBuf, ((word*)buf + 2), len);
-
-	return true;
-}	
-
 
 Basic::BasicDecoder::BasicDecoder()
 {	
@@ -41,7 +23,7 @@ Basic::BasicDecoder::BasicDecoder()
 
 Basic::BasicDecoder::~BasicDecoder()
 {
-	keywords.clear();
+	//keywords.clear();
 }
 
 void Basic::BasicDecoder::Test()
@@ -52,6 +34,7 @@ void Basic::BasicDecoder::Test()
 	}		
 }
 
+/*
 word Basic::BasicDecoder::GetLine(byte* buf, word maxLen)
 {			
 	if (buf == NULL)
@@ -63,19 +46,73 @@ word Basic::BasicDecoder::GetLine(byte* buf, word maxLen)
 	lineBuf.clear();		
 	int pos = 4;	
 	
-	while ((pos < lineLen + 4 /*&& b != 0x0D*/ && pos < maxLen))
+	while ((pos < lineLen + 4 && pos < maxLen))
 	{			
 		lineBuf.push_back(buf[pos]);				
 		pos++;						
 	}		
 
 	return lineLen + 4;	
-}	
+}
+*/
+
+Basic::BasicLine Basic::BasicDecoder::GetBasicLineFromLineBuffer(byte* buf, word maxLen)
+{
+	BasicLine bl;
+
+	bl.lineNumber = buf[0] * 0x100 + buf[1];
+	bl.basicSize = *(word*)&buf[2];
+
+	if (bl.lineNumber < 9999 && bl.basicSize == 0)
+		bl.basicSize = maxLen - 4;
+
+	//Line size including the 4 bytes line header.
+	bl.lineSize = bl.basicSize + 4;
+	
+	int posRead = 4;
+
+	if (bl.lineNumber <= 9999)
+	{
+		bl.lineBufBasic.clear();
+		while ((posRead < bl.lineSize && posRead < maxLen))
+		{
+			bl.lineBufBasic.push_back(buf[posRead++]);
+		}
+
+	}
+	else
+	{
+		bl.basicSize = bl.lineSize = 0;
+	}
+	
+	return bl;
+}
 
 
+void Basic::BasicDecoder::PutBasicLineToLineBuffer(BasicLine bl, byte* buf)
+{
+	buf[0] = bl.lineNumber / 0x100;
+	buf[1] = bl.lineNumber % 0x100;
+	buf[2] = bl.basicSize % 0x100;
+	buf[3] = bl.basicSize / 0x100;
+
+	memcpy(&buf[4], bl.lineBufBasic.data(), bl.basicSize);
+}
+
+Basic::BasicLine::BasicLine()
+{}
 
 
-bool Basic::BasicDecoder::DecodeLine(ostream& strOut)
+Basic::BasicLine::BasicLine(byte* bufBasic, word basicLen, word lineNo)
+{
+	lineNumber = lineNo;
+	basicSize = basicLen;
+	lineSize = basicSize + 4;
+	copy(bufBasic, bufBasic + lineSize, back_insert_iterator<vector<byte>>(lineBufBasic));
+}
+
+
+bool Basic::BasicDecoder::DecodeBasicLineToText(BasicLine bl, ostream& strOut)
 {
 	KeywordType::const_iterator it;
 	bool bOK = true;		
@@ -84,11 +121,11 @@ bool Basic::BasicDecoder::DecodeLine(ostream& strOut)
 	bOK = true;	
 	word lineBufIdx = 0;		
 	
-	strOut << right << setw(5) << lineNo;	
+	strOut << right << setw(5) << bl.lineNumber;	
 					
-	while (lineBufIdx < lineBuf.size() && bOK)
+	while (lineBufIdx < bl.lineBufBasic.size() && bOK)
 	{			
-		b = lineBuf[lineBufIdx];
+		b = bl.lineBufBasic[lineBufIdx];
 		if (b >= ' ' && b < BUDG_COPYRIGHT)
 			strOut << b;
 		else
@@ -103,16 +140,16 @@ bool Basic::BasicDecoder::DecodeLine(ostream& strOut)
 						if (m_ShowNumbers)
 						{		
 							//Only show numbers if the text representation is different from the actual binary value.
-							memcpy(&fp, &lineBuf[lineBufIdx+1], sizeof(fp));
+							memcpy(&fp, &bl.lineBufBasic[lineBufIdx+1], sizeof(fp));
 							double valBin = FPSpecToDouble(&fp), valDisp, valComp;
 							string valStrDisp;
 							
 							//Seek preceding string number and parse.							
 							short idx = lineBufIdx - 1;							
-							while (idx >0 && isdigit(lineBuf[idx]) || lineBuf[idx] == '.' || toupper(lineBuf[idx]) == 'E')
+							while (idx >0 && isdigit(bl.lineBufBasic[idx]) || bl.lineBufBasic[idx] == '.' || toupper(bl.lineBufBasic[idx]) == 'E')
 								idx--;
 							
-							copy(&lineBuf[idx+1], &lineBuf[lineBufIdx], back_insert_iterator<string>(valStrDisp));
+							copy(&bl.lineBufBasic[idx+1], &bl.lineBufBasic[lineBufIdx], back_insert_iterator<string>(valStrDisp));
 							stringstream sFmt;
 							sFmt << valStrDisp;
 							sFmt >> fixed >> setprecision(2) >> valDisp;
@@ -126,10 +163,10 @@ bool Basic::BasicDecoder::DecodeLine(ostream& strOut)
 					{							
 						strOut << "{" << it->second.str;
 						if (it->second.len >= 1)
-							strOut << " " << (word)lineBuf[lineBufIdx + 1];
+							strOut << " " << (word)bl.lineBufBasic[lineBufIdx + 1];
 						//AT,TAB have 2 arguments
 						if (it->second.len >= 2)
-							strOut << "," << (word)lineBuf[lineBufIdx + 2];
+							strOut << "," << (word)bl.lineBufBasic[lineBufIdx + 2];
 						strOut << "}";
 					}
 
@@ -208,10 +245,10 @@ bool Basic::BasicDecoder::DecodeVariables(byte* buf, word len, ostream& str)
 			while (varLen > 0)
 			{
 				byte c = buf[bufIdx++];
-				if (c >= ' ' && c <= 128)
+				if (c >= ' ' && c < 128)
 					str << c;
 				else
-					str << hex << showbase << setw(2) << setfill('0') << "'" << (short unsigned)c << "'";
+					str << "$" << hex << uppercase << setw(2) << setfill('0') << (short unsigned)c;
 				varLen--;				
 			}
 			str << "\"";
@@ -280,12 +317,14 @@ bool Basic::BasicDecoder::DecodeVariables(byte* buf, word len, ostream& str)
 	return res;
 }
 
+/*
 ostream& Basic::BasicDecoder::operator>>(ostream& sPrm)
 {		
 	DecodeLine(sPrm);
 	//sPrm << sTmp.str();
 	return sPrm;
 }
+*/
 
 //Taken from Taper by M. Heide.
 double Basic::BasicDecoder::FPSpecToDouble (SpectrumFPType *FPNumber)
@@ -319,42 +358,117 @@ double Basic::BasicDecoder::FPSpecToDouble (SpectrumFPType *FPNumber)
 	return (FPValue);
 }
 
-list<std::string> Basic::BasicDecoder::GetLoadingBlocks(byte* buf, word progLen)
+void Basic::BasicDecoder::ConvertLoader(BasicLine* blSrc, BasicLine* blDst, const char* loadPrefix, vector<string>* actualNames, byte* nameIdx)
 {
-	list<std::string> res;	
+	blDst->lineNumber = blSrc->lineNumber;
+	blDst->lineBufBasic.clear();
+
+	map<word, pair<word, string>> namesLoaded = GetLoadingBlocks(blSrc->lineBufBasic.data(), blSrc->basicSize);	
+	//If no LOAD statement in this line, just copy it over.
+	if (namesLoaded.size() == 0)
+	{
+		copy(blSrc->lineBufBasic.begin(), blSrc->lineBufBasic.end(), back_insert_iterator<vector<byte>>(blDst->lineBufBasic));
+	}
+	else
+	{
+		word inIdx = 0;		
+		while (inIdx < blSrc->basicSize)
+		{
+			//If LOAD found at this index in line, copy load prefix and name.
+			if (namesLoaded.find(inIdx) != namesLoaded.end())
+			{
+				//Remove previous prefix, if any.
+				while (blDst->lineBufBasic.size() > 0 && blDst->lineBufBasic[blDst->lineBufBasic.size() - 1] != Basic::BK_LOAD)
+					blDst->lineBufBasic.pop_back();
+
+				word prefIdx = 0;
+				while (prefIdx < strlen(loadPrefix))
+				{
+					if (loadPrefix[prefIdx] != '?')
+						blDst->lineBufBasic.push_back(loadPrefix[prefIdx]);
+					else if (*nameIdx < actualNames->size())
+					{
+						for (char c : (*actualNames)[*nameIdx])
+							blDst->lineBufBasic.push_back(c);
+						(*nameIdx)++;
+					}					
+
+					prefIdx++;
+				}
+				
+				//Skip after the loaded name.
+				inIdx = namesLoaded[inIdx].first;
+			}
+			else
+			{
+				blDst->lineBufBasic.push_back(blSrc->lineBufBasic[inIdx]);
+				inIdx++;
+			}			
+			
+		}
+	}
+	
+
+	blDst->basicSize = (word)blDst->lineBufBasic.size();
+	blDst->lineSize = blDst->basicSize + 4;
+}
+
+map<word, pair<word, std::string>> Basic::BasicDecoder::GetLoadingBlocks(byte* bufBasic, word progLen)
+{
+	map<word, pair<word, std::string>> res;
 	word lineSize = 0;
 	word bufPos = 0;	
+	vector<byte> lineBuf(bufBasic, bufBasic + progLen);
 
 	do
-	{
-		lineSize = GetLine(buf + bufPos, progLen - bufPos);
+	{		
+		lineSize = progLen;
+		auto remPos = find(lineBuf.begin(), lineBuf.end(), BK_REM);
+		//auto remPos = lineBuf.end();
+		
+		//The LOAD statement, after the name, has CODE or SCREEN$.
+		auto loadPos = find(lineBuf.begin(), lineBuf.end(), BK_LOAD);
+		auto loadCode = find(loadPos, lineBuf.end(), BK_CODE);
+		auto loadSCR = find(loadPos, lineBuf.end(), BK_SCREEN);
+		auto loadEnd = find(loadPos, lineBuf.end(), ':');
 
-		if (lineBuf[0] != BK_REM)
+		if (loadEnd > loadCode)
+			loadEnd = loadCode;
+		if (loadEnd > loadSCR)
+			loadEnd = loadSCR;		
+
+		while (loadPos != lineBuf.end() && loadPos < remPos && loadEnd != lineBuf.end())
 		{
-			std::vector<byte>::iterator loadPos = find(lineBuf.begin(), lineBuf.end(), BK_LOAD);
-			std::vector<byte>::iterator loadEnd = find(loadPos, lineBuf.end(), ':');
+			std::vector<byte>::iterator loadIt = loadEnd - 1;
+			string blockName;
 
-			while (loadPos != lineBuf.end())
+			//Search backwards from LOAD statement end towards the beginning, to find the end quote of file name.
+			while (loadIt > loadPos+1 && *loadIt != '"')
 			{
-				std::vector<byte>::iterator loadIt = loadEnd - 1;
-				string blockName;
-
-				while (loadIt != loadPos && *loadIt != '"')
-				{
-					loadIt--;
-				}
 				loadIt--;
-				while (loadIt != loadPos && *loadIt != '"')
-				{
-					blockName.insert(blockName.begin(), *loadIt);
-					loadIt--;
-				}
-				res.push_back(blockName);
+			}
+			if (*loadIt == '"')
+				loadIt--;			
+			
+			//Search backwards for the start quote of file name.
+			while (loadIt > loadPos+1 && *loadIt != '"')
+			{
+				blockName.insert(blockName.begin(), *loadIt);
+				loadIt--;
+			}
+			res[loadIt - lineBuf.begin()] = pair<word, string>(loadEnd - lineBuf.begin(), blockName);
 
-				loadPos = find(loadEnd, lineBuf.end(), BK_LOAD);
-				loadEnd = find(loadPos, lineBuf.end(), ':');
-			}			
-		}	
+			loadPos = find(loadEnd, lineBuf.end(), BK_LOAD);
+			loadEnd = find(loadPos, lineBuf.end(), ':');
+			auto loadCode = find(loadPos, lineBuf.end(), BK_CODE);
+			auto loadSCR = find(loadPos, lineBuf.end(), BK_SCREEN);
+
+			if (loadEnd > loadCode)
+				loadEnd = loadCode;
+			if (loadEnd > loadSCR)
+				loadEnd = loadSCR;
+		}			
+		
 		
 		bufPos += lineSize;
 	} while (lineSize > 0 && bufPos < progLen);	

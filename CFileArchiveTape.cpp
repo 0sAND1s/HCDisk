@@ -1,5 +1,7 @@
 #include "CFileArchiveTape.h"
 #include "CFileSpectrum.h"
+#include <algorithm>
+#include <set>
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -11,30 +13,64 @@
 #endif
 
 
+/// <summary>
+/// Will return blocks as higher level CFileSpectrumTape, based on the TAP/TZX tape blocks.
+/// </summary>
+/// <returns></returns>
 bool CFileArchiveTape::Init()
-{	
-	theTap = NULL;
-	if (strstr(Name, ".TAP"))
-		theTap = new CTapFile();	
-	else if (strstr(Name, ".TZX"))
-		theTap = new CTZXFile();	
+{		
+	bool res = true;
+	if (theTap == nullptr)
+		res = Open(Name);
 
-	bool res = theTap != NULL && theTap->Open(Name);
+	res = res && theTap->Open(Name);
 	
 	if (res)
 	{
-		CFileSpectrumTape* fs = NULL;	
-		TapeFiles.clear();
+		CFileSpectrumTape* tapeBlock = NULL;	
+
+		//Cleanup from prev reading.
+		if (TapeFiles.size() > 0)
+		{
+			for (auto block : TapeFiles)
+				delete block;
+			TapeFiles.clear();
+		}		
 
 		CurIdx = 0;
-		fs = GetBlock();
-		while (fs != NULL)
+		tapeBlock = GetBlock();
+		//Create unique names for blank named blocks, that's still related to the first block name.							
+		if (tapeBlock != NULL)
 		{
-			TapeFiles.push_back(*fs);
-			delete fs;
-			fs = GetBlock();
-		}	
-		
+			tapeBlock->GetFileName(blankNameTemplate, true);
+			byte idxOffset = std::min((byte)strlen(blankNameTemplate), (byte)(CTapeBlock::TAP_FILENAME_LEN - 1));
+			sprintf(&blankNameTemplate[idxOffset], "%s", "%d");
+		}		
+
+		while (tapeBlock != NULL)
+		{
+			TapeFiles.push_back(tapeBlock);			
+			
+			tapeBlock = GetBlock();
+		}					
+
+		//Set unique names for blocks with identical names.
+		set<string> names;
+		CFileArchive::FileNameType fn;
+		for (int i = 0; i < TapeFiles.size(); i++)
+		{
+			TapeFiles[i]->GetFileName(fn);
+			if (names.find(fn) == names.end())
+			{
+				names.insert(fn);
+			}
+			else
+			{
+				byte idxOffset = std::min((byte)strlen(fn), (byte)(CTapeBlock::TAP_FILENAME_LEN - 1));
+				sprintf(&fn[idxOffset], "%d", i);
+				TapeFiles[i]->SetFileName(fn);
+			}
+		}
 	}
 
 	return res;
@@ -42,13 +78,26 @@ bool CFileArchiveTape::Init()
 
 bool CFileArchiveTape::Open(char* name, bool create)
 {
-	strupr(name);		
-	theTap = new CTapFile();					
-	return theTap->Open(name, create ? CTapFile::TAP_OPEN_NEW : CTapFile::TAP_OPEN_EXISTING);	
+	char nameUp[_MAX_PATH];
+	strncpy(nameUp, name, sizeof(nameUp));
+	strupr(nameUp);
+
+	if (strstr(nameUp, ".TAP"))
+		theTap = new CTapFile();
+	else if (strstr(nameUp, ".TZX"))
+		theTap = new CTZXFile();
+	else
+		return false;
+
+	return theTap->Open(name, create ? CTapFile::TAP_OPEN_NEW : CTapFile::TAP_OPEN_EXISTING);
 }
 
 bool CFileArchiveTape::Close()
 {
+	for (auto block : TapeFiles)
+		delete block;
+	TapeFiles.clear();
+
 	if (theTap != NULL)
 	{
 		theTap->Close();
@@ -78,7 +127,7 @@ CFile* CFileArchiveTape::FindNext()
 
 	while (CurIdx < TapeFiles.size() && !bNameMatch)
 	{	
-		fs = &TapeFiles[CurIdx];
+		fs = TapeFiles[CurIdx];
 		bNameMatch = (fs->GetFileName((char*)&fn) && TrimEnd((char*)&fn) && WildCmp(FindPattern, fn));
 		CurIdx++;
 	}	
@@ -93,31 +142,37 @@ CFile* CFileArchiveTape::FindNext()
 	return (CFile*)fs;
 }
 
+/// <summary>
+/// Locates ONE next block that is a data block (not medatada).
+/// </summary>
+/// <returns></returns>
 CFileSpectrumTape* CFileArchiveTape::GetBlock()
 {
 	CTapeBlock tbHdr, tbData;
-	CFileSpectrumTape* fs = NULL;
-
-	if (CurIdx < theTap->GetBlockCount())
-		do
+	CFileSpectrumTape* fs = NULL;	
+	
+	do
+	{
+		bool blockOK = (CurIdx == 0 ? theTap->GetFirstBlock(&tbHdr) : theTap->GetNextBlock(&tbHdr));
+			
+		if (blockOK)
 		{
-			if (CurIdx == 0 ? theTap->GetFirstBlock(&tbHdr) : theTap->GetNextBlock(&tbHdr))
+			if (tbHdr.m_BlkType != CTapeBlock::TAPE_BLK_METADATA)
 			{
-				if (tbHdr.m_BlkType != CTapeBlock::TAPE_BLK_METADATA)
-					if(tbHdr.IsBlockHeader())
-					{
-						if (theTap->GetNextBlock(&tbData))
-							fs = TapeBlock2FileSpectrum(&tbHdr, &tbData);									
-					}		
-					else
-						fs = TapeBlock2FileSpectrum(NULL, &tbHdr);										
+				if (tbHdr.IsBlockHeader())
+				{
+					if (theTap->GetNextBlock(&tbData))
+						fs = TapeBlock2FileSpectrum(&tbHdr, &tbData);					
+				}
+				else
+					fs = TapeBlock2FileSpectrum(NULL, &tbHdr);
 			}
-			else
-				fs = NULL;
+		}
+		else
+			fs = NULL;
 
-			CurIdx++;
-		}	
-		while (CurIdx < theTap->GetBlockCount() && tbHdr.m_BlkType == CTapeBlock::TAPE_BLK_METADATA);
+		CurIdx++;
+	} while (CurIdx < theTap->GetBlockCount() && tbHdr.m_BlkType == CTapeBlock::TAPE_BLK_METADATA);
 
 	return fs;
 }
@@ -135,7 +190,7 @@ CFileSpectrumTape* CFileArchiveTape::TapeBlock2FileSpectrum(CTapeBlock* tbHdr, C
 		tbHdr->GetName((char*)&fn);
 		TrimEnd((char*)&fn);
 		if (strlen((char*)&fn) == 0)
-			sprintf(fn, "!noname%02d!", CurIdx+1);
+			sprintf(fn, blankNameTemplate, CurIdx+1);
 		fs->SetFileName(fn);		
 		fs->SpectrumType = (CFileSpectrum::SpectrumFileType)th->BlockType;
 		fs->SpectrumLength = th->Length;		
@@ -149,7 +204,7 @@ CFileSpectrumTape* CFileArchiveTape::TapeBlock2FileSpectrum(CTapeBlock* tbHdr, C
 	else
 	{
 		fs->SpectrumType = CFileSpectrum::SPECTRUM_UNTYPED;
-		sprintf(fn, "!nohead%02d!", CurIdx+1);
+		sprintf(fn, blankNameTemplate, CurIdx+1);
 		fs->SetFileName(fn);		
 	}
 
@@ -208,4 +263,19 @@ bool CFileArchiveTape::ReadFile(CFile* file)
 {
 	//The file is already in memory.
 	return true;
+}
+
+CFile* CFileArchiveTape::NewFile(char* name, long len, byte* data)
+{
+	CFileSpectrumTape* fSpec = new CFileSpectrumTape();
+	fSpec->SetFileName(name);
+	if (data != NULL)
+		fSpec->SetData(data, len);
+
+	return fSpec;
+}
+
+bool CFileArchiveTape::WriteFile(CFile* file)
+{
+	return AddFile((CFileSpectrumTape*)file);
 }

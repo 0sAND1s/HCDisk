@@ -5,18 +5,18 @@ const CDiskWin32Native::WinGeometryMedia CDiskWin32Native::WindowsSupportedGeome
 {   
     //https://en.wikipedia.org/wiki/List_of_floppy_disk_formats
     
-    //FAT 1.44MB 3.5"
-    { { 80, 2, 18, CDiskBase::SECT_SZ_512, 0xF6, 0x16, CDiskBase::DISK_DATARATE_HD }, F3_1Pt44_512 },    
-    //FAT 1.2MB 3.5""
-    { { 80, 2, 15, CDiskBase::SECT_SZ_512, 0xE5, 0x16, CDiskBase::DISK_DATARATE_HD }, F3_1Pt2_512 },
-    //CP/M 720KB 3.5"
-    { { 80, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x16, CDiskBase::DISK_DATARATE_DD_3_5},  F3_720_512 },
-    //640KB 3.5"
+    //FAT 1440 KB 3.5"
+    { { 80, 2, 18, CDiskBase::SECT_SZ_512, 0xF6, 0x16, CDiskBase::DISK_DATARATE_HD }, F3_1Pt44_512 },       //USB drive supported
+    //FAT 1.232 KB 3.5""
+    { { 77, 2, 8, CDiskBase::SECT_SZ_1024, 0xE5, 0x16, CDiskBase::DISK_DATARATE_HD }, F3_1Pt2_512 },        //USB drive supported (Japanese weird format using the same 3.5 HD disks)
+    //CP/M 720 KB 3.5"
+    { { 80, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x16, CDiskBase::DISK_DATARATE_DD_3_5},  F3_720_512 },      //USB drive supported
+    //640 KB 3.5"
     { { 80, 2, 8, CDiskBase::SECT_SZ_512, 0xE5, 0x16, CDiskBase::DISK_DATARATE_DD_3_5},  F3_640_512 },
     
-    //1.2MB 3.5"
+    //1200 KB 5.25"
     { { 80, 2, 15, CDiskBase::SECT_SZ_512, 0xF6, 0x16, CDiskBase::DISK_DATARATE_HD }, F5_1Pt2_512 },
-    //CP/M 720KB 3.5"
+    //CP/M 720 KB 5.25"
     { { 80, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x16, CDiskBase::DISK_DATARATE_DD_5_25},  F5_720_512 },
     //5.25" 640KB 
     { { 80, 2, 8, CDiskBase::SECT_SZ_512, 0xE5, 0x16, CDiskBase::DISK_DATARATE_DD_5_25},  F5_640_512 },

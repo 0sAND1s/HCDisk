@@ -17,7 +17,9 @@ public:
 	{
 		EXT_LENGTH = 0;
 		NAME_LENGHT = 11;
+		//Folders flag is not supported by HC BASIC (files are ignored if on user area > 0). But we still show them, to benefit the undelete feature.
 		FSFeatures = (FileSystemFeature)(FSFeatures | FSFT_ZXSPECTRUM_FILES | FSFT_FILE_ATTRIBUTES | FSFT_CASE_SENSITIVE_FILENAMES);
+		//FSFeatures = (FileSystemFeature)(FSFeatures & ~FSFT_FOLDERS);
 	}	
 
 	~CFSCPMHC()

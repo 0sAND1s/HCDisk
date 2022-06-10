@@ -1,5 +1,6 @@
 #include <memory.h>
 #include <stdio.h>
+#include <algorithm>
 #include "CFile.h"
 #include "CFSCPM.h"
 
@@ -12,7 +13,8 @@ CFile::CFile()
 
 CFile::CFile(char* name, dword length, const byte* buffer)
 {
-	strcpy(FileName, name);		
+	strncpy(FileName, name, sizeof(FileName));		
+	Name[0] = Extension[0] = NULL;
 	Length = length;
 	this->buffer = new byte[length];
 	memcpy(this->buffer, buffer, length);
@@ -29,9 +31,11 @@ CFile::~CFile()
 
 CFile::CFile(const CFile& src)
 {
-	strcpy(this->FileName, src.FileName);
-	strcpy(this->Name, src.Name);
-	strcpy(this->Extension, src.Extension);
+	strncpy(this->FileName, src.FileName, sizeof(this->FileName));
+	if (this->Name[0] != NULL)
+		strncpy(this->Name, src.Name, sizeof(this->FileName));
+	if (this->Extension[0] != NULL)
+		strncpy(this->Extension, src.Extension, sizeof(this->Extension));
 	
 	this->FileBlocks = src.FileBlocks;
 	this->FileDirEntries = src.FileDirEntries;
@@ -124,12 +128,14 @@ dword CFile::GetDataAsText(byte* bufOut, byte wrapOff)
 	return o - eof;
 }
 
-bool CFile::GetFileName(char* dest)
+bool CFile::GetFileName(char* dest, bool trim)
 { 			
 	memset(dest, ' ', CFileArchive::MAX_FILE_NAME_LEN);
 	dest[CFileArchive::MAX_FILE_NAME_LEN-1] = '\0';
-	strcpy(dest, FileName);	
-	CFileArchive::TrimEnd(dest);
+	strncpy(dest, FileName, std::min((byte)strlen(FileName), CFileArchive::MAX_FILE_NAME_LEN));
+
+	if (trim)
+		CFileArchive::TrimEnd(dest);
 	/*
 	if (strlen(Extension) > 0)
 	{
@@ -164,7 +170,7 @@ bool CFile::SetFileName(char* src)
 		char* dot = strrchr(src, '.');
 		if (dot != NULL)
 		{
-			byte extLen = strlen(dot+1);
+			word extLen = (word)strlen(dot+1);
 			res = memcpy(Name, src, dot - src) != NULL && memcpy(Extension, dot+1, extLen > 3 ? 3 : extLen) != NULL &&
 				strcpy(FileName, src);
 		}

@@ -84,8 +84,7 @@ CTapFile::~CTapFile()
 
 bool CTapFile::Open(char* fileName, TapeOpenMode mode)
 {	
-	this->fileName = fileName;
-	CTapeBlock tb;	
+	this->fileName = fileName;	
 
 	if (mode == TAP_OPEN_EXISTING)
 	{
@@ -106,10 +105,13 @@ bool CTapFile::Close()
 {
 	bool Result = true;
 
-	if (tapFile)
+	if (tapFile != NULL)
+	{
 		Result = fclose(tapFile) != EOF;
+		tapFile = NULL;
 
-	m_Idx.clear();
+		m_Idx.clear();
+	}	
 
 	return Result;
 }

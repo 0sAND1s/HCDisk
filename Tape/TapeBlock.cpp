@@ -78,12 +78,14 @@ bool CTapeBlock::GetName(char * szName)
 {
 	if (IsBlockHeader())
 	{
-		memcpy(szName, ((TapeBlockHeaderBasic*)Data)->FileName, TAP_FILENAME_LEN);
+		memset(szName, ' ', TAP_FILENAME_LEN);
 		szName[TAP_FILENAME_LEN] = 0;
+		TapeBlockName* tbn = &((TapeBlockHeaderBasic*)Data)->FileName;
+		int destIdx = 0;
 
 		for (byte i=0; i<TAP_FILENAME_LEN; i++)
-			if (szName[i] < 32 ||  szName[i] > 127)
-				szName[i] = '_';
+			if ((*tbn)[i] >= 32 && (*tbn)[i] < 127)
+				szName[destIdx++] = (*tbn)[i];
 
 		return true;
 	}

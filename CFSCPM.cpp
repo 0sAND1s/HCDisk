@@ -233,7 +233,8 @@ bool CFSCPM::ReadDirectory()
 				{	
 					fIt->FileBlocks.push_back(auNo);
 					//Don't count blocks for deleted files.					
-					FS_BlockMap[auNo] = fIt->User != DEL_MARKER;
+					if (fIt->User != DEL_MARKER)
+						FS_BlockMap[auNo] = true;
 					
 					auIdx++;
 					auNo = GetAUNoFromExt(*fDirEntIdx, auIdx);
@@ -243,7 +244,7 @@ bool CFSCPM::ReadDirectory()
 			fIt++;
 		}		
 
-		//Remove from list deleted files that are have overwritten blocks, leave only the ones that can be recovered.
+		//Remove from list deleted files that have overwritten blocks, leave only the ones that can be recovered.
 		fIt = CPM_FileList.begin();				
 		while (fIt != CPM_FileList.end())
 		{
@@ -262,6 +263,7 @@ bool CFSCPM::ReadDirectory()
 				}				
 			}
 
+			//If the deleted file has all blocks overwriten already, don't list it.
 			if (fIt->FileBlocks.size() == 0)
 				fIt = CPM_FileList.erase(fIt);
 			else

@@ -41,6 +41,7 @@ public:
 
 	virtual CFileSpectrum& operator= (const CFileSpectrum& src)
 	{
+		this->SpectrumStart = src.SpectrumStart;
 		this->SpectrumType = src.SpectrumType;
 		this->SpectrumLength = src.SpectrumLength;
 		this->SpectrumVarLength = src.SpectrumVarLength;

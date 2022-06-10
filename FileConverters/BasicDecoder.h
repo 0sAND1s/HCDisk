@@ -352,13 +352,11 @@ namespace Basic
 	{
 	public:
 		word lineNumber;
-		word lineLen;
-		byte lineBuf[BAS_LINE_MAX_LEN];
-
-		bool GetLine(byte* buf, word len);
-	protected:	
-		byte* pos;
-		byte* buf;		
+		word lineSize;		
+		word basicSize;
+		vector<byte> lineBufBasic;		
+		BasicLine();
+		BasicLine(byte* bufBasic, word basicLen, word lineNo);
 	};
 //////////////////////////////////////////////////////////////////////////
 
@@ -377,10 +375,7 @@ namespace Basic
 
 	protected:		
 		typedef map<BASICKeywordsIDType, BASICKeywordsType> KeywordType;		
-		KeywordType keywords;		
-		vector<byte> lineBuf;		
-		word lineNo;
-		word lineLen;
+		KeywordType keywords;						
 		bool m_ShowNumbers;
 		bool m_ShowAttributes;
 
@@ -388,13 +383,13 @@ namespace Basic
 		BasicDecoder();
 		~BasicDecoder();
 		static double FPSpecToDouble (SpectrumFPType *FPNumber);
-		void Test();
-		word GetLine(byte* buf, word len);
-		bool DecodeLine(ostream& str);		
+		void Test();		
+		BasicLine GetBasicLineFromLineBuffer(byte* bufLine, word maxLen);
+		void PutBasicLineToLineBuffer(BasicLine bl, byte* bufLine);
+		bool DecodeBasicLineToText(BasicLine bl, ostream& str);		
 		bool DecodeVariables(byte* buf, word len, ostream& str);
 		static word GetVarSize(byte* buf, word len);
-		list<std::string> GetLoadingBlocks(byte* buf, word progLen);
-		
-		ostream& operator>>(ostream&);
+		map<word, pair<word, std::string>> GetLoadingBlocks(byte* buf, word progLen);
+		void Basic::BasicDecoder::ConvertLoader(BasicLine* blSrc, BasicLine* blDst, const char* loadPrefix, vector<string>* actualNames, byte* nameIdx);
 	};
 }
