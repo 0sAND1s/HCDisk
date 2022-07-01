@@ -357,8 +357,8 @@ bool CTZXFile::IndexTape()
 
 	while (ftell(tapFile) < m_FileSz && Res)
 	{
-		m_CurrBlkID = (TZXBlockTypeID)fgetc(tapFile);	
 		off = ftell(tapFile);
+		m_CurrBlkID = (TZXBlockTypeID)fgetc(tapFile);			
 		m_CurBlkIdx++;
 		m_CurBlkStts = BLK_RD_STS_VALID;	
 	
@@ -401,7 +401,8 @@ bool CTZXFile::IndexTape()
 				break;
 
 			case BLK_ID_PULSES:								
-				Res = fseek(tapFile, fgetc(tapFile) * sizeof(word), SEEK_CUR) == 0;					
+				m_CurrBlk.blkPulseSeq.PulseCnt = fgetc(tapFile);
+				Res = fread(m_CurrBlk.blkPulseSeq.PulseLengts, sizeof(word), m_CurrBlk.blkPulseSeq.PulseCnt, tapFile) == m_CurrBlk.blkPulseSeq.PulseCnt;
 				break;
 
 			
@@ -489,9 +490,34 @@ bool CTZXFile::IndexTape()
 		}
 
 		idxItm.Offset = off;
-		idxItm.RdSts = m_CurBlkStts;
+		idxItm.RdSts = m_CurBlkStts;		
 		m_Idx.push_back(idxItm);
 	}	
 
 	return Res;	
+}
+
+bool CTZXFile::HasStandardBlocksOnly()
+{	
+	CTapeBlock tb;	
+	bool hasStandardBlocks = true;
+	bool finishedTape = !GetFirstBlock(&tb);
+	while (!finishedTape && hasStandardBlocks)
+	{						
+		switch (tb.m_BlkType)
+		{
+		case CTapeBlock::TAPE_BLK_STD:
+		case CTapeBlock::TAPE_BLK_TURBO:
+		case CTapeBlock::TAPE_BLK_PAUSE:
+		case CTapeBlock::TAPE_BLK_METADATA:
+			hasStandardBlocks = true;
+			break;
+		default:
+			hasStandardBlocks = false;
+		}	
+
+		finishedTape = !GetNextBlock(&tb);
+	};
+
+	return hasStandardBlocks;
 }

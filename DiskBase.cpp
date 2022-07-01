@@ -101,22 +101,17 @@ bool CDiskBase::GetDiskInfo(byte & trackCount, byte & sideCount, char* comment)
 {
 	byte buf[1024];
 
-	if (Seek(40))
+	if (Seek(79))
 	{
-		trackCount = 40;
-		if (Seek(41))
-		{
-			trackCount = 41;
-			if (Seek(42))
-				trackCount = 42;
-		}
-		
+		trackCount = 80;
 	}
+	else if (Seek(39))
+	{
+		trackCount = 40;		
+	}	
 	else
 		return false;
-
-	if (Seek(80))
-		trackCount = 80;
+	
 
 	if (ReadSectors(buf, 0, 1, 1, 1))
 		sideCount = 2;
@@ -124,6 +119,21 @@ bool CDiskBase::GetDiskInfo(byte & trackCount, byte & sideCount, char* comment)
 		sideCount = 1;
 
 	return true;
+}
+
+bool CDiskBase::DetectDiskGeometry(DiskDescType& dd)
+{	
+	SectDescType sd[MAX_SECT_PER_TRACK];
+	bool res = GetTrackInfo(0, 0, dd.SPT, sd);	
+
+	if (res)
+	{		
+		dd.SectSize = SectCode2SectSize(sd[0].sectSizeCode);		
+		//For this call to succeed, it must have the sector size filled in.
+		res = GetDiskInfo(dd.TrackCnt, dd.SideCnt, nullptr);
+	}			
+
+	return res;		
 }
 
 bool CDiskBase::FormatDisk()

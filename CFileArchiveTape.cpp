@@ -23,7 +23,7 @@ bool CFileArchiveTape::Init()
 	if (theTap == nullptr)
 		res = Open(Name);
 
-	res = res && theTap->Open(Name);
+	//res = res && theTap->Open(Name);
 	
 	if (res)
 	{
@@ -89,7 +89,9 @@ bool CFileArchiveTape::Open(char* name, bool create)
 	else
 		return false;
 
-	return theTap->Open(name, create ? CTapFile::TAP_OPEN_NEW : CTapFile::TAP_OPEN_EXISTING);
+	bool isOpen = theTap->Open(name, create ? CTapFile::TAP_OPEN_NEW : CTapFile::TAP_OPEN_EXISTING);
+	//bool isInit = !create ? Init() : true;
+	return isOpen/* && isInit*/;
 }
 
 bool CFileArchiveTape::Close()
@@ -157,7 +159,8 @@ CFileSpectrumTape* CFileArchiveTape::GetBlock()
 			
 		if (blockOK)
 		{
-			if (tbHdr.m_BlkType != CTapeBlock::TAPE_BLK_METADATA)
+			//Convert standard and turbo blocks only, the others are just pulses that we can't make sense of.
+			if (tbHdr.m_BlkType == CTapeBlock::TAPE_BLK_STD || tbHdr.m_BlkType == CTapeBlock::TAPE_BLK_TURBO)
 			{
 				if (tbHdr.IsBlockHeader())
 				{

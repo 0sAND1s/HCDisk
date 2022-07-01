@@ -45,7 +45,7 @@ public:
 	typedef struct
 	{
 		dword Offset;		
-		TapeBlkReadStatus RdSts;
+		TapeBlkReadStatus RdSts;		
 	} TapeBlkIdxType;
 #pragma pack()
 
@@ -90,6 +90,9 @@ public:
 	virtual void AddTapeProgramHeader(char* name, word dataLen, word startLine, word varLen);
 	virtual void AddTapeCodeHeader(char* name, word dataLen, word startAddr);
 	virtual void AddTapeArrayHeader(char* name, word dataLen, CTapeBlock::TapeBlockHeaderBasicType blType, char varName);	
+
+	virtual bool HasStandardBlocksOnly() { return true; }
+	virtual bool IsTZX() { return false; };
 };
 
 #endif// _TAP_H_

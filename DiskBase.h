@@ -103,6 +103,7 @@ public:
 	virtual bool WriteTrack(byte track, byte head, byte* buff);	
 	bool CopyTo(CDiskBase* dest,  bool formatDst = false);
 	virtual bool GetDiskInfo(byte& trkCnt, byte& sideCnt, char* comment = NULL);
+	bool DetectDiskGeometry(DiskDescType& dd);
 	bool CreateInterleaveTable();
 
 	ErrorType GetLastError(char* errMsg) 

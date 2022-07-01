@@ -142,6 +142,12 @@ public:
 		short CallItem[1];
 	} TZXBlkCallSeq;
 
+	typedef struct
+	{
+		byte PulseCnt;
+		word PulseLengts[0xFF];
+	} TZXBlkPulseSeq;
+
 	//XTape!",0x1A,MajR,MinR 
 	typedef struct
 	{
@@ -171,6 +177,7 @@ public:
 		TZXBlkPureData blkPureData;
 		TZXBlkArhiveInfo blkArhiveInfo;		
 		TZXBlkDirectRec blkDirRec;
+		TZXBlkPulseSeq blkPulseSeq;
 	} m_CurrBlk;
 	
 #pragma pack()	
@@ -188,6 +195,8 @@ public:
 	virtual bool IndexTape();
 	//RELATIVE jump for current position.
 	bool Jump(short iRelBlkIdx);
+	virtual bool HasStandardBlocksOnly();
+	virtual bool IsTZX() { return true; };
 };
 
 #endif//_TZX_H_

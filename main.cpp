@@ -86,17 +86,17 @@ static char* StorageTypeNames[] =
 {
 	"NONE",
 	"PHYSICAL DISK",
-	"RAW DISK IMAGE",
-	"DSK DISK IMAGE",
-	"EDSK DISK IMAGE",
-	"TRDOS DISK IMAGE",
-	"SCL TRDOS DISK IMAGE",
-	"CQM Sydex COPYQM DISK IMAGE",
-	"OPD OPUS DISK IMAGE",
-	"MGT Miles Gordon Tech DISK IMAGE",
-	"TAP TAPE IMAGE",
-	"TZX TAPE IMAGE",
-	"TD0 Teledisk DISK IMAGE"
+	"RAW - DISK IMAGE",
+	"DSK - CPCEMU DISK IMAGE",
+	"EDSK - CPCEMU DISK IMAGE",
+	"TRD - TR-DOS DISK IMAGE",
+	"SCL - TR-DOS DISK IMAGE",
+	"CQM - Sydex COPYQM DISK IMAGE",
+	"OPD - OPUS Discovery DISK IMAGE",
+	"MGT - Miles Gordon Tech DISK IMAGE",
+	"TAP - TAPE IMAGE",
+	"TZX - TAPE IMAGE",
+	"TD0 - Sydex Teledisk DISK IMAGE"
 };
 
 StorageType storType;
@@ -1146,15 +1146,15 @@ CDiskBase* InitDisk(char* path, CDiskBase::DiskDescType* dd = NULL)
 		else
 		{
 			//Drives A: or B: can be assigned to other disks.
-			printf("%s is not a floppy drive.\n", path);
+			printf("Drive %s is not a floppy drive.\n", path);
 		}		
 	}
 	else if (strstr((char*)path, ".DSK"))
 	{		
 		if (dd != NULL)
-			disk = new CDSK(*dd);
+			disk = new CEDSK(*dd);
 		else
-			disk = new CDSK();
+			disk = new CEDSK();
 	}
 	else
 	{
@@ -1178,25 +1178,15 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 	if (stricmp(path, "A:") == 0 || stricmp(path, "B:") == 0)
 	{
 		puts("Auto detecting disk geometry and file system...");
-		byte tracks = 0, heads = 0, sectCnt = 0;
-		CDiskBase::SectDescType si[CDiskBase::MAX_SECT_PER_TRACK];		
+		byte tracks = 0, heads = 0, sectCnt = 0;		
 		CDiskBase* diskWin32 = InitDisk(path, NULL);
 
 		if (diskWin32 != nullptr)
 		{
 			if (diskWin32->Open(path, CDiskBase::OPEN_MODE_EXISTING) && 
-				diskWin32->GetTrackInfo(0, 0, sectCnt, si))				
-			{	
-				diskWin32->DiskDefinition.SectSize = CDiskBase::SectCode2SectSize(si->sectSizeCode);				
-				//For this call to succeed, it must have the sector size filled in.
-				diskWin32->GetDiskInfo(tracks, heads);	
-
-				diskWin32->DiskDefinition.TrackCnt = tracks;
-				diskWin32->DiskDefinition.SideCnt = heads;
-				diskWin32->DiskDefinition.SPT = sectCnt;				
-				
+				diskWin32->DetectDiskGeometry(diskWin32->DiskDefinition))
+			{									
 				fsIdx = 0;				
-
 				foundGeom = GetMatchingGeometriesByGeometry(diskWin32->DiskDefinition);
 			}
 			else
@@ -1659,7 +1649,7 @@ bool Stat(int argc, char* argv[])
 bool CopyDisk(int argc, char* argv[])
 {
 	bool format = argc >= 2 && stricmp(argv[1], "-f") == 0;
-	if (theFS != nullptr && Confirm("This copy operation will overwrite data on destination drive/image, if it exists already. Are you sure?"))
+	if (theFS != nullptr/* && Confirm("This copy operation will overwrite data on destination drive/image, if it exists already. Are you sure?")*/)
 	{		
 		if (theFS->GetFSFeatures() && CFileSystem::FSFT_DISK)
 		{
@@ -1679,14 +1669,15 @@ bool CopyDisk(int argc, char* argv[])
 				if (!format)
 				{
 					//Make sure that the read disk has the same format as intended. If not, it must be formatted first.
-					byte trackCnt, sideCnt, sectorCnt;
-					CDiskBase::SectDescType sectorsInfo[CDiskBase::MAX_SECT_PER_TRACK];
-					if (dst->GetDiskInfo(trackCnt, sideCnt) &&
-						dst->GetTrackInfo(0, 0, sectorCnt, sectorsInfo) &&
-						(trackCnt != src->DiskDefinition.TrackCnt ||
-							sideCnt != src->DiskDefinition.SideCnt ||
-							sectorCnt != src->DiskDefinition.SPT ||
-							CDiskBase::SectCode2SectSize(sectorsInfo[0].sectSizeCode) != src->DiskDefinition.SectSize))
+					bool sameGeometry = true;
+					CDiskBase::DiskDescType dd;
+					sameGeometry = dst->DetectDiskGeometry(dd) &&
+						dd.TrackCnt == src->DiskDefinition.TrackCnt &&
+						dd.SideCnt == src->DiskDefinition.SideCnt &&
+						dd.SPT == src->DiskDefinition.SPT &&
+						dd.SectSize == src->DiskDefinition.SectSize;
+
+					if (!sameGeometry)
 					{
 						res = false;
 						puts("The destination disk has a different format than the source disk. Format it first.");
@@ -1861,10 +1852,10 @@ bool DeleteFiles(int argc, char* argv[])
 	{
 		char msg[32];
 		sprintf(msg, "Delete %d files?", fCnt);
-		if (Confirm(msg))
+		//if (Confirm(msg))
 			return theFS->Delete(fspec);
-		else
-			return false;
+		//else
+			//return false;
 	}
 	else
 		return false;
@@ -1917,7 +1908,7 @@ bool PrintHelp(int argc, char* argv[]);
 void Tap2Wav(CTapFile* theTap, bool realTime = true)
 {				
 	CTape2Wav tape2wav;
-	CTZXFile* tzx = (CTZXFile*)theTap;
+	CTZXFile* tzx = theTap->IsTZX() ? (CTZXFile*)theTap : nullptr;
 	CTZXFile::TZXBlkArhiveInfo* blkArh;
 	CTZXFile::TZXBlkArhiveInfo::TextItem* blkTxt;
 	dword bufIdx;
@@ -1944,8 +1935,9 @@ void Tap2Wav(CTapFile* theTap, bool realTime = true)
 
 			if (theTap->m_CurBlkStts != CTapFile::BLK_RD_STS_VALID)
 			{
-				printf("%s block, ID 0x%X, skipping.\n",
-					CTapFile::TapeBlkReadStatusNames[theTap->m_CurBlkStts], (byte)tzx->m_CurrBlkID);						
+				if (tzx != nullptr)
+					printf("%s block, ID 0x%X, skipping.\n",
+						CTapFile::TapeBlkReadStatusNames[theTap->m_CurBlkStts], (byte)tzx->m_CurrBlkID);						
 			}
 			else 
 			{					
@@ -1953,7 +1945,7 @@ void Tap2Wav(CTapFile* theTap, bool realTime = true)
 				{				
 					if (tb->m_BlkType == CTapeBlock::TAPE_BLK_PAUSE)
 					{							
-						if (tzx->m_CurrBlk.pauseLen > 0)
+						if (tzx != nullptr && tzx->m_CurrBlk.pauseLen > 0)
 							tape2wav.PutSilence(tzx->m_CurrBlk.pauseLen);
 						else
 						{								
@@ -1965,11 +1957,11 @@ void Tap2Wav(CTapFile* theTap, bool realTime = true)
 					else
 					{
 						if (tb->m_BlkType == CTapeBlock::TAPE_BLK_STD)
-							printf("%sStd. Block\t", tzx->m_bInGroup ? "\t" : "");
+							printf("%sStd. Block\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
 						else if (tb->m_BlkType == CTapeBlock::TAPE_BLK_TURBO)
-							printf("%sTrb. Block\t", tzx->m_bInGroup ? "\t" : "");
+							printf("%sTrb. Block\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
 						else
-							printf("%sRaw data\t", tzx->m_bInGroup ? "\t" : "");
+							printf("%sRaw data\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
 
 						if ((tb->m_BlkType == CTapeBlock::TAPE_BLK_STD || tb->m_BlkType == CTapeBlock::TAPE_BLK_TURBO) &&
 							tb->IsBlockHeader())
@@ -2025,7 +2017,7 @@ void Tap2Wav(CTapFile* theTap, bool realTime = true)
 
 					}						
 				}					
-				else
+				else if (tzx != nullptr)
 				{
 					char msg[256];
 
@@ -2092,11 +2084,10 @@ void Tap2Wav(CTapFile* theTap, bool realTime = true)
 						break;
 
 					case CTZXFile::BLK_ID_LOOP_END:
-						printf("Loop end.\n");
+						printf("Loop end %d.\n", tzx->m_BlkLoopIdx);
 						if (++tzx->m_BlkLoopIdx < tzx->m_LoopRptCnt)
 						{
-							tzx->Seek((word)tzx->m_BlkLoopStrt);															
-							tzx->m_CurBlkIdx--;
+							tzx->Seek((word)tzx->m_BlkLoopStrt);																						
 						}
 						break;							
 
@@ -2127,7 +2118,7 @@ void Tap2Wav(CTapFile* theTap, bool realTime = true)
 				}
 			}
 
-			delete tb->Data;
+			delete [] tb->Data;
 			tb->Data = NULL;
 
 			blockRead = theTap->GetNextBlock(tb);
@@ -2140,7 +2131,7 @@ ExitLoop:
 			//theTap->Close();
 			tape2wav.Close();
 			dword sec = tape2wav.GetWrittenLenMS()/1000;
-			printf("The length is: %02d:%02d.\n", sec/60, sec%60);
+			printf("Wrote %s with length is: %02d:%02d.\n", wavName.str().c_str(), sec/60, sec%60);
 		}
 	}		
 }
@@ -2154,6 +2145,11 @@ bool PlayTape(int argc, char* argv[])
 		if (IsTape)
 		{
 			bool playToWav = argc > 0 && stricmp((char*)argv[0], "-w") == 0;
+			if (!playToWav && !((CFileArchiveTape*)theFS)->HasStandardBlocksOnly())
+			{
+				playToWav = true;
+				puts("The tape image has non-standard blocks, playing to wave file instead of real time.");
+			}
 			Tap2Wav(((CFileArchiveTape*)theFS)->theTap, !playToWav);
 		}
 		else
@@ -2226,7 +2222,7 @@ bool Export2Tape(int argc, char* argv[])
 				if (argc >= 2)
 					fspec = (char*)argv[1];
 
-				auto exportedBlocks = set<string>();				
+				auto exportedBlocks = list<string>();				
 				CFile* f = theFS->FindFirst(fspec);
 				while (f != NULL && theFS->OpenFile(f) && theFS->ReadFile(f))
 				{
@@ -2236,7 +2232,7 @@ bool Export2Tape(int argc, char* argv[])
 					CFileArchive::FileNameType fn;
 					fst->GetFileName(fn);					
 					if (find(exportedBlocks.begin(), exportedBlocks.end(), fn) == exportedBlocks.end())
-						exportedBlocks.insert(fn);					
+						exportedBlocks.push_back(fn);					
 
 					//Also add blocks loaded by a basic block if not already exported by name.
 					if (fst->GetType() == CFileSpectrum::SPECTRUM_PROGRAM)
@@ -2246,8 +2242,16 @@ bool Export2Tape(int argc, char* argv[])
 												
 						auto loadedBlocks = GetLoadedBlocksInProgram(buf, fst->GetLength(), fst->SpectrumVarLength);	
 						for (auto loadedName : loadedBlocks)
+						{
 							if (find(exportedBlocks.begin(), exportedBlocks.end(), loadedName) == exportedBlocks.end())
-								exportedBlocks.insert(loadedName);
+							{
+								//Trim loaded block name.
+								CFileArchive::FileNameType fn;
+								strcpy(fn, loadedName.c_str());
+								CFileArchive::TrimEnd(fn);
+								exportedBlocks.push_back(fn);
+							}
+						}
 												
 						delete[] buf;												
 					}
@@ -2277,7 +2281,7 @@ bool Export2Tape(int argc, char* argv[])
 				CFileArchiveTape tapeDest2((char*)outName.c_str());
 				tapeDest2.Open((char*)outName.c_str(), true);
 				
-				tapeDest.Open(tmpName);
+				tapeDest.Open(tmpName);				
 				tapeDest.Init();
 
 				ConvertBASICLoaderForDevice(&tapeDest, &tapeDest2, LDR_TAPE);

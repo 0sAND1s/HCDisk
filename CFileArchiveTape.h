@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-//Base class for tape file archive
+//Wrapper class for tape file archive: TAP or TZX
 //Author: George Chirtoaca, 2014
 //////////////////////////////////////////////////////////////////////////
 
@@ -31,7 +31,7 @@ public:
 	{
 		Close();
 	}
-	
+		
 	virtual bool Init();
 	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL);
 	virtual bool WriteFile(CFile*);
@@ -41,6 +41,8 @@ public:
 	virtual bool AddFile(CFileSpectrumTape* fSpec);
 	virtual bool Close();
 	virtual bool ReadFile(CFile* file);		
+	bool HasStandardBlocksOnly() { return theTap->HasStandardBlocksOnly(); }
+	bool IsTZX() { return theTap->IsTZX(); };
 
 	CTapFile* theTap;
 protected:	
@@ -50,7 +52,7 @@ protected:
 	CFileSpectrumTape* TapeBlock2FileSpectrum(CTapeBlock* tbHdr, CTapeBlock* tbData);
 	bool FileSpectrum2TapeBlock(CFileSpectrumTape* fSpec, CTapeBlock& tbHdr, CTapeBlock& tbData);	
 	vector<CFileSpectrumTape*> TapeFiles;
-	FileNameType blankNameTemplate = "noname%02d";
+	FileNameType blankNameTemplate = "noname%02d";	
 };
 
 class CFileSpectrumTape: public CFileSpectrum, public CFile
