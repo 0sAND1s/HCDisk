@@ -27,7 +27,18 @@ public:
 	virtual bool FormatTrack(byte track, byte side);
 	virtual bool Seek(byte trackNo);	
 	virtual bool SeekSide(byte side);
-	virtual bool GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescType sectors[]) {return false;}
+	virtual bool GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescType sectors[]) 
+	{
+		sectorCnt = DiskDefinition.SPT;
+		for (int secIdx = 0; secIdx < sectorCnt; secIdx++)
+		{
+			sectors[secIdx].head = side;
+			sectors[secIdx].sectID = secIdx + 1;
+			sectors[secIdx].track = track;
+			sectors[secIdx].sectSizeCode = SectSize2SectCode(DiskDefinition.SectSize);
+		}
+		return true;
+	}
 
 protected:	
 	FILE* fileImg;

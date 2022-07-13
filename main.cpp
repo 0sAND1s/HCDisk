@@ -1662,7 +1662,7 @@ bool CopyDisk(int argc, char* argv[])
 			strupr((char*)dstName);
 
 			CDiskBase* dst = InitDisk(dstName, &src->DiskDefinition);		
-			bool res = dst->Open((char*)dstName, CDiskBase::OPEN_MODE_CREATE);
+			bool res = dst->Open((char*)dstName, (format ? CDiskBase::OPEN_MODE_CREATE : CDiskBase::OPEN_MODE_EXISTING));
 
 			if (res)
 			{
@@ -2221,6 +2221,9 @@ bool Export2Tape(int argc, char* argv[])
 				char* fspec = "*";
 				if (argc >= 2)
 					fspec = (char*)argv[1];
+				bool convertLoader = true;
+				if (argc >= 3 && stricmp(argv[2], "-noconv") == 0)
+					convertLoader = false;
 
 				auto exportedBlocks = list<string>();				
 				CFile* f = theFS->FindFirst(fspec);
@@ -2277,18 +2280,23 @@ bool Export2Tape(int argc, char* argv[])
 				tapeDest.Close();
 
 								
-				//Update the BASIC loader to match tape LOAD synthax.								
-				CFileArchiveTape tapeDest2((char*)outName.c_str());
-				tapeDest2.Open((char*)outName.c_str(), true);
-				
-				tapeDest.Open(tmpName);				
-				tapeDest.Init();
+				if (convertLoader)
+				{
+					//Update the BASIC loader to match tape LOAD synthax.								
+					CFileArchiveTape tapeDest2((char*)outName.c_str());
+					tapeDest2.Open((char*)outName.c_str(), true);
 
-				ConvertBASICLoaderForDevice(&tapeDest, &tapeDest2, LDR_TAPE);
+					tapeDest.Open(tmpName);
+					tapeDest.Init();
 
-				tapeDest.Close();
-				tapeDest2.Close();
-				remove(tmpName);				
+					ConvertBASICLoaderForDevice(&tapeDest, &tapeDest2, LDR_TAPE);
+
+					tapeDest.Close();
+					tapeDest2.Close();
+					remove(tmpName);
+				}
+				else
+					rename(tmpName, outName.c_str());
 			}
 		}
 		else
@@ -2312,8 +2320,12 @@ bool ImportTape(int argc, char* argv[])
 	char* tapSrcName = argv[0];
 	char* tapTempName = nullptr;
 
+	bool convertLoader = true;
+	if (argc >= 3 && stricmp(argv[2], "-noconv") == 0)
+		convertLoader = false;
+
 	//Conversion for HC BASIC loaders
-	if (IsHCDisk)
+	if (convertLoader && IsHCDisk)
 	{
 		tapTempName = "temp.tap";
 		CFileArchiveTape tapeSrc(tapSrcName);
@@ -2871,11 +2883,15 @@ static const Command theCommands[] =
 		PlayTape},
 	{{"tapexp"}, "Exports the files to a tape image", 
 		{{".tap name", true, "the TAP file name"}, 
-		{"file mask", false, "the file name mask"}}, 
+		{"file mask", false, "the file name mask"},
+		{"-noconv", false, "don't convert BASIC loader synthax"}
+		}, 
 		Export2Tape},
 	{{"tapimp"}, "Imports the TAP file to disk", 
 		{{".tap name", true, "the TAP file name"}, 
-		{"file mask", false, "the file name mask"}}, 
+		{"file mask", false, "the file name mask"},
+		{"-noconv", false, "don't convert BASIC loader synthax"}
+		}, 
 		ImportTape},
 	{{"saveboot"}, "Save boot tracks to file", {"file name", true, "output file"}, SaveBoot},
 	{{"loadboot"}, "Load boot tracks from file", {"file name", true, "input file"}, LoadBoot},
