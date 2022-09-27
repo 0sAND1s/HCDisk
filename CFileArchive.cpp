@@ -119,7 +119,7 @@ bool CFileArchive::WildCmp(char * mask, const FileNameType fileName)
 
 bool CFileArchive::IsCharValidForFilename(char c)
 {
-	return c > ' ' && c < 128 && strchr("\"*?\\/", c) == NULL;
+	return c > ' ' && c < 128 && strchr("\"*?\\/_", c) == NULL;
 }
 
 bool CFileArchive::CreateFileName(char* fNameIn, CFile* file)
@@ -139,14 +139,15 @@ bool CFileArchive::CreateFileName(char* fNameIn, CFile* file)
 		while (i < NAME_LENGHT + EXT_LENGTH && i < strlen(fNameIn))
 		{			
 			char c = fNameIn[i] & 0x7F;
-			if (!IsCharValidForFilename(c) /*|| (EXT_LENGTH == 0 && i < lastNonBlank)*/)
-				c = '_';
-
-			//Skip blanks and if we don't have extension, replace with '_'.		
-			if ((i < NAME_LENGHT || EXT_LENGTH == 0) && i <= lastNonBlank)
-				file->Name[on++] = c;
-			else if (EXT_LENGTH > 0 /*&& i <= lastNonBlank */&& c != '_' && i >= NAME_LENGHT)
-				file->Extension[oe++] = c;
+			if (IsCharValidForFilename(c) /*|| (EXT_LENGTH == 0 && i < lastNonBlank)*/)
+				//c = '-';				
+			{
+				//Skip blanks and if we don't have extension, replace with '-'.		
+				if ((i < NAME_LENGHT || EXT_LENGTH == 0) && i <= lastNonBlank)
+					file->Name[on++] = c;
+				else if (EXT_LENGTH > 0 /*&& i <= lastNonBlank  && c != '-' */ && i >= NAME_LENGHT)
+					file->Extension[oe++] = c;				
+			}						
 
 			i++;
 		}	
@@ -172,9 +173,10 @@ bool CFileArchive::CreateFileName(char* fNameIn, CFile* file)
 bool CFileArchive::CreateFSName(CFile* file, char* fNameOut)
 {
 	memset(fNameOut, ' ', MAX_FILE_NAME_LEN);
+	TrimEnd(file->Extension);
 	if (fNameOut != NULL && file != NULL)
 	{				
-		if (EXT_LENGTH > 0)
+		if (EXT_LENGTH > 0 && strlen(file->Extension) > 0)
 		{
 			byte nLen = strlen(file->Name);
 			memcpy(fNameOut, file->Name, nLen < NAME_LENGHT ? nLen : NAME_LENGHT);
@@ -186,7 +188,7 @@ bool CFileArchive::CreateFSName(CFile* file, char* fNameOut)
 		{
 			byte nLen = strlen(file->FileName);
 			//memcpy(fNameOut, file->Name, nLen > NAME_LENGHT ? NAME_LENGHT : nLen);
-			memcpy(fNameOut, file->FileName, std::min(nLen, NAME_LENGHT));
+			memcpy(fNameOut, file->FileName, nLen);
 		}
 
 		return true;

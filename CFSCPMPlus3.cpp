@@ -40,7 +40,8 @@ CFile* CFSCPMPlus3::NewFile(char* name, long len, byte* data)
 {
 	CFilePlus3* f = new CFilePlus3(this);
 	memset(&f->TheHeader, 0, sizeof(f->TheHeader));
-	f->SetFileName(name);
+	//f->SetFileName(name);
+	CreateFileName(name, f);
 	if (len > 0 && data != NULL)
 		f->SetData(data, len);
 	return f; 

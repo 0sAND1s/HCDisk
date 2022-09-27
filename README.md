@@ -17,24 +17,24 @@ George Chirtoaca, June 2014, george_chirtoaca@yahoo.com
 2. What can it do?
 
 	It can understand these file systems:
-- CPM - Spectrum +3 and various clones (HC, CoBra)
+- Generic CPM - Spectrum +3 and various clones (HC, CoBra)
 - +3 BASIC (CPM based)
-- Betadisk TR-DOS
-- Miles Gordon Technologies +D
-- Opus Discovery
+- Betadisk TR-DOS (read only)
+- Miles Gordon Technologies +D (read only)
+- Opus Discovery (read only)
 - ICE Felix HC BASIC (Romanian clone, CPM based)
-- ICTI CoBra Devil FS (Romanian clone)
+- ICTI CoBra Devil FS (Romanian clone) (read only)
 - Electronica CIP-04 (Spectrum +3 clone from Romania, with 3.5 disk drive)
 File systems based on CPM are read-write, the others are read only (for now).
 
 	Several disk image types are supported:
-- Physical disks inserted into the PC floppy drive
+- Physical disks inserted into the PC floppy drive or USB floppy drive (for CP/M formats)
 - RAW, including TRD, MGT, OPD
 - DSK/EDSK - CPCEMU
 - CQM (read only) - Copy QM by Sydex
 - SCL (read only) - Russian emulators
-- TD0 - Teledisk by Sydex
-- Tape images: TAP, TZX
+- TD0 - Teledisk by Sydex (read only)
+- Tape images: TAP, TZX (read only)
 	
 	Note: For accessing floppy disks in physical drive for all supported formats, you need Simon Owen's fdrawcmd driver: http://simonowen.com/fdrawcmd/ .
 	For standard geometries supported by Windows, the standard Windows driver is now used (added in January 2022). This also works with USB floppy drives for modern computers without a floppy controller.
@@ -52,12 +52,11 @@ File systems based on CPM are read-write, the others are read only (for now).
 - browse and view files from physical disks, disk images or tape images; an extended
 file catalog is displayed (read text documents from CPM disks, browse your old BASIC programs, etc)
 - transfer physical disks into disk images for preservation or use on emulators
-- export and import files between different file systems
-(Spectrum +3 to MGT +D, Opus to Tape, etc)
-- disk to tape and tape to disk conversion
+- export and import files between different file systems (Spectrum +3 to MGT +D, Opus to Tape, etc)
+- disk to tape and tape to disk conversion, now including BASIC loader automatic conversion
 - tape image to sound signal conversion or WAV file (for use on a Spectrum without disk)
 - disk image conversion between formats (RAW to DSK, CQM to RAW, etc)
-- create physical disks from downloaded disk images, to be used on the real machine
+- create physical disks from downloaded disk images, to be used on the real machines
 
 4. Where does the name come from?
 

@@ -186,7 +186,7 @@ typedef enum
 	LDR_MICRODRIVE,
 	LDR_OPUS,
 	LDR_HC_DISK,
-	LDR_HC_COM,
+	LDR_IF1_COM,
 	LDR_SPECTRUM_P3_DISK,
 	LDR_MGT
 } StorageLoaderType;
@@ -200,10 +200,10 @@ const char LDR_OPUS_STR[] = { '*', '"', 'm', '"', ';', (char)Basic::BK_NOT, (cha
 //HC disk:		LOAD *"d";0;"NAME"
 const char LDR_HC_DISK_STR[] = { '*', '"', 'd', '"', ';', (char)Basic::BK_NOT, (char)Basic::BK_PI, ';', '"', '?', '"', 0 };
 //HC COM:		LOAD *"b";"NAME"
-const char LDR_HC_COM_STR[] = { '*', '"', 'b', '"', ';', '"', '?', '"', 0 };
+const char LDR_IF1_COM_STR[] = { '*', '"', 'b', '"', ';', '"', '?', '"', 0 };
 //Spectrum +3:	LOAD "A:NAME"
-const char LDR_SPECTRUM_P3_DISK_STR[] = { '"', 'A', ':', '?', '"', 0 };
-//MGT +D:		LOAD d1"NAME"
+const char LDR_SPECTRUM_P3_DISK_STR[] = { '"', '?', '"', 0 };
+//MGT +D:		LOAD d1"NAME"; Microdrive synthax is also supported.
 const char LDR_MGT_STR[] = { 'd', '1', '"', '?', '"', 0 };
 
 const char* STORAGE_LOADER_EXPR[] =
@@ -212,12 +212,12 @@ const char* STORAGE_LOADER_EXPR[] =
 	LDR_MICRODRIVE_STR,
 	LDR_OPUS_STR,
 	LDR_HC_DISK_STR,
-	LDR_HC_COM_STR,
+	LDR_IF1_COM_STR,
 	LDR_SPECTRUM_P3_DISK_STR,
 	LDR_MGT_STR
 };
 
-const char* LDR_TAG[] = { "TAPE", "MICRODRIVE", "OPUS", "HCDISK", "HCCOM", "PLUS3", "MGT"};
+const char* LDR_TAG[] = { "TAPE", "MICRODRIVE", "OPUS", "HCDISK", "IF1COM", "PLUS3", "MGT"};
 
 class FileSystemDescription 
 {
@@ -265,21 +265,21 @@ const FileSystemDescription DISK_TYPES[] =
 	},
 
 	{
-		"Spectrum +3 BASIC 3\" 180K", FS_CPM_PLUS3_BASIC,
+		"Spectrum +3 BASIC 180K", FS_CPM_PLUS3_BASIC,
 		{40, 1, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{1024, 175, 64, 1}, 
 		{1, 0}
 	},
 
 	{
-		"Spectrum +3 3\" BASIC 203K", FS_CPM_PLUS3_BASIC,
+		"Spectrum +3 BASIC 203K", FS_CPM_PLUS3_BASIC,
 		{42, 1, 10, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 6}, 		
 		{1024, 205, 64, 1}, 
 		{1, 2}
 	},
 
 	{
-		"Spectrum +3 BASIC 3\" 720K", FS_CPM_PLUS3_BASIC,
+		"Spectrum +3 BASIC 720K", FS_CPM_PLUS3_BASIC,
 		{80, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{2048, 357, 256, 1}, 
 		{1, 0}
@@ -683,7 +683,9 @@ bool Cat(int argc, char* argv[])
 				
 				if (st != CFileSpectrum::SPECTRUM_UNTYPED)
 					itoa(s->SpectrumLength, len, 10);
-									
+				else
+					itoa(theFS->GetFileSize(f, false), len, 10);
+
 				printf("\t%s\t%5s\t%5s", 
 					CFileSpectrum::SPECTRUM_FILE_TYPE_NAMES[st], start, len);										
 			}				
@@ -968,7 +970,7 @@ bool TypeFile(int argc, char* argv[])
 			CFileSpectrum* fileSpectrum = dynamic_cast<CFileSpectrum*>(f);				
 			isProgram = fileSpectrum->GetType() == CFileSpectrum::SPECTRUM_PROGRAM;
 			isBytes = fileSpectrum->GetType() == CFileSpectrum::SPECTRUM_BYTES;
-			isSCR = isBytes && fileSpectrum->SpectrumLength == 6912;			
+			isSCR = fileSpectrum->SpectrumLength == 6912;			
 
 			if (isProgram)
 			{
@@ -1152,9 +1154,9 @@ CDiskBase* InitDisk(char* path, CDiskBase::DiskDescType* dd = NULL)
 	else if (strstr((char*)path, ".DSK"))
 	{		
 		if (dd != NULL)
-			disk = new CEDSK(*dd);
+			disk = new CDSK(*dd);
 		else
-			disk = new CEDSK();
+			disk = new CDSK();
 	}
 	else
 	{
@@ -2221,9 +2223,9 @@ bool Export2Tape(int argc, char* argv[])
 				char* fspec = "*";
 				if (argc >= 2)
 					fspec = (char*)argv[1];
-				bool convertLoader = true;
-				if (argc >= 3 && stricmp(argv[2], "-noconv") == 0)
-					convertLoader = false;
+				bool convertLoader = false;
+				if (argc >= 3 && stricmp(argv[2], "-convldr") == 0)
+					convertLoader = true;
 
 				auto exportedBlocks = list<string>();				
 				CFile* f = theFS->FindFirst(fspec);
@@ -2316,16 +2318,22 @@ bool ImportTape(int argc, char* argv[])
 
 	bool IsDisk = (theFS->GetFSFeatures() & CFileSystem::FSFT_DISK) > 0;
 	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) > 0;
-	bool IsHCDisk = (strcmp(theFS->Name, "HC BASIC 3.5\"") == 0) || (strcmp(theFS->Name, "HC BASIC 5.25\"") == 0);	
+	bool IsHCDisk = (strstr(theFS->Name, "HC BASIC") != nullptr);
+	bool IsPlus3 = (strstr(theFS->Name, "Spectrum +3") != nullptr);
 	char* tapSrcName = argv[0];
 	char* tapTempName = nullptr;
+	StorageLoaderType ldrType = LDR_TAPE;
+	if (IsHCDisk)
+		ldrType = LDR_HC_DISK;
+	else if (IsPlus3)
+		ldrType = LDR_SPECTRUM_P3_DISK;
 
-	bool convertLoader = true;
-	if (argc >= 3 && stricmp(argv[2], "-noconv") == 0)
-		convertLoader = false;
+	bool convertLoader = false;
+	if (argc >= 3 && stricmp(argv[2], "-convldr") == 0)
+		convertLoader = true;
 
-	//Conversion for HC BASIC loaders
-	if (convertLoader && IsHCDisk)
+	//Conversion for BASIC loaders
+	if (convertLoader)
 	{
 		tapTempName = "temp.tap";
 		CFileArchiveTape tapeSrc(tapSrcName);
@@ -2333,7 +2341,8 @@ bool ImportTape(int argc, char* argv[])
 		if (tapeSrc.Open(tapSrcName, false) && tapeSrc.Init() &&
 			tapeHC.Open(tapTempName, true))
 		{			
-			ConvertBASICLoaderForDevice(&tapeSrc, &tapeHC, LDR_HC_DISK);
+			//Convert for HC or otherwise leave tape syntax, but with proper file names.
+			ConvertBASICLoaderForDevice(&tapeSrc, &tapeHC, ldrType);
 			tapeSrc.Close();
 			tapeHC.Close();
 
@@ -2356,7 +2365,7 @@ bool ImportTape(int argc, char* argv[])
 			while (fSrc != NULL && writeOK)
 			{			
 				CFileSystem::FileNameType fn;				
-				fSrc->GetFileName(fn);
+				fSrc->GetFileName(fn);				
 				CFile* fDest = theFS->NewFile(fn);
 				
 				if (fDest != NULL)
@@ -2428,7 +2437,7 @@ bool SaveBoot(int argc, char* argv[])
 		}
 		else
 		{
-			printf("Numarul de piste pentru boot este 0.\n");
+			printf("There are no boot tracks on the current disk.\n");
 			res = false;
 		}
 	}
@@ -2478,7 +2487,7 @@ bool LoadBoot(int argc, char* argv[])
 		}
 		else
 		{
-			printf("Boot track count is 0.\n");
+			printf("There are no boot tracks on the current disk.\n");
 			res = false;
 		}
 
@@ -2613,7 +2622,7 @@ bool ChangeAttributes(int argc, char* argv[])
 }
 
 //Convers a Z80 binary into a BASIC block with a REM line.
-//Before executing the Z80 binary, it moves it to the specified address.
+//Before executing the Z80 binary, it moves it to the specified address, if the address is specified.
 bool Bin2REM(int argc, char* argv[])
 {
 	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) > 0;
@@ -2629,9 +2638,9 @@ bool Bin2REM(int argc, char* argv[])
 	if (argc >= 1)
 		blobName = argv[0];
 	if (argc >= 2)
-		addr = atoi(argv[1]);
+		setName = argv[1];
 	if (argc >= 3)
-		setName = argv[2];
+		addr = atoi(argv[2]);	
 	
 	if (setName == nullptr)
 		setName = blobName;
@@ -2650,32 +2659,38 @@ bool Bin2REM(int argc, char* argv[])
 		return false;
 	}
 	
-	byte basLDR[] = { 
-		Basic::BASICKeywordsIDType::BK_RANDOMIZE, 
+	byte basLDR[] = {
+		Basic::BASICKeywordsIDType::BK_RANDOMIZE,
 		Basic::BASICKeywordsIDType::BK_USR,
 		Basic::BASICKeywordsIDType::BK_VAL,
 		'"', '3', '1', '+',
 		Basic::BASICKeywordsIDType::BK_PEEK, '2', '3', '6', '3', '5', '+', '2', '5', '6', '*',
 		Basic::BASICKeywordsIDType::BK_PEEK, '2', '3', '6', '3', '6',
-		'"', ':', Basic::BASICKeywordsIDType::BK_REM,
+		'"', ':', Basic::BASICKeywordsIDType::BK_REM
+	};
+
+	byte asmLdr[] = {		
 		0x21, 14, 0,										//ld hl, lenght of ASM loader, the blob follows it
 		0x09,												//add hl, bc	;BC holds the address called from RANDOMIZE USR.
 		0x11, (byte)(addr%256), (byte)(addr/256),			//ld de, start addr
 		0xD5,												//push de		;Jump to start of blob. 
 		0x01, (byte)(blobSize%256), (byte)(blobSize/256),	//ld bc, blob size
 		0xED, 0xB0,											//ldir
-		0xC9												//ret
+		0xC9												//ret		
 	};
 					
 	//Create blob with BASIC loader + actual blob.
-	byte* blobBuf = new byte[blobSize + sizeof(basLDR)];
+	word ldrLen = sizeof(basLDR) + (addr > 0 ? sizeof(asmLdr) : 0);
+	byte* blobBuf = new byte[blobSize + ldrLen];
 	memcpy(blobBuf, basLDR, sizeof(basLDR));
-	fread(&blobBuf[sizeof(basLDR)], 1, blobSize, fBlob);
+	if (addr > 0)
+		memcpy(blobBuf + sizeof(basLDR), asmLdr, sizeof(asmLdr));
+	fread(&blobBuf[ldrLen], 1, blobSize, fBlob);
 	fclose(fBlob);
 			
 	//Create BASIC line from buffer.
 	const word progLineNo = 0;	
-	Basic::BasicLine bl(blobBuf, (word)blobSize + sizeof(basLDR), progLineNo);
+	Basic::BasicLine bl(blobBuf, (word)blobSize + ldrLen, progLineNo);
 	delete [] blobBuf;
 				
 	//Create header for Spectrum file.
@@ -2692,15 +2707,14 @@ bool Bin2REM(int argc, char* argv[])
 	bd.PutBasicLineToLineBuffer(bl, lastBuf);	
 	f->SetData(lastBuf, bl.lineSize);
 	delete [] lastBuf;
-
-	//Set file type to something that is both CFile and CFileSpectrum, to be accepted on Spectrum disks and tape images.	
+	
 	bool res = theFS->WriteFile(f);		
 	delete f;	
 	return res;	
 }
 
 
-//Automatic BASIC loader conversion for different storage devices (HC disk, HC serial, Spectrum disk, Opus, etc).
+//Automatic BASIC loader conversion for different storage devices (HC disk, IF1 serial, Spectrum disk, Opus, etc).
 //Must first check that the tape is convertible:
 //- it has the number of blocks with header (typed files) equal to the number of blocks present in the BASIC loader to be loaded
 //- multilevel games have more blocks loaded by machine code (not present in the BASIC loader), so those games cannot be converted
@@ -2735,12 +2749,28 @@ bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, Stora
 				byte* fileData = new byte[fileLen];
 				fileToCheck->GetData(fileData);
 				loadedBlocks = GetLoadedBlocksInProgram(fileData, fileToCheck->SpectrumLength, fileToCheck->SpectrumVarLength);
-				delete[] fileData;				
+				delete[] fileData;
 			}
 			else
 			{
-				CFileArchive::FileNameType fileName;
+				CFileArchive::FileNameType fileName;				
+				//Convert file name to match destination FS naming rules.
+				//dst->CreateFileName(fileName, fileToCheck);
+				//fileToCheck->GetFileName(fileName);
+				// 
+				//For +3 the name in the BASIC loader must contain dot if lenght is > 8.
+								
+				char name[sizeof(CFileArchive::FileNameType)];
+				char ext[4];															
 				fileToCheck->GetFileName(fileName);
+				CFile fTmp;
+				theFS->CreateFileName(fileName, &fTmp);
+				fTmp.GetFileName(name, ext);
+				if (strlen(ext) > 0)
+					sprintf(fileName, "%s.%s", name, ext);				
+				else
+					sprintf(fileName, "%s", name);
+				
 				actualBlockNames.push_back(fileName);
 			}					
 
@@ -2797,7 +2827,14 @@ bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, Stora
 					bufPosIn += blSrc.lineSize;
 					bufPosOut += blSrc.lineSize;
 				}				
-			} while (bufPosIn < srcFileSpec->SpectrumLength);
+			} while (bufPosIn < srcFileSpec->SpectrumLength - srcFileSpec->SpectrumVarLength);
+
+			//Copy variables too.
+			if (srcFileSpec->SpectrumVarLength > 0)
+			{
+				memcpy(bufDst + bufPosOut, bufSrc + bufPosIn, srcFileSpec->SpectrumVarLength);
+				bufPosOut += srcFileSpec->SpectrumVarLength;
+			}
 
 			CFileArchive::FileNameType fileName;
 			srcFileSpec->GetFileName(fileName);
@@ -2815,9 +2852,9 @@ bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, Stora
 			delete dstFile;
 
 			if (bufSrc != nullptr)
-				delete bufSrc;
+				delete [] bufSrc;
 			if (bufSrc != nullptr)
-				delete bufDst;
+				delete [] bufDst;
 
 		}		
 		else //Copy rest of blocks that are not program.
@@ -2884,13 +2921,13 @@ static const Command theCommands[] =
 	{{"tapexp"}, "Exports the files to a tape image", 
 		{{".tap name", true, "the TAP file name"}, 
 		{"file mask", false, "the file name mask"},
-		{"-noconv", false, "don't convert BASIC loader synthax"}
+		{"-convldr", false, "convert BASIC loader synthax, file names"}
 		}, 
 		Export2Tape},
 	{{"tapimp"}, "Imports the TAP file to disk", 
 		{{".tap name", true, "the TAP file name"}, 
 		{"file mask", false, "the file name mask"},
-		{"-noconv", false, "don't convert BASIC loader synthax"}
+		{"-convldr", false, "convert BASIC loader synthax, file names"}
 		}, 
 		ImportTape},
 	{{"saveboot"}, "Save boot tracks to file", {"file name", true, "output file"}, SaveBoot},
@@ -2904,14 +2941,14 @@ static const Command theCommands[] =
 		{"+/-ars", true, "set/remove attribute(s) (a)rhive, (r)eadonly, (s)ystem"}}, 
 		ChangeAttributes},
 	{{"bin2rem"}, "Transform binary to BASIC block",
-		{{"file", true, "blob to add"},
-		 {"address of execution", true, "address to copy the block to before execution"},
-		 {"name of block", false, "name of BASIC block"}
+		{{"file", true, "blob to add"},		 
+		{"name of block", false, "name of BASIC block"},
+		{"address of execution", false, "address to copy the block to before execution"},
 		},
 		Bin2REM},
 	{{"convldr"}, "Converts a BASIC loader to work with another storage device",
 		{{".tap name", true, "destination TAP file name"},
-		{"loader type", true, "type of loader: TAPE, MICRODRIVE, OPUS, HCDISK, HCCOM, PLUS3, MGT"}
+		{"loader type", true, "type of loader: TAPE, MICRODRIVE, OPUS, HCDISK, IF1COM, PLUS3, MGT"}
 		},
 		ConvertBASICLoader},
 	{{"exit", "quit"}, "Exit program", 
@@ -2981,7 +3018,7 @@ bool ExecCommand(char* cmd, char params[10][MAX_PATH])
 							if (!theCommands[cmdIdx].cmdDlg(pCnt, pParams))
 							{																		
 								printf("Operation failed.\n");
-								/*
+								
 								if (theFS != NULL)
 								{
 									char errMsg[80];
@@ -2994,8 +3031,7 @@ bool ExecCommand(char* cmd, char params[10][MAX_PATH])
 										printf("\n");
 								}
 								else
-									printf("\n");
-								*/
+									printf("\n");								
 							}								
 						}
 				}						

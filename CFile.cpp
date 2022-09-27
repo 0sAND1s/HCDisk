@@ -130,8 +130,8 @@ dword CFile::GetDataAsText(byte* bufOut, byte wrapOff)
 
 bool CFile::GetFileName(char* dest, bool trim)
 { 			
-	memset(dest, ' ', CFileArchive::MAX_FILE_NAME_LEN);
-	dest[CFileArchive::MAX_FILE_NAME_LEN-1] = '\0';
+	memset(dest, ' ', sizeof(CFileArchive::FileNameType));
+	dest[sizeof(CFileArchive::FileNameType) - 1] = '\0';
 	strncpy(dest, FileName, std::min((byte)strlen(FileName), CFileArchive::MAX_FILE_NAME_LEN));
 
 	if (trim)
@@ -150,7 +150,15 @@ bool CFile::GetFileName(char* dest, bool trim)
 
 bool CFile::GetFileName(char* name, char* ext)
 {
-	return strcpy(name, Name) && strcpy(ext, Extension) && CFileArchive::TrimEnd(name) && CFileArchive::TrimEnd(ext);
+	if (strlen(Extension) > 0)
+	{
+		return strcpy(name, Name) && strcpy(ext, Extension) && CFileArchive::TrimEnd(name) && CFileArchive::TrimEnd(ext);
+	}
+	else
+	{
+		*ext = '\0';
+		return strcpy(name, Name);
+	}
 }
 
 bool CFile::SetFileName(char* src)
@@ -168,10 +176,10 @@ bool CFile::SetFileName(char* src)
 		Extension[sizeof(Extension) - 1] = '\0';
 
 		char* dot = strrchr(src, '.');
-		if (dot != NULL)
+		if (dot != NULL && strlen(dot) <= 3+1)
 		{
 			word extLen = (word)strlen(dot+1);
-			res = memcpy(Name, src, dot - src) != NULL && memcpy(Extension, dot+1, extLen > 3 ? 3 : extLen) != NULL &&
+			res = memcpy(Name, src, dot - src) != NULL && memcpy(Extension, dot+1, extLen) != NULL &&
 				strcpy(FileName, src);
 		}
 		else

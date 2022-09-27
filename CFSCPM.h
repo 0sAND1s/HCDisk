@@ -78,7 +78,8 @@ public:
 	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL) 
 	{ 
 		CFileCPM* f = new CFileCPM(this);
-		f->SetFileName(name);
+		//f->SetFileName(name);
+		CreateFileName(name, f);
 		if (len > 0 && data != NULL)
 			f->SetData(data, len);
 		return f; 
