@@ -1,0 +1,1 @@
+for %%d in (testfiles\*) do hcdisk2 open %%d : dir : exit

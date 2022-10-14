@@ -51,7 +51,7 @@ CTapeBlock::~CTapeBlock()
 {	
 	if (Length > 0 && Data != NULL)
 	{
-		delete Data;
+		delete [] Data;
 		Data = NULL;
 		Length = 0;
 	}	

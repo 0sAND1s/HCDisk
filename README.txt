@@ -1,5 +1,5 @@
-HCDisk 2.0 - PC disk utility for Sinclair Spectrum related file systems.
-George Chirtoaca, June 2014, george_chirtoaca@yahoo.com
+HCDisk 2.0 - PC utility for Sinclair Spectrum computer file transfer.
+George Chirtoaca, 2014 - 2022, george.chirtoaca@gmail.com
 
 1. What is it?
 2. What can it do?
@@ -10,9 +10,10 @@ George Chirtoaca, June 2014, george_chirtoaca@yahoo.com
 7. What features are planned?
 
 
+
 1. What is it?
 
-	HCDisk is a tool able to transfer files to and from several file systems Specific to the Sinclair Spectrum computer and clones. 
+	HCDisk is a tool able to transfer files to and from several file systems and interfaces specific to the Sinclair Spectrum computer and clones. 
 
 2. What can it do?
 
@@ -26,9 +27,12 @@ George Chirtoaca, June 2014, george_chirtoaca@yahoo.com
 - ICTI CoBra Devil FS (Romanian clone) (read only)
 - Electronica CIP-04 (Spectrum +3 clone from Romania, with 3.5 disk drive)
 File systems based on CPM are read-write, the others are read only (for now).
+	
+	Can also send TAP and TZX (including copy protected ones) files over to a Spectrum computer via audio output of PC.
+	Can also send TAP/TZX (standard blocks) to a Spectrum computer with IF1 interface via the PC RS-232 serial COM port.
 
-	Several disk image types are supported:
-- Physical disks inserted into the PC floppy drive or USB floppy drive (for CP/M formats)
+	Several disk/tape image formats are supported:
+- Physical disks inserted into the PC floppy drive (any format) or USB floppy drive (for CP/M formats only)
 - RAW, including TRD, MGT, OPD
 - DSK/EDSK - CPCEMU
 - CQM (read only) - Copy QM by Sydex
@@ -37,9 +41,8 @@ File systems based on CPM are read-write, the others are read only (for now).
 - Tape images: TAP, TZX (read only)
 	
 	Note: For accessing floppy disks in physical drive for all supported formats, you need Simon Owen's fdrawcmd driver: http://simonowen.com/fdrawcmd/ .
-	For standard geometries supported by Windows, the standard Windows driver is now used (added in January 2022). This also works with USB floppy drives for modern computers without a floppy controller.
-	The geometries supported by Windows are using sector size of 512 bytes and also 40 and 80 tracks, with 8, 9, 15 and 18 sectors per track, single or dual sided. The USB floppy drives only support 80x2x9 DD and 80x2x18 HD TxHxS.
-	
+For standard geometries supported by Windows, the standard Windows driver is now used (added in January 2022). This also works with USB floppy drives for modern computers without a floppy controller.
+The geometries supported by Windows are using sector size of 512 bytes and also 40 and 80 tracks, with 8, 9, 15 and 18 sectors per track, single or dual sided. The USB floppy drives only support 80x2x9 DD and 80x2x18 HD TxHxS.	
 
 	It also includes file conversion for Spectrum Specific files, to be viewed on PC:
 - converts Spectrum BASIC programs to BASIC source code 
@@ -57,11 +60,12 @@ file catalog is displayed (read text documents from CPM disks, browse your old B
 - tape image to sound signal conversion or WAV file (for use on a Spectrum without disk)
 - disk image conversion between formats (RAW to DSK, CQM to RAW, etc)
 - create physical disks from downloaded disk images, to be used on the real machines
+- send TAP/TZX files to Spectrum via audio
+- send TAP/TZX/DSK files to Spectrum via COM port
 
 4. Where does the name come from?
 
-	HC is the name of a Sinclair Spectrum compatible computer series manufactured in Romania by the I.C.E. Felix plant. 
-I had one as my first computer.
+	HC is the name of a Sinclair Spectrum compatible computer series manufactured in Romania by the I.C.E. Felix factory. I had one as my first computer.
 	The first version of HCDisk only understood the file system specific to HC, but I kept the name, even if now it can 
 process file systems for several other clones and add-ons. Not by coincidence, HC is also an acronym for Home Computer.
 So this tool applies to home computers.
@@ -188,14 +192,37 @@ Progress: 77 %
 tapexp  - Exports the files to a tape image
 - <.tap name>: the TAP file name
 - [file mask]: the file name mask - if specified, only these files will be exported, not all the files.
+- [-convldr]: convert BASIC loader synthax, file names
+The parameter -convldr will cause BASIC program conversion to match the tape LOAD synthax.
 
 tapimp  - Imports the TAP file to disk
 - <.tap name>: the TAP file name
 - [file mask]: the file name mask - if specified, only these files will be exported, not all the files.
+- [-convldr]: convert BASIC loader synthax, file names
+The parameter -convldr will cause BASIC program conversion to match the destination file system LOAD syntax.
 
 formatdisk - Format a physical disk or a disk image for a certain file system
 - <disk/image> : the disk drive or image to format
 - [-t] : the file system format number to use, as found in fsinfo command
+
+convldr - Converts a BASIC loader to work with another storage device
+- <.tap name>: destination TAP file name
+- <loader type>: type of loader: TAPE, MICRODRIVE, OPUS, HCDISK, IF1COM, PLUS3, MGT
+Will convert the BASIC program to LOAD from a different device. The ones supported are mentioned.
+Is usefull for tape to disk conversion, where it also handles file naming (distinct, unique, non-empty names for disk files).
+
+putif1  - Send a file or collection to IF1 trough the COM port
+- <file name/mask>: file mask to select files for sending
+- [COM port index]: COMx port to use, default 1
+- [baud rate]: baud rate for COM, default is 4800
+If one of the blocks is a Program block, the loaded blocks for that block are also sent and the BASIC loader is updated to match IF1 synthax. 
+So it automatically does TAP to IF1 uploading.
+
+getif1  - Get a single file from IF1 trough the COM port
+- <file name>: file name for the received file
+- [COM port index]: COMx port to use, default 1
+- [baud rate]: baud rate for COM, default is 9600
+
 
 exit quit  - Exit program
 
@@ -228,7 +255,6 @@ disks, like the tape images, SCL images, or in the future, file archive (ZIP, et
 the original author and include the changes you added to the code, when you release your code.
 
 7. What other features are planned?
-- Add support for serial transfer using the PC COM port and IF1 compatible Spectrum interfaces
 - Add support for the FAT file system
 - Add file system configuration in external config. file, to be able to add varations of a file system without recompiling
-- Add write support for the current read-only file systems
+- Add write support for the current read-only file systems, if usefull.

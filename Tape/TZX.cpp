@@ -177,7 +177,9 @@ bool CTZXFile::GetNextBlock(CTapeBlock* tb)
 		tb->m_BlkType = CTapeBlock::TAPE_BLK_TURBO;
 		break;
 
-	case BLK_ID_TXT_DESCR:
+	case BLK_ID_MSG:
+		fgetc(tapFile);	//Skip timer in seconds.
+	case BLK_ID_TXT_DESCR:	
 		m_CurrBlk.blkMsg.Len = fgetc(tapFile);
 		Res = fread(m_CurrBlk.blkMsg.Msg, 1, m_CurrBlk.blkMsg.Len, tapFile) == m_CurrBlk.blkMsg.Len;		
 		tb->m_BlkType = CTapeBlock::TAPE_BLK_METADATA;
@@ -316,15 +318,7 @@ bool CTZXFile::GetNextBlock(CTapeBlock* tb)
 		m_CurBlkStts = BLK_RD_STS_UNSUPORTED;
 		fread(&wTmp, sizeof(word), 1, tapFile);
 		fseek(tapFile, wTmp, SEEK_CUR);
-		break;
-
-	case BLK_ID_MSG:
-		Res = true;
-		m_CurBlkStts = BLK_RD_STS_UNSUPORTED;
-		fgetc(tapFile);
-		wTmp = fgetc(tapFile);
-		fseek(tapFile, wTmp, SEEK_CUR);
-		break;
+		break;	
 
 	case BLK_ID_CSW:
 	case BLK_ID_GENERALIZED:		
@@ -374,7 +368,9 @@ bool CTZXFile::IndexTape()
 					(fseek(tapFile, m_CurrBlk.blkTrb.Len1 + (0x10000 * m_CurrBlk.blkTrb.Len2), SEEK_CUR) == 0);								
 				break;
 
-			case BLK_ID_TXT_DESCR:
+			case BLK_ID_MSG:
+				fgetc(tapFile); //Skip timer.
+			case BLK_ID_TXT_DESCR:							
 				m_CurrBlk.blkMsg.Len = fgetc(tapFile);
 				Res = fseek(tapFile, m_CurrBlk.blkMsg.Len, SEEK_CUR) == 0;
 				break;
@@ -464,15 +460,7 @@ bool CTZXFile::IndexTape()
 				fread(&wTmp, sizeof(word), 1, tapFile);
 				fseek(tapFile, wTmp, SEEK_CUR);
 				break;
-
-			case BLK_ID_MSG:
-				Res = true;
-				m_CurBlkStts = BLK_RD_STS_UNSUPORTED;
-				fgetc(tapFile);
-				wTmp = fgetc(tapFile);
-				fseek(tapFile, wTmp, SEEK_CUR);
-				break;
-
+			
 			case BLK_ID_CSW:
 			case BLK_ID_GENERALIZED:		
 				Res = true;

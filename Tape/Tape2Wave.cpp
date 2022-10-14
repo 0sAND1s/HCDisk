@@ -31,7 +31,7 @@ bool CTape2Wav::AddBlock(CTapeBlock* tb)
 	if (tb->m_BlkType == CTapeBlock::TAPE_BLK_STD || tb->m_BlkType == CTapeBlock::TAPE_BLK_TURBO)
 	{
 		//Pilot
-		wav.PutWaves(T2HZ(tb->m_Timings.Pilot), tb->m_Timings.PilotPulseCnt/2, CurPulseLevel);	
+		wav.PutWaves(T2HZ(tb->m_Timings.Pilot), tb->m_Timings.PilotPulseCnt, CurPulseLevel);	
 
 		//Syncs
 		wav.PutPulse(T2HZ(tb->m_Timings.Sync1), CurPulseLevel);

@@ -88,14 +88,12 @@ public:
 	}	
 
 	~CFileSpectrumTape()
-	{
-		/*
+	{		
 		if (this->buffer != NULL)
 		{
 			delete buffer;
 			buffer = NULL;
-		}
-		*/
+		}	
 	}
 
 	virtual dword GetLength()

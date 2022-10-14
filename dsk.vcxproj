@@ -85,7 +85,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;kernel32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -96,7 +96,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="COM4HC.CPP" />
+    <ClCompile Include="COMIF1.cpp" />
     <ClCompile Include="CRC.cpp" />
     <ClCompile Include="DiskBase.cpp" />
     <ClCompile Include="DiskImgCQM.cpp" />
@@ -138,7 +138,7 @@
     <ClCompile Include="td0_lzss.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="com4hc.h" />
+    <ClInclude Include="COMIF1.h" />
     <ClInclude Include="DiskWin32Native.h" />
     <ClInclude Include="CRC.h" />
     <ClInclude Include="DiskBase.h" />

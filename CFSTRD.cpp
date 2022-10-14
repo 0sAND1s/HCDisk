@@ -111,7 +111,13 @@ bool CFSTRDOS::ReadDirectory()
 			file.StartSector = dirEnt.StartSect;
 			file.StartTrack = dirEnt.StartTrack;
 			file.SectorCnt = dirEnt.LenghtSect;	
-			CreateFileName(dirEnt.FileName, &file);			
+			CreateFileName(dirEnt.FileName, &file);
+			/*
+			memset(file.Name, ' ', sizeof(file.FileName));
+			memcpy(file.Name, dirEnt.FileName, sizeof(dirEnt.FileName));
+			memset(file.Extension, ' ', sizeof(file.Extension));
+			file.Extension[0] = dirEnt.FileExt;
+			*/
 			
 			FS_DirEntryMap[dirEntIdx] = true;
 			for (word secIdx = 0; secIdx <= dirEnt.LenghtSect; secIdx++)

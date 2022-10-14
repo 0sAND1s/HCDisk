@@ -31,11 +31,9 @@ CFile::~CFile()
 
 CFile::CFile(const CFile& src)
 {
-	strncpy(this->FileName, src.FileName, sizeof(this->FileName));
-	if (this->Name[0] != NULL)
-		strncpy(this->Name, src.Name, sizeof(this->FileName));
-	if (this->Extension[0] != NULL)
-		strncpy(this->Extension, src.Extension, sizeof(this->Extension));
+	strncpy(this->FileName, src.FileName, sizeof(this->FileName));	
+	strncpy(this->Name, src.Name, sizeof(this->FileName));	
+	strncpy(this->Extension, src.Extension, sizeof(this->Extension));
 	
 	this->FileBlocks = src.FileBlocks;
 	this->FileDirEntries = src.FileDirEntries;

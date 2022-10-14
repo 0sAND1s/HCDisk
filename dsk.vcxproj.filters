@@ -139,7 +139,7 @@
     <ClCompile Include="DiskWin32Native.cpp">
       <Filter>Disk</Filter>
     </ClCompile>
-    <ClCompile Include="COM4HC.CPP">
+    <ClCompile Include="COMIF1.cpp">
       <Filter>COM</Filter>
     </ClCompile>
   </ItemGroup>
@@ -259,7 +259,7 @@
     <ClInclude Include="DiskWin32Native.h">
       <Filter>Disk</Filter>
     </ClInclude>
-    <ClInclude Include="com4hc.h">
+    <ClInclude Include="COMIF1.h">
       <Filter>COM</Filter>
     </ClInclude>
   </ItemGroup>

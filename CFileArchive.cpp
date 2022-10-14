@@ -119,7 +119,7 @@ bool CFileArchive::WildCmp(char * mask, const FileNameType fileName)
 
 bool CFileArchive::IsCharValidForFilename(char c)
 {
-	return c > ' ' && c < 128 && strchr("\"*?\\/_", c) == NULL;
+	return c > ' ' && c < 128 && strchr("\"*?\\/", c) == NULL;
 }
 
 bool CFileArchive::CreateFileName(char* fNameIn, CFile* file)
