@@ -129,31 +129,73 @@ bool CFileArchive::CreateFileName(char* fNameIn, CFile* file)
 		memset(file->FileName, 0, sizeof(FileNameType));		
 		memset(file->Name, 0, sizeof(file->Name));		
 		memset(file->Extension, 0, sizeof(file->Extension));		
-		byte lastNonBlank = 0;
 
-		for (byte idxExt = 0; idxExt < NAME_LENGHT /*+ EXT_LENGTH*/; idxExt++)
-			if ((fNameIn[idxExt] & 0x7F) != ' ')
-				lastNonBlank = idxExt;
+		
+		//byte lastNonBlank = 0;
 
-		byte i = 0, on = 0, oe = 0;	
-		while (i < NAME_LENGHT + EXT_LENGTH && i < strlen(fNameIn))
-		{			
-			char c = fNameIn[i] & 0x7F;
-			if (IsCharValidForFilename(c) /*|| (EXT_LENGTH == 0 && i < lastNonBlank)*/)
-				//c = '-';				
+		//for (byte idxExt = 0; idxExt < NAME_LENGHT /*+ EXT_LENGTH*/; idxExt++)
+		//	if ((fNameIn[idxExt] & 0x7F) != ' ')
+		//		lastNonBlank = idxExt;
+
+		//char* dot = strrchr(fNameIn, '.');
+		//int dotPos = dot != nullptr ? dot - fNameIn : -1;
+		//int i = 0, on = 0, oe = 0;	
+		//while (i < NAME_LENGHT + EXT_LENGTH && i < strlen(fNameIn))
+		//{			
+		//	char c = fNameIn[i] & 0x7F;
+		//	if (IsCharValidForFilename(c) /*|| (EXT_LENGTH == 0 && i < lastNonBlank)*/)
+		//		//c = '-';				
+		//	{
+		//		//Skip blanks and if we don't have extension, replace with '-'.		
+		//		if ((i < NAME_LENGHT || EXT_LENGTH == 0) && i <= lastNonBlank && (dotPos > 0 ? i < dotPos : true))
+		//			file->Name[on++] = c;
+		//		else if (EXT_LENGTH > 0 /*&& i <= lastNonBlank  && c != '-' */ && (i >= NAME_LENGHT || (dotPos > 0 ? i > dotPos : true)))
+		//			file->Extension[oe++] = c;				
+		//	}						
+
+		//	i++;
+		//}	
+
+		//file->Name[on] = '\0';
+		//file->Extension[oe] = '\0';		
+
+		FileNameType fnBuf{};
+		strncpy(fnBuf, fNameIn, min(sizeof(fnBuf), strlen(fNameIn)));
+		for (char& c : fnBuf)
+		{
+			c = c & 0x7F; //Strip attribute bit;
+		}
+
+		char* extStart = nullptr;
+		char* nameEnd = &fnBuf[strlen(fnBuf) - 1];
+		if (EXT_LENGTH > 0)
+		{
+			extStart = strrchr(fnBuf, '.');
+			if (extStart != NULL)
 			{
-				//Skip blanks and if we don't have extension, replace with '-'.		
-				if ((i < NAME_LENGHT || EXT_LENGTH == 0) && i <= lastNonBlank)
-					file->Name[on++] = c;
-				else if (EXT_LENGTH > 0 /*&& i <= lastNonBlank  && c != '-' */ && i >= NAME_LENGHT)
-					file->Extension[oe++] = c;				
-			}						
+				extStart++;
+				nameEnd = extStart - 2;
+			}
+			else if (strlen(fnBuf) > NAME_LENGHT)
+			{
+				extStart = fnBuf + NAME_LENGHT;
+				nameEnd = extStart - 1;
+			}
+		}		
 
-			i++;
-		}	
+		if (extStart != nullptr)
+		{
+			word extLen = (word)strlen(extStart);
+			strncpy(file->Extension, extStart, min((size_t)EXT_LENGTH, strlen(extStart)));
+			strncpy(file->Name, fnBuf, min((int)NAME_LENGHT, nameEnd - fnBuf +1));
+		}
+		else
+		{
+			strncpy(file->Name, fnBuf, min((size_t)NAME_LENGHT, strlen(fnBuf)));
+		}
 
-		file->Name[on] = '\0';
-		file->Extension[oe] = '\0';
+		TrimEnd(file->Name);
+		TrimEnd(file->Extension);
 
 		if (strlen(file->Extension) > 0)
 			sprintf(file->FileName, "%s.%s", file->Name, file->Extension);

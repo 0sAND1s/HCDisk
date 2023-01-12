@@ -178,12 +178,12 @@ bool CFile::SetFileName(char* src)
 		{
 			word extLen = (word)strlen(dot+1);
 			res = memcpy(Name, src, dot - src) != NULL && memcpy(Extension, dot+1, extLen) != NULL &&
-				strcpy(FileName, src);
+				strncpy(FileName, src, sizeof(FileName)-1);
 		}
 		else
 		{
 			res = memcpy(Name, src, strlen(src)) != NULL &&
-				strcpy(FileName, src);
+				strncpy(FileName, src, sizeof(FileName) - 1);
 		}
 	}	
 

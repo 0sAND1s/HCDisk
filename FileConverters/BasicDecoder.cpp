@@ -63,7 +63,7 @@ Basic::BasicLine Basic::BasicDecoder::GetBasicLineFromLineBuffer(byte* buf, word
 	bl.lineNumber = buf[0] * 0x100 + buf[1];
 	bl.basicSize = *(word*)&buf[2];
 
-	if (bl.lineNumber < 9999 && bl.basicSize == 0)
+	if (bl.lineNumber <= 9999 && bl.basicSize == 0)
 		bl.basicSize = maxLen - 4;
 
 	//Line size including the 4 bytes line header.

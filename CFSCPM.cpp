@@ -500,13 +500,19 @@ bool CFSCPM::Rename(CFileCPM* f, char* newName)
 		LastError = ERR_FILE_EXISTS;
 		res = false;
 	}
+
+	auto fa = GetAttributes(f);
 		
 	if (res)
-		res = f->SetFileName(newName);	
+		//res = f->SetFileName(newName);	
+		res = CreateFileName(newName, f);
 
 	if (res)
 		for (byte fDirEnt = 0; fDirEnt < f->FileDirEntries.size() && res; fDirEnt++)
 			res = CreateFSName(f, DirEntries[f->FileDirEntries[fDirEnt]].FileName);	
+
+	//Don't loose attributes on rename.
+	SetAttributes(newName, fa, CFileArchive::ATTR_NONE);
 
 	if (res)
 		res = WriteDirectory() && ReadDirectory();

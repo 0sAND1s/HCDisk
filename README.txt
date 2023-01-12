@@ -161,6 +161,7 @@ program, as it is the case when saving a program after being run, without first 
 
 copydisk  - Copy current disk to another disk or image
 - <destination>: destination disk/image - if writing to physical a disk, that disk must be properly formatted
+- f: format destination disk while copying
 
 put  - Copy PC file to file system
 - <source file>: the file to copy

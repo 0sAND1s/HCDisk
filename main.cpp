@@ -847,14 +847,18 @@ string Disassemble(byte* buf, word len, word addr = 0)
 	DISZ80	*d;			/* Pointer to the Disassembly structure */
 	int		err;		/* line count */		
 	string res;
+	bool useHex = true;
 
 	d = (DISZ80 *)malloc(sizeof(DISZ80));	
 	if (d != NULL)
 	{
 		memset(d, 0, sizeof(DISZ80));
 		dZ80_SetDefaultOptions(d);		
+
 		d->cpuType = DCPU_Z80;		
 		d->flags |= (DISFLAG_SINGLE | DISFLAG_ADDRDUMP | DISFLAG_OPCODEDUMP | DISFLAG_UPPER | DISFLAG_ANYREF | DISFLAG_RELCOMMENT | DISFLAG_VERBOSE);
+		if (useHex)
+			d->layoutRadix = DRADIX_HEX;
 
 		//Fix address.
 		byte* buf1 = new byte[64 * 1024];
@@ -867,8 +871,11 @@ string Disassemble(byte* buf, word len, word addr = 0)
 		s.unsetf(ios::skipws);
 		s.setf(ios::uppercase);
 		while (err == DERR_NONE && len > 0) 		
-		{							
-			s << setw(4) << hex << setfill('0') << addr << "H\t" << d->disBuf << "\t" << d->commentBuf << "\r\n";												
+		{										
+			if (useHex)
+				s << hex;
+
+			s << setw(4) << setfill('0') << addr << "\t" << setfill(' ') << setw(8) << d->hexDisBuf << "\t" << d->disBuf << "\t" << d->commentBuf << "\r\n";
 			
 			addr += (word)d->bytesProcessed;		
 			//Instruction/buffer boundary mismatch.
