@@ -124,7 +124,7 @@ bool CFileArchive::IsCharValidForFilename(char c)
 
 bool CFileArchive::CreateFileName(char* fNameIn, CFile* file)
 {
-	if (fNameIn != NULL && file != NULL && strlen(fNameIn) > 0)
+	if (fNameIn != NULL && file != NULL && strlen(fNameIn) > 0 && strlen(fNameIn) <= (NAME_LENGHT + EXT_LENGTH + 1))
 	{					
 		memset(file->FileName, 0, sizeof(FileNameType));		
 		memset(file->Name, 0, sizeof(file->Name));		
@@ -160,7 +160,7 @@ bool CFileArchive::CreateFileName(char* fNameIn, CFile* file)
 		//file->Extension[oe] = '\0';		
 
 		FileNameType fnBuf{};
-		strncpy(fnBuf, fNameIn, min(sizeof(fnBuf), strlen(fNameIn)));
+		strncpy(fnBuf, fNameIn, min(sizeof(fnBuf)-1, strlen(fNameIn)));
 		for (char& c : fnBuf)
 		{
 			c = c & 0x7F; //Strip attribute bit;

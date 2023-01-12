@@ -46,7 +46,9 @@ bool CFSCobraDEVIL::Init()
 				FS_DirEntryMap[dirIdx] = true;
 
 				CFileDevil* f = new CFileDevil();
-				CreateFileName(dirEnt->Name, f);				
+				FileNameType fn{};
+				strncpy(fn, dirEnt->Name, sizeof(dirEnt->Name));
+				CreateFileName(fn, f);				
 				
 				if (dirEnt->Flag == FLAG_EXTENT)	
 				{
@@ -75,7 +77,10 @@ bool CFSCobraDEVIL::Init()
 								fh->FileBlocks.push_back(dirIdx + hdrLessIdx);
 								fh->fs = this;
 
-								CreateFileName(dirEnt->Name, fh);				
+								FileNameType fn{};
+								strncpy(fn, dirEnt->Name, sizeof(dirEnt->Name));
+								CreateFileName(fn, fh);
+								
 								char hdrLessName[3];
 								itoa(hdrLessIdx, hdrLessName, 10);
 								strcat(fh->Name, hdrLessName);

@@ -166,7 +166,9 @@ bool CFSCPM::ReadDirectory()
 			{
 				CFileCPM f = CFileCPM(this);
 				f.User = DirEntries[entIdx].UsrCode;
-				CreateFileName(DirEntries[entIdx].FileName, &f);
+				FileNameType fn{};
+				strncpy(fn, DirEntries[entIdx].FileName, sizeof(DirEntries[entIdx].FileName));
+				CreateFileName(fn, &f);
 
 				CPMFileListType::iterator fit = find(CPM_FileList.begin(), CPM_FileList.end(), f);
 				if (fit != CPM_FileList.end())
@@ -512,7 +514,8 @@ bool CFSCPM::Rename(CFileCPM* f, char* newName)
 			res = CreateFSName(f, DirEntries[f->FileDirEntries[fDirEnt]].FileName);	
 
 	//Don't loose attributes on rename.
-	SetAttributes(newName, fa, CFileArchive::ATTR_NONE);
+	if (res)
+		res = SetAttributes(newName, fa, CFileArchive::ATTR_NONE);
 
 	if (res)
 		res = WriteDirectory() && ReadDirectory();

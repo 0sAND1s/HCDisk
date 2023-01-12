@@ -55,7 +55,12 @@ bool CFSTRDSCL::Init()
 				file.SectorCnt = dirEnt->LenghtSect;	
 				file.StartSector = 0;	//Not available for SCL.
 				file.StartTrack = 0;	//Not available for SCL.
-				CreateFileName(dirEnt->FileName, &file);
+				
+				FileNameType fn{};
+				strncpy(fn, dirEnt->FileName, sizeof(dirEnt->FileName));
+				TrimEnd(fn);
+				sprintf(&fn[strlen(fn)], ".%c", dirEnt->FileExt);			
+				CreateFileName(fn, &file);
 
 				TRD_Files.push_back(file);							
 			}

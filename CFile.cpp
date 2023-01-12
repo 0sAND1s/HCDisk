@@ -130,7 +130,7 @@ bool CFile::GetFileName(char* dest, bool trim)
 { 			
 	memset(dest, ' ', sizeof(CFileArchive::FileNameType));
 	dest[sizeof(CFileArchive::FileNameType) - 1] = '\0';
-	strncpy(dest, FileName, std::min((byte)strlen(FileName), CFileArchive::MAX_FILE_NAME_LEN));
+	strcpy(dest, FileName);
 
 	if (trim)
 		CFileArchive::TrimEnd(dest);

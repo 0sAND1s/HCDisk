@@ -50,7 +50,6 @@ hcdisk2 open testfiles\tap.tap -t 1 : dir : cat pots$ : exit
 pause
 
 REM Cobra DEVIL BASIC on 3.5 disk, TD0 image format, shows a SCREEN$ file
-REM *****issue on command line batch commands ****
 cls
 hcdisk2 open testfiles\cobradevil.td0 -t 2 : dir : cat PSP : exit
 pause

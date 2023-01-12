@@ -109,6 +109,15 @@ public:
 		return src != NULL;
 	}
 
+	void GetFileNameLen(byte* nameLen, byte* extLen) 
+	{
+		if (nameLen != nullptr)
+			*nameLen = NAME_LENGHT;
+
+		if (extLen != nullptr)
+			*extLen = EXT_LENGTH;
+	}
+
 protected:
 	ErrorType LastError;		
 	const static char* ERROR_TYPE_MSG[];		

@@ -86,16 +86,16 @@ typedef enum
 static char* StorageTypeNames[] = 
 {
 	"NONE",
-	"PHYSICAL DISK",
-	"RAW - DISK IMAGE",
-	"DSK - CPCEMU DISK IMAGE",
-	"EDSK - CPCEMU DISK IMAGE",
+	"A:/B: - PHYSICAL DISK (RW)",
+	"RAW - DISK IMAGE (RW)",
+	"DSK - CPCEMU DISK IMAGE (RW)",
+	"EDSK - CPCEMU DISK IMAGE (RW)",
 	"TRD - TR-DOS DISK IMAGE",
 	"SCL - TR-DOS DISK IMAGE",
 	"CQM - Sydex COPYQM DISK IMAGE",
 	"OPD - OPUS Discovery DISK IMAGE",
 	"MGT - Miles Gordon Tech DISK IMAGE",
-	"TAP - TAPE IMAGE",
+	"TAP - TAPE IMAGE (RW)",
 	"TZX - TAPE IMAGE",
 	"TD0 - Sydex Teledisk DISK IMAGE"
 };
@@ -467,9 +467,9 @@ bool ShowKnownFS(int argc, char* argv[])
 		printf("|%d\t|%d\t|%d\t|%d\n", DISK_TYPES[fsIdx].fsParams.BlockSize, DISK_TYPES[fsIdx].fsParams.BlockCount, 
 			DISK_TYPES[fsIdx].fsParams.DirEntryCount, DISK_TYPES[fsIdx].fsParams.BootTrackCount);
 	}
-	printf("Known data sources: %s", StorageTypeNames[STOR_NONE + 1]);
-	for (byte dsIdx = STOR_NONE + 2; dsIdx < STOR_LAST; dsIdx++)
-		printf(", %s", StorageTypeNames[dsIdx]);
+	printf("Known containers: \n");
+	for (byte dsIdx = STOR_NONE + 1; dsIdx < STOR_LAST; dsIdx++)
+		printf("- %s\n", StorageTypeNames[dsIdx]);
 	printf("\n");
 
 	return true;
@@ -1519,7 +1519,7 @@ bool Open(int argc, char* argv[])
 			else if (selGeom > 0)
 			{
 				//diskTypes
-				if (selGeom < foundGeom.size())
+				if (selGeom <= foundGeom.size())
 					fsIdx = foundGeom[selGeom - 1];
 				else
 					fsIdx = selGeom - 1;
@@ -1666,8 +1666,12 @@ bool Stat(int argc, char* argv[])
 		vFt.push_back(CFileSystem::FSFeatureNames[log2(CFileSystem::FSFT_CASE_SENSITIVE_FILENAMES)]);
 	for (byte ftIdx = 0; ftIdx < vFt.size(); ftIdx++)
 		printf("%s, ", vFt[ftIdx].c_str());		
-	
 	printf("\n");
+
+	byte nameLen, extLen;
+	theFS->GetFileNameLen(&nameLen, &extLen);
+	printf("File name structure\t: %d.%d (name.extension)\n", nameLen, extLen);
+	
 
 	return true;
 }

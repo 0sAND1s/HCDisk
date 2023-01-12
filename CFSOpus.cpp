@@ -65,7 +65,9 @@ bool CFSOpus::Init()
 					FS_BlockMap[blk] = true;
 
 				CFileOpus* f = new CFileOpus();								
-				CreateFileName(dirEnt->name, f);	
+				FileNameType fn{};
+				strncpy(fn, dirEnt->name, sizeof(dirEnt->name));
+				CreateFileName(fn, f);	
 
 				f->Length = (dirEnt->last_block - dirEnt->first_block + 1) * FSParams.BlockSize + dirEnt->bytes_in_last_block;			
 
