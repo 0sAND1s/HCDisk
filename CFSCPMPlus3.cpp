@@ -36,7 +36,7 @@ CFile* CFSCPMPlus3::FindNext()
 	}
 }
 
-CFile* CFSCPMPlus3::NewFile(char* name, long len, byte* data)
+CFile* CFSCPMPlus3::NewFile(const char* name, long len, byte* data)
 {
 	CFilePlus3* f = new CFilePlus3(this);
 	memset(&f->TheHeader, 0, sizeof(f->TheHeader));

@@ -42,7 +42,7 @@ CFile* CFSCPMHC::FindNext()
 	}
 }
 
-CFile* CFSCPMHC::NewFile(char* name, long len, byte* data)
+CFile* CFSCPMHC::NewFile(const char* name, long len, byte* data)
 {
 	CFileHC* f = new CFileHC(this);
 	f->User = 0;

@@ -33,3 +33,13 @@
 .vs/
 Debug/
 Release/
+*.dsk
+*.img
+*.tap
+*.tzx
+*.mgt
+*.trd
+*.scl
+*.scr
+*.bin
+*.zip

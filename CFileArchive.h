@@ -67,7 +67,7 @@ public:
 	virtual ~CFileArchive();		
 
 	virtual bool Init() = 0;					
-	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL) { return NULL; };
+	virtual CFile* NewFile(const char* name, long len = 0, byte* data = NULL) { LastError = ERR_NONE; return NULL; };
 	virtual CFile* FindFirst(char* pattern) = 0;
 	virtual CFile* FindFirst(char* pattern, bool includeDeleted) { return FindFirst(pattern); };
 	virtual CFile* FindNext() = 0;
@@ -77,8 +77,8 @@ public:
 	virtual FileAttributes GetAttributes(CFile*) { return ATTR_NONE; };					
 	virtual bool SetAttributes(char* filespec, FileAttributes toSet, FileAttributes toClear) { LastError = ERR_NOT_SUPPORTED; return false; };
 
-	virtual bool OpenFile(CFile*) { return true; };
-	virtual bool CloseFile(CFile*) { return true; };
+	virtual bool OpenFile(CFile*) { LastError = ERR_NONE; return true; };
+	virtual bool CloseFile(CFile*) { LastError = ERR_NONE; return true; };
 	virtual bool ReadFile(CFile*) { LastError = ERR_NOT_SUPPORTED; return false; };
 	virtual bool WriteFile(CFile*) { LastError = ERR_NOT_SUPPORTED; return false; };
 	virtual bool Delete(char* fnames) { LastError = ERR_NOT_SUPPORTED; return false; };
@@ -87,7 +87,7 @@ public:
 	virtual bool SetFileFolder(CFile* file, char* folderName) { LastError = ERR_NOT_SUPPORTED; return false; }
 	
 	virtual bool IsCharValidForFilename(char c);
-	virtual bool CreateFileName(char* fNameIn, CFile* file);
+	virtual bool CreateFileName(const char* fNameIn, CFile* file);
 	virtual bool CreateFSName(CFile* file, char* fNameOut);
 
 	virtual ErrorType GetLastError(char* errMsg = NULL)

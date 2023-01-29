@@ -238,7 +238,7 @@ bool CFSTRDOS::WriteFile(CFileTRD* file)
 	return false;
 }
 
-CFile* CFSTRDOS::NewFile(char* name, long len, byte* data)
+CFile* CFSTRDOS::NewFile(const char* name, long len, byte* data)
 {
 	CFileTRD* f = new CFileTRD(this);
 	f->SetFileName(name);

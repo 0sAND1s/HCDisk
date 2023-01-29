@@ -57,7 +57,7 @@ bool CFileArchiveTape::Init()
 		//Set unique names for blocks with identical names.
 		set<string> names;
 		CFileArchive::FileNameType fn;
-		for (int i = 0; i < TapeFiles.size(); i++)
+		for (unsigned i = 0; i < TapeFiles.size(); i++)
 		{
 			TapeFiles[i]->GetFileName(fn);
 			if (names.find(fn) == names.end())
@@ -227,6 +227,7 @@ bool CFileArchiveTape::FileSpectrum2TapeBlock(CFileSpectrumTape* fSpec, CTapeBlo
 	if (fSpec->GetType() != CFileSpectrum::SPECTRUM_UNTYPED)
 	{
 		//tbHdr = new CTapeBlock();		
+		//Tape block destructor will free buffer.
 		tbHdr.Data = (byte*)new CTapeBlock::TapeBlockHeaderBasic();
 		CTapeBlock::TapeBlockHeaderBasic* th = (CTapeBlock::TapeBlockHeaderBasic*)tbHdr.Data;
 		tbHdr.Length = sizeof(CTapeBlock::TapeBlockHeaderBasic);		
@@ -244,22 +245,29 @@ bool CFileArchiveTape::FileSpectrum2TapeBlock(CFileSpectrumTape* fSpec, CTapeBlo
 			th->Param2 = 32768;		
 	}
 	
+	//Tape block destructor will free buffer.
 	tbData.Data = new byte[fSpec->SpectrumLength];
-	tbData.Length = fSpec->SpectrumLength;		
-	fSpec->GetData(tbData.Data);
+	tbData.Length = fSpec->SpectrumLength;			
 	
-	return true;
+	return fSpec->GetData(tbData.Data);
 }
 
 
 bool CFileArchiveTape::AddFile(CFileSpectrumTape* fSpec)
 {
 	CTapeBlock tbHdr, tbData;
+	bool res = true;
 
-	FileSpectrum2TapeBlock(fSpec, tbHdr, tbData);	
-	theTap->AddTapeBlock(tbHdr.Data, (word)tbHdr.Length, CTapeBlock::TAPE_BLOCK_FLAG_HEADER);
-	theTap->AddTapeBlock(tbData.Data, (word)tbData.Length, CTapeBlock::TAPE_BLOCK_FLAG_DATA);	
-	return true;
+	res = FileSpectrum2TapeBlock(fSpec, tbHdr, tbData);	
+	if (res)
+		res = theTap->AddTapeBlock(tbHdr.Data, (word)tbHdr.Length, CTapeBlock::TAPE_BLOCK_FLAG_HEADER) &&
+			theTap->AddTapeBlock(tbData.Data, (word)tbData.Length, CTapeBlock::TAPE_BLOCK_FLAG_DATA);	
+		
+	//Re-index tape after a block was appended.
+	if (res)
+		res = Init();
+
+	return res;
 }
 
 bool CFileArchiveTape::ReadFile(CFile* file)
@@ -268,17 +276,17 @@ bool CFileArchiveTape::ReadFile(CFile* file)
 	return true;
 }
 
-CFile* CFileArchiveTape::NewFile(char* name, long len, byte* data)
+CFile* CFileArchiveTape::NewFile(const char* name, long len, byte* data)
 {
 	CFileSpectrumTape* fSpec = new CFileSpectrumTape();
 	fSpec->SetFileName(name);
 	if (data != NULL)
 		fSpec->SetData(data, len);
 
-	return fSpec;
+	return dynamic_cast<CFile*>(fSpec);
 }
 
 bool CFileArchiveTape::WriteFile(CFile* file)
 {
-	return AddFile((CFileSpectrumTape*)file);
+	return AddFile(dynamic_cast<CFileSpectrumTape*>(file));
 }

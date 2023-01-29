@@ -158,19 +158,25 @@ bool CTapFile::IndexTape()
 	bool Res = true;
 	
 	m_Idx.clear();
-	
-	while (Res)
-	{
-		TapeBlkIdxType idxType = {fileOffset, BLK_RD_STS_VALID};		
-		Res = (fread(&blkLen, sizeof(blkLen), 1, tapFile) == 1) && (fseek(tapFile, blkLen, SEEK_CUR) == 0);
-		if (Res)
-		{
-			m_Idx.push_back(idxType);
-			fileOffset = ftell(tapFile);
-		}
-	} 		
 
-	return m_Idx.size() > 0;
+	fseek(tapFile, 0, SEEK_END);
+	long fSize = ftell(tapFile);
+	fseek(tapFile, 0, SEEK_SET);
+	
+	if (fSize > 0)
+		while (Res)
+		{
+			TapeBlkIdxType idxType = {fileOffset, BLK_RD_STS_VALID};		
+			Res = (fread(&blkLen, sizeof(blkLen), 1, tapFile) == 1) && (fseek(tapFile, blkLen, SEEK_CUR) == 0);
+			if (Res)
+			{
+				m_Idx.push_back(idxType);
+				fileOffset = ftell(tapFile);
+			}
+		} 		
+
+	//Accept empty TAP files as valid.
+	return m_Idx.size() > 0 || fSize == 0;
 }
 
 dword CTapFile::GetBlockCount()

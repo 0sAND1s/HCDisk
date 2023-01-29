@@ -228,6 +228,7 @@ public:
 	CDiskBase::DiskDescType diskDef;		
 	CFileSystem::FSParamsType fsParams;
 	word otherParams[5];
+	bool writeSupport;
 };
 
 const FileSystemDescription DISK_TYPES[] =
@@ -241,70 +242,80 @@ const FileSystemDescription DISK_TYPES[] =
 		"HC BASIC 5.25\"", FS_CPM_HC_BASIC, 
 		{40, 2, 16, CDiskBase::SECT_SZ_256, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 
 		{2048, 160, 128, 0},
-		{1, 1}
+		{1, 1},
+		true
 	},
 
 	{
 		"HC BASIC 3.5\"", FS_CPM_HC_BASIC,
 		{80, 2, 16, CDiskBase::SECT_SZ_256, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{2048, 320, 128, 0}, 
-		{1, 1}
+		{1, 1},
+		true
 	},
 
 	{
 		"GENERIC CP/M 2.2 5.25\"", FS_CPM_GENERIC,
 		{40, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{2048, 175, 64, 2}, 
-		{2, 1}
+		{2, 1},
+		true
 	},
 
 	{
 		"GENERIC CP/M 2.2 3.5\"", FS_CPM_GENERIC,
 		{80, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{2048, 351, 128, 4}, 
-		{1, 1}
+		{1, 1},
+		true
 	},
 
 	{
 		"Spectrum +3 BASIC 180K", FS_CPM_PLUS3_BASIC,
 		{40, 1, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{1024, 175, 64, 1}, 
-		{1, 0}
+		{1, 0},
+		true
 	},
 
 	{
 		"Spectrum +3 BASIC 203K", FS_CPM_PLUS3_BASIC,
 		{42, 1, 10, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 6}, 		
 		{1024, 205, 64, 1}, 
-		{1, 2}
+		{1, 2},
+		true
 	},
 
 	{
 		"Spectrum +3 BASIC 720K", FS_CPM_PLUS3_BASIC,
 		{80, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{2048, 357, 256, 1}, 
-		{1, 0}
+		{1, 0},
+		true
 	},
 
 	{
 		"Spectrum +3 BASIC PCW", FS_CPM_PLUS3_BASIC,
 		{40, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{2048, 175, 64, 1}, 
-		{1, 0}
+		{1, 0},
+		true
 	},
 
 	{
 		"Spectrum +3 CP/M SSDD", FS_CPM_GENERIC,
 		{40, 1, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{1024, 175, 64, 1}, 
-		{1, 0}
+		{1, 0},
+		true
 	},
 
 	{
 		"Spectrum +3 CP/M DSDD", FS_CPM_GENERIC,
 		{80, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{2048, 357, 256, 1}, 
-		{1, 0}
+		{1, 0},
+		true
 	},	
 
 	{
@@ -377,7 +388,8 @@ const FileSystemDescription DISK_TYPES[] =
 		"Electronica CIP-04", FS_CPM_PLUS3_BASIC,
 		{80, 1, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{1024, 355, 64, 1}, 
-		{1, 0}
+		{1, 0},
+		true
 	},
 
 /*
@@ -457,15 +469,15 @@ long fsize(char* fname)
 
 bool ShowKnownFS(int argc, char* argv[])
 {
-	puts("Idx\tName\t\t\t|Geometry\t|Bl.Sz.\t|Bl.Cnt\t|Dir.\t|Boot");
-	puts("--------------------------------------------------------------------");
+	puts("Idx\tName\t\t\t|Geometry\t|Bl.Sz.\t|Bl.Cnt\t|Dir\t|Boot\t|Writable");
+	puts("-----------------------------------------------------------------------------------------");
 	for (byte fsIdx = 0; fsIdx < sizeof(DISK_TYPES)/sizeof(DISK_TYPES[0]); fsIdx++)
 	{
 		printf("%2d. %-20s\t|%dx%dx%dx%d\t", fsIdx+1, DISK_TYPES[fsIdx].Name, 			
 			DISK_TYPES[fsIdx].diskDef.TrackCnt, DISK_TYPES[fsIdx].diskDef.SideCnt, 
 			DISK_TYPES[fsIdx].diskDef.SPT, DISK_TYPES[fsIdx].diskDef.SectSize);
-		printf("|%d\t|%d\t|%d\t|%d\n", DISK_TYPES[fsIdx].fsParams.BlockSize, DISK_TYPES[fsIdx].fsParams.BlockCount, 
-			DISK_TYPES[fsIdx].fsParams.DirEntryCount, DISK_TYPES[fsIdx].fsParams.BootTrackCount);
+		printf("|%d\t|%d\t|%d\t|%d\t|%s\n", DISK_TYPES[fsIdx].fsParams.BlockSize, DISK_TYPES[fsIdx].fsParams.BlockCount, 
+			DISK_TYPES[fsIdx].fsParams.DirEntryCount, DISK_TYPES[fsIdx].fsParams.BootTrackCount, DISK_TYPES[fsIdx].writeSupport ? "yes" : "no");
 	}
 	printf("Known containers: \n");
 	for (byte dsIdx = STOR_NONE + 1; dsIdx < STOR_LAST; dsIdx++)
@@ -1490,13 +1502,13 @@ bool Open(int argc, char* argv[])
 	if (storType == STOR_NONE)
 	{
 		printf("The specified source '%s' doesn't hold a recognized disk/file system.\n", path);			
-		//theFS = NULL;
+		theFS = NULL;
 	}
 	else
 	{				
 		char* dskFmt = StorageTypeNames[(int)storType];
 		
-		printf("Storage format is: %s. ", dskFmt);				
+		printf("Container\t: %s. \n", dskFmt);				
 
 		bool bFoundSel = false, bCancel = false;		
 		if (storType != STOR_TAP && storType != STOR_TZX && storType != STOR_SCL)
@@ -1534,7 +1546,7 @@ bool Open(int argc, char* argv[])
 		{
 			theDiskDesc = DISK_TYPES[fsIdx];
 			bool isOpen = true;
-			printf("File system is: %s.\n", theDiskDesc.Name);
+			printf("File system\t: %s.\n", theDiskDesc.Name);
 			
 			//These must be processed here, after the user choses the geometry/fs, as the geometry is not known for RAW images.
 			if (storType == STOR_RAW)
@@ -1628,7 +1640,7 @@ bool Stat(int argc, char* argv[])
 
 	word feat = theFS->GetFSFeatures();
 
-	printf("Storage\t\t\t: %s\n", StorageTypeNames[storType]);
+	printf("Container\t\t: %s\n", StorageTypeNames[storType]);
 	printf("File system\t\t: %s\n", theFS->Name);
 	printf("Path\t\t\t: %s\n", path);
 
@@ -1679,8 +1691,9 @@ bool Stat(int argc, char* argv[])
 
 bool CopyDisk(int argc, char* argv[])
 {
-	bool format = argc >= 2 && stricmp(argv[1], "-f") == 0;
-	if (theFS != nullptr/* && Confirm("This copy operation will overwrite data on destination drive/image, if it exists already. Are you sure?")*/)
+	bool format = (argc >= 2 && stricmp(argv[1], "-f") == 0);
+	bool formatWithoutConfirmation = (argc >= 3 && stricmp(argv[2], "-y") == 0);
+	if (theFS != nullptr && (format ? formatWithoutConfirmation || Confirm("This copy operation will overwrite data on destination drive/image, if it exists already. Are you sure?") : true))
 	{		
 		if (theFS->GetFSFeatures() && CFileSystem::FSFT_DISK)
 		{
@@ -1718,9 +1731,13 @@ bool CopyDisk(int argc, char* argv[])
 				}
 				else
 					res = res && ((CDiskBase*)src)->CopyTo(dst, format);
-			}										
+			}
+			else
+			{
+				puts("The destionation disk could not be opened.");
+			}
 
-			delete dst;
+			delete dst;			
 
 			return res;
 		}
@@ -1800,28 +1817,25 @@ bool PutFile(int argc, char* argv[])
 		argIdx++;
 	}	
 
-	CFile* f = theFS->NewFile((char*)nameDest.c_str());
-	theFS->SetFileFolder(f, folder);									
-	//res = f->SetFileName(nameDest);		
-		
-	//char name2[80];
-	//f->GetFileName(name2);
+	CFile* fileNew = theFS->NewFile(nameDest.c_str());			
+	theFS->SetFileFolder(fileNew, folder);										
 	dword fsz = fsize(name);	
 	FILE* fpc = fopen(name, "rb");
-	if (res && fpc != NULL && f != NULL)
-	{
+	if (res && fpc != NULL && fileNew != NULL)
+	{		
 		byte* buf = new byte[fsz];				
 		fread(buf, 1, fsz, fpc);
 		fclose(fpc);
-		f->SetData(buf, fsz);
-
+		fileNew->SetData(buf, fsz);
+		delete[] buf;		
+		
 		if (IsBasic)
 		{
-			CFileSpectrum* s = dynamic_cast<CFileSpectrum*>(f);
+			CFileSpectrum* s = dynamic_cast<CFileSpectrum*>(fileNew);
 
 			s->SpectrumType = CFileSpectrum::SPECTRUM_UNTYPED;
-			s->SpectrumStart = 0xFFFF;
-			s->SpectrumVarLength = s->SpectrumArrayVarName = 0;
+			s->SpectrumStart = 0;
+			s->SpectrumVarLength = s->SpectrumArrayVarName = 0;			
 			s->SpectrumLength = (word)fsz;				
 				
 			argIdx = 0;
@@ -1834,35 +1848,33 @@ bool PutFile(int argc, char* argv[])
 				}
 				else if (strcmp(argv[argIdx], "-t") == 0)
 				{
-					string stStr = argv[argIdx+1];
-					CFileSpectrum::SpectrumFileType st = CFileSpectrum::SPECTRUM_UNTYPED;
+					string stStr = argv[argIdx+1];					
 
 					if (stStr == "p")
 					{
-						st = CFileSpectrum::SPECTRUM_PROGRAM;
+						s->SpectrumType = CFileSpectrum::SPECTRUM_PROGRAM;
 						s->SpectrumVarLength = Basic::BasicDecoder::GetVarSize(buf, (word)fsz);							
 					}
 					else if (stStr == "b")
-						st = CFileSpectrum::SPECTRUM_BYTES;
+						s->SpectrumType = CFileSpectrum::SPECTRUM_BYTES;
 					else if (stStr == "c")
-						st = CFileSpectrum::SPECTRUM_CHAR_ARRAY;
+						s->SpectrumType = CFileSpectrum::SPECTRUM_CHAR_ARRAY;
 					else if (stStr == "n")
-						st = CFileSpectrum::SPECTRUM_NUMBER_ARRAY;
-					s->SpectrumType = st;
+						s->SpectrumType = CFileSpectrum::SPECTRUM_NUMBER_ARRAY;
+					
 					argIdx++;
 				}
 
 				argIdx++;
 			}				
-		}
+		}		
 			
-		res = theFS->WriteFile(f);
-		delete buf;
+		res = theFS->WriteFile(fileNew);		
 	}	
 	else		
-		res = false;					
+		res = false;			
 
-	delete f;
+	delete fileNew;
 	
 
 	return res;
@@ -1872,6 +1884,8 @@ bool DeleteFiles(int argc, char* argv[])
 {
 	char* fspec = (char*)argv[0];
 	byte fCnt = 0;
+	bool withoutConfirmation = (argc >= 2 && stricmp(argv[1], "-y") == 0);
+
 	CFile* f = theFS->FindFirst(fspec);
 	while (f != NULL)
 	{
@@ -1883,10 +1897,10 @@ bool DeleteFiles(int argc, char* argv[])
 	{
 		char msg[32];
 		sprintf(msg, "Delete %d files?", fCnt);
-		//if (Confirm(msg))
+		if (withoutConfirmation || Confirm(msg))
 			return theFS->Delete(fspec);
-		//else
-			//return false;
+		else
+			return false;
 	}
 	else
 		return false;
@@ -2285,7 +2299,7 @@ bool Export2Tape(int argc, char* argv[])
 			byte* buf = new byte[fst->GetLength()];
 			fst->GetData(buf);
 												
-			auto loadedBlocks = GetLoadedBlocksInProgram(buf, fst->GetLength(), fst->SpectrumVarLength);	
+			auto loadedBlocks = GetLoadedBlocksInProgram(buf, (word)fst->GetLength(), fst->SpectrumVarLength);	
 			for (auto loadedName : loadedBlocks)
 			{
 				if (find(exportedBlocks.begin(), exportedBlocks.end(), loadedName) == exportedBlocks.end())
@@ -2667,11 +2681,29 @@ bool FormatDisk(int argc, char* argv[])
 		res = false;
 
 	char* path = argv[0];
-	strupr(path);
+	strupr(path);	
 
 	byte selGeom = 0xFF;
 	if (argc >= 3 && strcmp(argv[1], "-t") == 0)
-		selGeom = atoi(argv[2])-1;
+		selGeom = atoi(argv[2])-1;	
+
+	bool formatWithoutConfirmation = false;	
+
+	auto ext = GetExtension(path);
+	if (ext == "TAP")
+	{
+		ofstream tapFile(path);
+		tapFile.close();
+		formatWithoutConfirmation = (argc >= 2 && stricmp(argv[3], "-y") == 0);
+		return true;
+	}
+	else
+	{ 
+		formatWithoutConfirmation = (argc >= 4 && stricmp(argv[3], "-y") == 0);
+	}
+	
+	if (!formatWithoutConfirmation && !Confirm("The format operation will erase existing data. Are you sure?"))
+		return false;
 
 	CDiskBase::DiskDescType dd;
 
@@ -2723,9 +2755,11 @@ bool FormatDisk(int argc, char* argv[])
 	}
 
 	if (res)
-		res = fs->Format();	
+	{		
+		res = fs->Format();
+	}
 
-	if (res)
+	if (fs != nullptr)
 		delete fs;
 
 	return res;
@@ -3059,8 +3093,9 @@ static const Command theCommands[] =
 		TypeFile},	
 	{{"copydisk"}, "Copy current disk to another disk or image", 
 		{{"destination", true, "destination disk/image"},
-		 {"-f", false, "format destination while copying"}}, 
-		CopyDisk},
+		 {"-f", false, "format destination while copying"},
+		 {"-y", false, "format without confirmation"}
+		}, CopyDisk},
 	{{"put"}, "Copy PC file to file system", 
 		{{"source file", true, "the file to copy"}, 
 		{"-n newname", false, "name for destination file"},
@@ -3068,8 +3103,8 @@ static const Command theCommands[] =
 		{"-s start, -t p|b|c|n file type", false, "Spectrum file attributes"}}, 
 		PutFile},
 	{{"del", "rm"}, "Delete file(s)", 
-		{{"file spec.", true, "the file(s) to delete"}}, 
-		DeleteFiles},			
+		{{"file spec.", true, "the file(s) to delete"}, 
+		{"-y", false, "delete without confirmation"}}, DeleteFiles},
 	{{"ren"}, "Rename file", 
 		{{"file name", true, "the file to rename"}, {"new name", true, "new file name"}}, 
 		RenameFile},			

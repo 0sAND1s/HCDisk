@@ -27,6 +27,7 @@ public:
 	{
 		SpectrumType = SPECTRUM_UNTYPED;
 		SpectrumStart = SpectrumLength = 0;
+		SpectrumVarLength = SpectrumArrayVarName = 0;		
 	}
 
 	virtual SpectrumFileType GetType() 

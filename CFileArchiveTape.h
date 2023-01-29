@@ -33,7 +33,7 @@ public:
 	}
 		
 	virtual bool Init();
-	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL);
+	virtual CFile* NewFile(const char* name, long len = 0, byte* data = NULL);
 	virtual bool WriteFile(CFile*);
 	virtual bool Open(char* name, bool create = false);
 	virtual CFile* FindFirst(char* pattern);
@@ -57,14 +57,7 @@ protected:
 
 class CFileSpectrumTape: public CFileSpectrum, public CFile
 {
-public:
-	virtual bool SetFileName(char* src)
-	{
-		//Trim according to tape block lenght.
-		//src[CTapeBlock::TAP_FILENAME_LEN] = 0;
-		return CFileArchive::TrimEnd(src) && CFile::SetFileName(src);
-	}
-
+public:	
 	virtual bool GetFileName(char* dest, bool trim = true)
 	{
 		bool res = CFile::GetFileName(dest, trim);
@@ -73,7 +66,7 @@ public:
 		return res;
 	}
 	
-	CFileSpectrumTape()
+	CFileSpectrumTape(): CFile(), CFileSpectrum()
 	{
 	}
 
@@ -87,11 +80,11 @@ public:
 		*(CFileSpectrum*)this = src;
 	}	
 
-	~CFileSpectrumTape()
+	virtual ~CFileSpectrumTape()
 	{		
 		if (this->buffer != NULL)
 		{
-			delete buffer;
+			delete[] buffer;
 			buffer = NULL;
 		}	
 	}

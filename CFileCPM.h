@@ -24,7 +24,7 @@ public:
 	CFileCPM();
 	CFileCPM(CFSCPM* fs);
 	CFileCPM(const CFileCPM& src);
-	~CFileCPM();
+	virtual ~CFileCPM();
 	
 	virtual CFileCPM operator= (const CFileCPM&);
 	virtual int operator== (const CFileCPM&) const;

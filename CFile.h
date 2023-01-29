@@ -18,7 +18,7 @@ public:
 	CFile();
 	CFile(const CFile& src);
 	CFile(char* name, dword length, const byte* buffer);
-	~CFile();
+	virtual ~CFile();
 
 	virtual bool operator== (const CFile&);
 	virtual bool operator!= (const CFile& src) { return !(this->operator==(src));};
@@ -33,8 +33,8 @@ public:
 	//Returns the internal file name.
 	virtual bool GetFileName(char* dest, bool trim = true);
 	virtual bool GetFileName(char* name, char* ext);
-	virtual bool SetFileName(char* src);
-	virtual bool SetFileName(char* name, char* ext);	
+	virtual bool SetFileName(const char* src);
+	virtual bool SetFileName(const char* name, const char* ext);	
 
 protected:	
 	//CFileSystem* fs;

@@ -34,7 +34,7 @@ public:
 	}
 
 	virtual CFile* FindNext();	
-	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL);	
+	virtual CFile* NewFile(const char* name, long len = 0, byte* data = NULL);	
 	//Adds the HC file header before writing to disk.	
 	virtual bool WriteFile(CFile* file);
 	virtual bool ReadFile(CFile* file);

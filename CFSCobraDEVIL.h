@@ -41,7 +41,7 @@ public:
 	dword GetDiskLeftSpace();
 
 	virtual dword GetFileSize(CFile* file, bool onDisk = false);
-	CFile* NewFile(char* name, long len = 0, byte* data = NULL);
+	CFile* NewFile(const char* name, long len = 0, byte* data = NULL);
 	CFile* FindFirst(char* pattern);
 	CFile* FindNext();
 	virtual bool OpenFile(CFile*) { return true; };

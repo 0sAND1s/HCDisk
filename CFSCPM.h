@@ -75,7 +75,7 @@ public:
 
 	virtual bool Init() { return ReadDirectory(); }
 
-	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL) 
+	virtual CFile* NewFile(const char* name, long len = 0, byte* data = NULL) 
 	{ 
 		CFileCPM* f = new CFileCPM(this);
 		//f->SetFileName(name);

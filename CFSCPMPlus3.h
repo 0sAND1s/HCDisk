@@ -25,7 +25,7 @@ public:
 
 	virtual bool ReadDirectory();
 	virtual CFile* FindNext();
-	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL);
+	virtual CFile* NewFile(const char* name, long len = 0, byte* data = NULL);
 	virtual bool ReadFile(CFile* file);
 	virtual bool WriteFile(CFile* file);
 	virtual bool OpenFile(CFile* file);

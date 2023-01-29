@@ -78,7 +78,7 @@ public:
 	CFSTRDOS(CDiskBase* theDisk, char* name = NULL);
 	virtual ~CFSTRDOS();	
 
-	virtual CFile* NewFile(char* name, long len = 0, byte* data = NULL);
+	virtual CFile* NewFile(const char* name, long len = 0, byte* data = NULL);
 	virtual CFile* FindFirst(char* pattern = "*");		
 	virtual CFile* FindNext();	
 	

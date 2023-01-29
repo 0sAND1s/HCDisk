@@ -9,6 +9,8 @@ CFile::CFile()
 {	
 	Length = 0;
 	buffer = NULL;
+	isOpened = false;
+	FileName[0] = Name[0] = Extension[0] = NULL;
 }
 
 CFile::CFile(char* name, dword length, const byte* buffer)
@@ -18,13 +20,14 @@ CFile::CFile(char* name, dword length, const byte* buffer)
 	Length = length;
 	this->buffer = new byte[length];
 	memcpy(this->buffer, buffer, length);
+	isOpened = false;
 }
 
 CFile::~CFile()
 {
 	if (buffer != NULL)
 	{
-		delete buffer;
+		delete[] buffer;
 		buffer = NULL;
 	}
 };
@@ -159,7 +162,7 @@ bool CFile::GetFileName(char* name, char* ext)
 	}
 }
 
-bool CFile::SetFileName(char* src)
+bool CFile::SetFileName(const char* src)
 {
 	bool res = true;
 
@@ -173,7 +176,7 @@ bool CFile::SetFileName(char* src)
 		Name[sizeof(Name) - 1] = '\0';
 		Extension[sizeof(Extension) - 1] = '\0';
 
-		char* dot = strrchr(src, '.');
+		const char* dot = strrchr(src, '.');
 		if (dot != NULL && strlen(dot) <= 3+1)
 		{
 			word extLen = (word)strlen(dot+1);
@@ -190,7 +193,7 @@ bool CFile::SetFileName(char* src)
 	return res;
 }
 
-bool CFile::SetFileName(char* name, char* ext)
+bool CFile::SetFileName(const char* name, const char* ext)
 {
 	if (name == NULL || strlen(name) == 0)
 		return false;

@@ -135,7 +135,7 @@ bool CFSCobraDEVIL::Init()
 	return res;
 }
 
-CFile* CFSCobraDEVIL::NewFile(char* name, long len, byte* data)
+CFile* CFSCobraDEVIL::NewFile(const char* name, long len, byte* data)
 {
 	CFileDevil* f = new CFileDevil(this);	
 	f->SetFileName(name);

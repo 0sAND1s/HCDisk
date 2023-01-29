@@ -122,7 +122,7 @@ bool CFileArchive::IsCharValidForFilename(char c)
 	return c > ' ' && c < 128 && strchr("\"*?\\/", c) == NULL;
 }
 
-bool CFileArchive::CreateFileName(char* fNameIn, CFile* file)
+bool CFileArchive::CreateFileName(const char* fNameIn, CFile* file)
 {
 	if (fNameIn != NULL && file != NULL && strlen(fNameIn) > 0 && strlen(fNameIn) <= (NAME_LENGHT + EXT_LENGTH + 1))
 	{					
