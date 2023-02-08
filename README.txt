@@ -63,6 +63,16 @@ file catalog is displayed (read text documents from CPM disks, browse your old B
 - send TAP/TZX files to Spectrum via audio
 - send TAP/TZX/DSK files to Spectrum via COM port
 
+PC					Transfer method				Spectrum
+---------------------------------------------------------------------
+Audio out jack		PC plays TAP/TZX			Ear in
+Floppy disk	drive	Read/Write disks			Floppy disk drive
+USB floppy disk		Read/Write CP/M disks		Floppy disk drive
+Disk images			PC reads/writes floppy		Floppy disk drive
+Disk images			PC read/writes USB stick	GoTek floppy emulator
+COM port			Upload/download files		IF1 COM port
+
+
 4. Where does the name come from?
 
 	HC is the name of a Sinclair Spectrum compatible computer series manufactured in Romania by the I.C.E. Felix factory. I had one as my first computer.

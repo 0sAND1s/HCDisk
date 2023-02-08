@@ -160,7 +160,7 @@ bool CDiskImgTD0::Open(char* imgName, DiskOpenMode openMode)
 			if ((hdrSect->Syndrome & 0x30) == 0 && (hdrSect->SLen & 0xf8) == 0)
 			{				
 				word* datalen = (word*)&imgBuff[imgBuffIdx];								
-				int expLen = RLEExpander(&imgBuff[imgBuffIdx], &trk.sectorsBuf[(hdrSect->SNum - 1) * sectSize], (*datalen));								
+				int expLen = RLEExpander(&imgBuff[imgBuffIdx], &trk.sectorsBuf[idxSect * sectSize], (*datalen));
 				imgBuffIdx += (*datalen) + 2;
 			}
 			else
@@ -183,8 +183,10 @@ bool CDiskImgTD0::Open(char* imgName, DiskOpenMode openMode)
 		imgBuffIdx += sizeof(TDTrackHeader);
 	}
 
-	this->DiskDefinition.SPT = TDDisk[0][0].sectors.size();
-	this->DiskDefinition.SectSize = SectCode2SectSize(TDDisk[0][0].sectors[0].SLen);
+	//Use track 2 for geometry reporting, since system COBRA CP/M disks have 1 sector/track for the first 2 tracks on each side.
+	const byte trackToProbe = 2;
+	this->DiskDefinition.SPT = (byte)TDDisk[0][trackToProbe].sectors.size();
+	this->DiskDefinition.SectSize = SectCode2SectSize(TDDisk[0][trackToProbe].sectors[0].SLen);
 	this->DiskDefinition.TrackCnt = trackCnt + 1;				
 
 	//Source disk density (0 = 250K bps,  1 = 300K bps,  2 = 500K bps ; +128 = single-density FM)
@@ -212,12 +214,15 @@ bool CDiskImgTD0::ReadSectors(byte * buff, byte track, byte side, byte sector, b
 	word idxDstBuf = 0;
 	for (byte idxSect = sector - 1; idxSect < sector - 1 + sectCnt; idxSect++)
 	{
-		DiskSectType st = SectCode2SectSize(TDDisk[side][track].sectors[idxSect].SLen);
-		word idxSectBuf = idxSect * (word)st;
+		if (idxSect < TDDisk[side][track].sectors.size())
+		{
+			DiskSectType st = SectCode2SectSize(TDDisk[side][track].sectors[idxSect].SLen);
+			word idxSectBuf = idxSect * (word)st;
 
-		memcpy(&buff[idxDstBuf], &TDDisk[side][track].sectorsBuf[idxSectBuf], (word)st);
-		idxSectBuf += (word)st;				
-		idxDstBuf += (word)st;
+			memcpy(&buff[idxDstBuf], &TDDisk[side][track].sectorsBuf[idxSectBuf], (word)st);
+			idxSectBuf += (word)st;
+			idxDstBuf += (word)st;
+		}		
 	}
 
 	return true;
@@ -232,7 +237,7 @@ bool CDiskImgTD0::GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescT
 {	
 	if (side < TDDisk->size() && track < TDDisk[side].size())
 	{
-		sectorCnt = TDDisk[track][side].sectors.size();
+		sectorCnt = (byte)TDDisk[track][side].sectors.size();
 		sectors = new SectDescType[sectorCnt];
 		
 		for (vector<TDSectorHeader>::iterator it = TDDisk[track][side].sectors.begin(); it != TDDisk[track][side].sectors.end(); it++)
@@ -255,8 +260,8 @@ bool CDiskImgTD0::GetDiskInfo(byte& trkCnt, byte& sideCnt, char* comment)
 	if (diskCmnt != NULL)
 		comment = diskCmnt;
 
-	sideCnt = TDDisk->size();
-	trkCnt = TDDisk[0].size();
+	sideCnt = (byte)TDDisk->size();
+	trkCnt = (byte)TDDisk[0].size();
 
 	return true;
 }
