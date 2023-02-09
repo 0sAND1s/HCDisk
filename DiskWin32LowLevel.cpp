@@ -193,6 +193,8 @@ bool CDiskWin32LowLevel::GetTrackInfo(byte track, byte side, byte& sectorCnt, Se
 				sectorsInfo[s].sectSizeCode = psr->Header[s].size;
 				sectorsInfo[s].head = psr->Header[s].head;
 				sectorsInfo[s].track = psr->Header[s].cyl;
+				
+				InterlaveTbl[s] = sectorsInfo[s].sectID;
 			}		
 		}		
 	}   

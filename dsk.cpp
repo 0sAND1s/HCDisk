@@ -139,6 +139,7 @@ bool CDSK::Open(char * dskName, DiskOpenMode mode)
 				//Take interleave from firs track.
 				for (byte secIdx = 0; secIdx < currTrack.sectorCount; secIdx++)
 					InterlaveTbl[secIdx] = currSectorInfo[secIdx].sectorID;
+				DiskDefinition.HWInterleave = CalculateInterleaveFactor();
 				
 				if (currTrack.dataRate == DATA_RATE_HIGH)
 					DiskDefinition.Density = DISK_DATARATE_HD;

@@ -105,6 +105,7 @@ public:
 	virtual bool GetDiskInfo(byte& trkCnt, byte& sideCnt, char* comment = NULL);
 	bool DetectDiskGeometry(DiskDescType& dd);
 	bool CreateInterleaveTable();
+	byte CalculateInterleaveFactor();
 
 	ErrorType GetLastError(char* errMsg) 
 	{ 

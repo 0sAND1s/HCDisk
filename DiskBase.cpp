@@ -167,3 +167,13 @@ bool CDiskBase::FormatDisk()
 
 	return res;
 }
+
+byte CDiskBase::CalculateInterleaveFactor()
+{		
+	byte secIdx = 1;
+	//Search sector index with first ID +1;
+	while (secIdx < DiskDefinition.SPT && InterlaveTbl[secIdx] - InterlaveTbl[0] != 1)
+		secIdx++;
+
+	return secIdx - 1;
+}

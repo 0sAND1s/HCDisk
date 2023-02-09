@@ -179,6 +179,7 @@ bool CDiskImgTD0::Open(char* imgName, DiskOpenMode openMode)
 	this->DiskDefinition.SPT = (byte)TDDisk[0][trackToProbe].sectors.size();
 	this->DiskDefinition.SectSize = SectCode2SectSize(TDDisk[0][trackToProbe].sectors[0].SLen);
 	this->DiskDefinition.TrackCnt = trackCnt + 1;				
+	this->DiskDefinition.HWInterleave = CalculateInterleaveFactor();
 
 	//Source disk density (0 = 250K bps,  1 = 300K bps,  2 = 500K bps ; +128 = single-density FM)
 	switch(hdrImg->Dens)

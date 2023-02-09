@@ -1552,26 +1552,19 @@ bool Open(int argc, char* argv[])
 			
 			//These must be processed here, after the user choses the geometry/fs, as the geometry is not known for RAW images.
 			if (storType == STOR_RAW)
-			{
-				/*
+			{				
 				if (theDisk != NULL)
-					delete theDisk;
-				*/
+					delete theDisk;			
 
 				theDisk = new CDiskImgRaw(theDiskDesc.diskDef);
 				isOpen = ((CDiskImgRaw*)theDisk)->Open(path);				
 			}			
-			else if (storType == STOR_REAL)
-			{				
-				//if (theDisk != NULL)
-				//	delete theDisk;
+			else //Override disk geometry with the one specified, in case of > 80 track disks for example.
+			{								
 				if (theDisk != NULL)
 					theDisk->DiskDefinition = theDiskDesc.diskDef;
 				else
-					isOpen = false;
-				
-				//theDisk = new CDiskWin32Native(theDiskDesc.diskDef);
-				//isOpen = ((CDiskWin32Native*)theDisk)->Open(path);
+					isOpen = false;							
 			}			
 
 			if (isOpen && theFS == NULL && theDisk != NULL)
@@ -1589,13 +1582,7 @@ bool Open(int argc, char* argv[])
 				else if (theDiskDesc.fsType == FS_OPUS_DISCOVERY)
 					theFS = new CFSOpus(theDisk, theDiskDesc.Name);
 				else if (theDiskDesc.fsType == FS_MGT_PLUSD)
-					theFS = new CFSMGT(theDisk, theDiskDesc.Name);
-				/*
-				else if (theDiskDesc.fsType == FS_FAT12)
-				{
-					
-				}
-				*/
+					theFS = new CFSMGT(theDisk, theDiskDesc.Name);				
 			}
 						
 			if (theFS == NULL || !theFS->Init())
@@ -1652,6 +1639,7 @@ bool Stat(int argc, char* argv[])
 		printf("Disk geometry\t\t: %dT x %dH x %dS x %dB/S\n",
 			fs->Disk->DiskDefinition.TrackCnt, fs->Disk->DiskDefinition.SideCnt,
 			fs->Disk->DiskDefinition.SPT, fs->Disk->DiskDefinition.SectSize);
+		printf("Hard sector skew\t: %d\n", fs->Disk->DiskDefinition.HWInterleave);
 		printf("Raw Size\t\t: %d KB\n", (fs->Disk->DiskDefinition.TrackCnt * fs->Disk->DiskDefinition.SideCnt * fs->Disk->DiskDefinition.SPT * fs->Disk->DiskDefinition.SectSize)/1024);
 		printf("Block size\t\t: %.02f KB\n", (float)fs->GetBlockSize()/1024);
 		printf("Blocks free/max\t\t: %d/%d \n", fs->GetFreeBlockCount(), fs->GetMaxBlockCount());
@@ -1660,7 +1648,7 @@ bool Stat(int argc, char* argv[])
 		printf("Catalog free/max\t: %d/%d = %02.2f%% free\n", fs->GetFreeDirEntriesCount(), fs->GetMaxDirEntriesCount(), 
 			((float)fs->GetFreeDirEntriesCount()/fs->GetMaxDirEntriesCount())*100);
 		if (fs->Disk->diskCmnt != NULL)
-			printf("%s", fs->Disk->diskCmnt);
+			printf("%s", fs->Disk->diskCmnt);		
 	}
 
 	
@@ -1684,7 +1672,7 @@ bool Stat(int argc, char* argv[])
 
 	byte nameLen, extLen;
 	theFS->GetFileNameLen(&nameLen, &extLen);
-	printf("File name structure\t: %d.%d (name.extension)\n", nameLen, extLen);
+	printf("File name structure\t: %d.%d (name.extension)\n", nameLen, extLen);	
 	
 
 	return true;
