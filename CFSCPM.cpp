@@ -50,12 +50,14 @@ CFSCPM::~CFSCPM()
 
 	FS_BlockMap.clear();
 	FS_DirEntryMap.clear();
-	
+
+	/*
 	if (Disk != NULL)
 	{
 		delete Disk;
 		Disk = NULL;
-	}	
+	}
+	*/
 }
 
 

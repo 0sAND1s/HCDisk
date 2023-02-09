@@ -13,18 +13,23 @@ char* CDiskBase::ERROR_TYPE_MSG[] =
 	"Invalid parameter"
 };
 
-CDiskBase::CDiskBase(DiskDescType dd)
+CDiskBase::CDiskBase(DiskDescType dd): CDiskBase()
 { 					
 	this->DiskDefinition = dd; 
 	diskCmnt = NULL;
+	memset(InterlaveTbl, 0, sizeof(InterlaveTbl));
 	CreateInterleaveTable();
 }	
 
 CDiskBase::CDiskBase()
-{
+{	
+	diskCmnt = NULL;
+	this->DiskDefinition.Filler = 0xE5;
+	this->DiskDefinition.GapFmt = 0x16;
+	this->DiskDefinition.HWInterleave = 0;
+	m_Skew = 0;
 	//Initialize using consecutive sector IDs = no interleave.	
 	CreateInterleaveTable();
-	diskCmnt = NULL;
 }
 
 CDiskBase::CDiskBase(byte tracks, byte spt, byte sides, DiskSectType st, DiskDensType dens, byte filler, byte gap)
@@ -56,12 +61,26 @@ bool CDiskBase::CreateInterleaveTable()
 {
 	if (DiskDefinition.HWInterleave > DiskDefinition.SPT|| DiskDefinition.SPT > MAX_SECT_PER_TRACK)
 		return false;
-	
-	InterlaveTbl[0] = 1;
+		
+	/*
 	for (byte sectIdx = 1; sectIdx < DiskDefinition.SPT; sectIdx++)
 	{									
 		InterlaveTbl[sectIdx] = 
 			((InterlaveTbl[sectIdx - 1] + DiskDefinition.HWInterleave) % DiskDefinition.SPT) + 1;		
+	}
+	*/
+	//Interleave factor tells us how many sectors to skip: 1 = skip 1 sector = 1, x, 2, y, 3, etc.	
+	int secIdx = 0;	
+	int secID = 1;	
+	int trkOffset = 0;
+	for (int secCnt = 1; secCnt <= DiskDefinition.SPT; secCnt++)
+	{		
+		InterlaveTbl[trkOffset + secIdx] = secID;
+		secIdx += (DiskDefinition.HWInterleave + 1);
+		secIdx = secIdx % DiskDefinition.SPT;
+		secID++;		
+		//Restart on track index.
+		trkOffset = (secCnt / (DiskDefinition.SPT / (DiskDefinition.HWInterleave + 1)));
 	}
 
 	return true;

@@ -27,8 +27,9 @@ public:
 		char Name[10];
 		word Length;
 		word Param1;
-		word Param2;		
-		byte unused[3];
+		word Param2;
+		byte Attributes;
+		byte unused[2];
 		word hdrlBlockLen[118];		
 	};
 #pragma pack ()
@@ -47,6 +48,7 @@ public:
 	virtual bool OpenFile(CFile*) { return true; };
 	virtual bool CloseFile(CFile*) { return true; };
 	bool ReadBlock(byte* buf, word blkIdx, byte sectCnt = 0);
+	virtual FileAttributes GetAttributes(CFile* file);
 
 	//bool ReadFile(CFile*);	
 	bool IsCharValidForFilename(char c)

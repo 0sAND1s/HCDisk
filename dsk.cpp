@@ -9,14 +9,13 @@ char CDSK::DSK_TRACK_SIGNATURE[13] = "Track-Info\r\n";
 CDSK::CDSK(): CDiskBase()
 {
 	dskFile = NULL;
-	sigMinValidLen = (byte)strlen("MV - CPC");
+	//sigMinValidLen = (byte)strlen("MV - CPC");
 	LastError = ERR_OK;	
 	InterlaveTbl[0] = 0;
 }
 
 CDSK::CDSK(DiskDescType diskDesc): CDiskBase(diskDesc)
-{
-	CDSK();	
+{	
 }
 
 
@@ -28,6 +27,7 @@ CDSK::~CDSK()
 
 CDSK::CDSK(const CDSK& src): CDiskBase(src)
 {	
+	CDSK();
 }
 
 bool CDSK::AddDiskHeader()
@@ -79,7 +79,7 @@ bool CDSK::CreateImage()
 		for (byte side = 0; side < DiskDefinition.SideCnt; side++)
 		{
 			//Write track header.
-			TrackInfoBlockType trkInfo = {"", {0, 0, 0}, trk, side, DATA_RATE_UNKNOWN, 0 , 
+			TrackInfoBlockType trkInfo = {"", {0, 0, 0}, trk, side, DATA_RATE_SINGLE_DOUBLE, 0 , 
 				SectSize2SectCode(DiskDefinition.SectSize), DiskDefinition.SPT, DiskDefinition.GapFmt, DiskDefinition.Filler};
 			memcpy(trkInfo.signature, DSK_TRACK_SIGNATURE, sizeof(trkInfo.signature));
 			if (fwrite(&trkInfo, sizeof(TrackInfoBlockType), 1, dskFile) != 1)

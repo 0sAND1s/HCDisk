@@ -17,7 +17,7 @@ CFSCobraDEVIL::CFSCobraDEVIL(CDiskBase* disk, char* name): CFileSystem(disk, nam
 	//A directory entry has one sector and addresses one block. Max. dir. entries is 108 = 6 tracks x 18 SPT. 
 	FSParams.DirEntryCount = (RESERVED_TRACKS * disk->DiskDefinition.SPT);
 	
-	FSFeatures = (FileSystemFeature)(FSFeatures | FSFT_ZXSPECTRUM_FILES | FSFT_CASE_SENSITIVE_FILENAMES);
+	FSFeatures = (FileSystemFeature)(FSFeatures | FSFT_ZXSPECTRUM_FILES | FSFT_CASE_SENSITIVE_FILENAMES | FSFT_FILE_ATTRIBUTES);
 }
 
 bool CFSCobraDEVIL::Init()
@@ -219,6 +219,23 @@ dword CFSCobraDEVIL::GetDiskLeftSpace()
 { 
 	return GetDiskMaxSpace() - DEVIL_Dir.size() * FSParams.BlockSize; 
 };	
+
+CFileSystem::FileAttributes CFSCobraDEVIL::GetAttributes(CFile* file)
+{
+	auto f = (CFileDevil*)file;
+	byte res = (byte)FileAttributes::ATTR_NONE;
+	if (f->FileDirEntries.size() > 0)
+	{
+		byte attrByte = this->DEVIL_Dir[f->FileDirEntries[0]].Attributes;
+
+		if ((attrByte & 1) == 1)
+			res |= (int)FileAttributes::ATTR_SYSTEM;
+		if ((attrByte & 2) == 2)
+			res |= (int)FileAttributes::ATTR_READ_ONLY;
+	}	
+
+	return (FileAttributes)res;
+}
 
 //////////////////////////////////////////////////////////////////////////
 

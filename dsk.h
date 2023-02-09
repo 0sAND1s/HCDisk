@@ -71,7 +71,7 @@ protected:
 	char dskName[255];
 	FILE * dskFile;	
 	//char signature[SIGNATURE_LEN];
-	byte sigMinValidLen;	
+	byte sigMinValidLen = 8;	
 	static char *ErrMsg[ERR_ITEM_CNT];	
 
 	virtual bool SeekSide(byte side);

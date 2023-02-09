@@ -240,7 +240,7 @@ const FileSystemDescription DISK_TYPES[] =
 	//Some values are informative, or for disk detection. Most FS classes recalculate FS params dynamically based on disk geometry.	
 	{ 
 		"HC BASIC 5.25\"", FS_CPM_HC_BASIC, 
-		{40, 2, 16, CDiskBase::SECT_SZ_256, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 
+		{40, 2, 16, CDiskBase::SECT_SZ_256, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_5_25, 0}, 
 		{2048, 160, 128, 0},
 		{1, 1},
 		true
@@ -256,7 +256,7 @@ const FileSystemDescription DISK_TYPES[] =
 
 	{
 		"GENERIC CP/M 2.2 5.25\"", FS_CPM_GENERIC,
-		{40, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
+		{40, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_5_25, 0},
 		{2048, 175, 64, 2}, 
 		{2, 1},
 		true
@@ -354,7 +354,7 @@ const FileSystemDescription DISK_TYPES[] =
 
 	{
 		"Opus Discovery 40T DS", FS_OPUS_DISCOVERY, 
-		{ 40, 2, 18, CDiskBase::SECT_SZ_256, 0x00, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0},
+		{ 40, 2, 18, CDiskBase::SECT_SZ_256, 0x00, 0x1B, CDiskBase::DISK_DATARATE_DD_5_25, 0},
 		{256, 1440, 112}
 	},
 
@@ -377,9 +377,9 @@ const FileSystemDescription DISK_TYPES[] =
 	},
 	
 	{
-		//HardSkew = 2.
+		//HardSkew = 1.
 		"CoBra Devil", FS_COBRA_DEVIL,
-		{80, 2, 18, CDiskBase::SECT_SZ_256, 0xE5, 20, CDiskBase::DISK_DATARATE_DD_3_5, 2}, 		
+		{80, 2, 18, CDiskBase::SECT_SZ_256, 0xE5, 20, CDiskBase::DISK_DATARATE_DD_3_5, 1}, 		
 		{9216, 77, 108}
 		//{}
 	},	
@@ -771,7 +771,7 @@ bool GetFile(int argc, char* argv[])
 						f->GetData(buf1);				
 					fwrite(buf1, 1, len, pcFile);
 					fclose(pcFile);
-					delete buf1;							
+					delete[] buf1;							
 					printf("Wrote file %s\n", fn);		
 					res = true;
 				}				
@@ -901,7 +901,7 @@ string Disassemble(byte* buf, word len, word addr = 0)
 		}
 
 		res = s.str();
-		delete buf1;
+		delete[] buf1;
 	}
 
 	free(d);	
@@ -1065,7 +1065,7 @@ bool TypeFile(int argc, char* argv[])
 			delete buf2;
 		}
 
-		delete buf1;		
+		delete[] buf1;		
 		theFS->CloseFile(f);
 	}					
 	else	
@@ -1430,11 +1430,13 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 		else
 			it++;
 		
+		/*
 		if (theDisk != NULL)
 		{
 			delete theDisk;
 			theDisk = NULL;
 		}
+		*/
 
 		if (theFS != NULL)
 		{
@@ -1705,7 +1707,7 @@ bool CopyDisk(int argc, char* argv[])
 
 			strupr((char*)dstName);
 
-			CDiskBase* dst = InitDisk(dstName, &src->DiskDefinition);		
+			CDiskBase* dst = InitDisk(dstName, &src->DiskDefinition);					
 			bool res = dst->Open((char*)dstName, (format ? CDiskBase::OPEN_MODE_CREATE : CDiskBase::OPEN_MODE_EXISTING));
 
 			if (res)
@@ -2607,7 +2609,7 @@ bool SaveBoot(int argc, char* argv[])
 				fclose(fout);
 			}
 
-			delete trkBuf;			
+			delete[] trkBuf;			
 		}
 		else
 		{
@@ -2665,7 +2667,7 @@ bool LoadBoot(int argc, char* argv[])
 			res = false;
 		}
 
-		delete trkBuf;			
+		delete[] trkBuf;			
 	}
 	else
 		res = false;

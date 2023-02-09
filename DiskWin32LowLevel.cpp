@@ -145,12 +145,12 @@ bool CDiskWin32LowLevel::FormatTrack(byte track, byte side)
 
 	PFD_ID_HEADER ph = pfp->Header;
 
-	for (BYTE s = 1 ; s <= pfp->sectors ; s++, ph++)
+	for (BYTE secIdx = 0 ; secIdx < pfp->sectors ; secIdx++, ph++)
 	{
 		ph->cyl = track;
 		ph->head = side;
 		//ph->sector = ((s + track*(pfp->sectors - TRACK_SKEW)) % pfp->sectors);
-		ph->sector = s;
+		ph->sector = InterlaveTbl[secIdx];
 		ph->size = pfp->size;
 	}
 

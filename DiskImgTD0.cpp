@@ -98,18 +98,7 @@ bool CDiskImgTD0::Open(char* imgName, DiskOpenMode openMode)
 	}
 
 	TDTrackHeader* hdrTrk = (TDTrackHeader*)&imgBuff[imgBuffIdx];
-	imgBuffIdx += sizeof(TDTrackHeader);
-	TDSectorHeader* hdrSect = (TDSectorHeader*)&imgBuff[imgBuffIdx];			
-	
-	dword oldIdx = imgBuffIdx;
-	for (byte idxSect=0; idxSect < hdrTrk->SecPerTrk; idxSect++)
-	{
-		hdrSect = (TDSectorHeader*)&imgBuff[imgBuffIdx];			
-		imgBuffIdx += sizeof(TDSectorHeader);			
-		InterlaveTbl[idxSect] = hdrSect->SNum;
-	}
-	imgBuffIdx = oldIdx;
-	
+	imgBuffIdx += sizeof(TDTrackHeader);		
 	this->DiskDefinition.SideCnt = hdrImg->Surface;
 	byte trackCnt = 0, sidenumber = 0, sectCnt = 0;
 
@@ -155,17 +144,19 @@ bool CDiskImgTD0::Open(char* imgName, DiskOpenMode openMode)
 		{
 			hdrSect = (TDSectorHeader*)&imgBuff[imgBuffIdx];			
 			imgBuffIdx += sizeof(TDSectorHeader);			
-			word sectSize = SectCode2SectSize(hdrSect->SLen);		
+			word sectSize = SectCode2SectSize(hdrSect->SLen);											
+			InterlaveTbl[idxSect] = hdrSect->SNum;			
 
 			if ((hdrSect->Syndrome & 0x30) == 0 && (hdrSect->SLen & 0xf8) == 0)
 			{				
 				word* datalen = (word*)&imgBuff[imgBuffIdx];								
-				int expLen = RLEExpander(&imgBuff[imgBuffIdx], &trk.sectorsBuf[idxSect * sectSize], (*datalen));
+				//int expLen = RLEExpander(&imgBuff[imgBuffIdx], &trk.sectorsBuf[idxSect * sectSize], (*datalen));
+				int expLen = RLEExpander(&imgBuff[imgBuffIdx], &trk.sectorsBuf[(InterlaveTbl[idxSect] - InterlaveTbl[0]) * sectSize], (*datalen));
 				imgBuffIdx += (*datalen) + 2;
 			}
 			else
 			{
-				memset(&trk.sectorsBuf[(hdrSect->SNum - 1) * sectSize], 0xE5, sectSize);				
+				memset(&trk.sectorsBuf[(InterlaveTbl[idxSect] - InterlaveTbl[0]) * sectSize], 0xE5, sectSize);
 			}
 			
 			trk.sectors.push_back(*hdrSect);							
@@ -209,9 +200,11 @@ bool CDiskImgTD0::Open(char* imgName, DiskOpenMode openMode)
 	return true;
 }
 
+
+//The hardware interleave is handled in the image decompression.
 bool CDiskImgTD0::ReadSectors(byte * buff, byte track, byte side, byte sector, byte sectCnt)
 {				
-	word idxDstBuf = 0;
+	word idxDstBuf = 0;	
 	for (byte idxSect = sector - 1; idxSect < sector - 1 + sectCnt; idxSect++)
 	{
 		if (idxSect < TDDisk[side][track].sectors.size())
