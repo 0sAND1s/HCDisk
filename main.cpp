@@ -166,6 +166,25 @@ bool Confirm(char* msg)
 	return c == 13;
 }
 
+bool ProgressCallbackRead(word item, word totalItems)
+{
+	printf("\rReading track %d/%d.", item, totalItems);
+	return true;
+}
+
+bool ProgressCallbackWrite(word item, word totalItems)
+{
+	printf("\rWriting track %d/%d.", item, totalItems);
+	return true;
+}
+
+bool ProgressCallbackFormat(word item, word totalItems)
+{
+	printf("\rFormatting track %d/%d.", item, totalItems);
+	return true;
+}
+
+
 typedef enum
 {	
 	FS_CPM_GENERIC,
@@ -1126,14 +1145,12 @@ bool Close(int argc, char* argv[])
 		delete theFS;
 		theFS = NULL;					
 	}
-
-	/*
+	
 	if (theDisk != NULL)
 	{
 		delete theDisk;
 		theDisk = NULL;
 	}
-	*/
 	
 	return true;
 }
@@ -1430,13 +1447,12 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 		else
 			it++;
 		
-		/*
+		
 		if (theDisk != NULL)
 		{
 			delete theDisk;
 			theDisk = NULL;
-		}
-		*/
+		}		
 
 		if (theFS != NULL)
 		{
@@ -1678,7 +1694,6 @@ bool Stat(int argc, char* argv[])
 	return true;
 }
 
-
 bool CopyDisk(int argc, char* argv[])
 {
 	bool format = (argc >= 2 && stricmp(argv[1], "-f") == 0);
@@ -1695,11 +1710,13 @@ bool CopyDisk(int argc, char* argv[])
 
 			strupr((char*)dstName);
 
+			src->SetProgressCallback(ProgressCallbackRead);
 			CDiskBase* dst = InitDisk(dstName, &src->DiskDefinition);					
 			bool res = dst->Open((char*)dstName, (format ? CDiskBase::OPEN_MODE_CREATE : CDiskBase::OPEN_MODE_EXISTING));
 
 			if (res)
 			{
+				dst->SetProgressCallback(ProgressCallbackWrite);
 				if (!format)
 				{
 					//Make sure that the read disk has the same format as intended. If not, it must be formatted first.
@@ -2746,6 +2763,7 @@ bool FormatDisk(int argc, char* argv[])
 
 	if (res)
 	{		
+		disk->SetProgressCallback(ProgressCallbackFormat);
 		res = fs->Format();
 	}
 

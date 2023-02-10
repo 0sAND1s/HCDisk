@@ -105,6 +105,9 @@ bool CDiskBase::CopyTo(CDiskBase* dest, bool formatDst)
 		for (byte head = 0; head < DiskDefinition.SideCnt && resOK; head++)
 		{
 			resOK = ReadTrack(trkBuf, track, head);
+			if (progCallback != nullptr)
+				resOK = progCallback(track, DiskDefinition.TrackCnt-1);
+
 			if (resOK && formatDst)
 				resOK = dest->FormatTrack(track, head);
 			if (resOK)
@@ -131,8 +134,8 @@ bool CDiskBase::GetDiskInfo(byte & trackCount, byte & sideCount, char* comment)
 	else
 		return false;
 	
-
-	if (ReadSectors(buf, 0, 1, 1, 1))
+	//Get geometry from track 2, skip tracks 0,1, as these might be non-standard.
+	if (ReadSectors(buf, 2, 0, 1, 1))
 		sideCount = 2;
 	else
 		sideCount = 1;
@@ -162,7 +165,9 @@ bool CDiskBase::FormatDisk()
 	for (byte track = 0; track < DiskDefinition.TrackCnt && res; track++)
 		for (byte head = 0; head < DiskDefinition.SideCnt && res; head++)
 		{
-			res = this->FormatTrack(track, head);		
+			res = this->FormatTrack(track, head);
+			if (progCallback != nullptr)
+				progCallback(track, DiskDefinition.TrackCnt-1);
 		}
 
 	return res;

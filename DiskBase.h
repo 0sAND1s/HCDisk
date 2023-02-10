@@ -14,6 +14,7 @@ class CDiskBase
 {
 public:
 	static const byte MAX_SECT_PER_TRACK = 32;		//Maximum sector count on a track
+	typedef bool (ProgressCallbackType)(word item, word totalItems);
 	
 	typedef enum
 	{
@@ -106,6 +107,8 @@ public:
 	bool DetectDiskGeometry(DiskDescType& dd);
 	bool CreateInterleaveTable();
 	byte CalculateInterleaveFactor();
+	void SetContinueOnError(bool doIgnore) { continueOnError = doIgnore;  }
+	void SetProgressCallback(ProgressCallbackType* callback) { progCallback = callback; }
 
 	ErrorType GetLastError(char* errMsg) 
 	{ 
@@ -121,7 +124,9 @@ protected:
 	byte m_Skew;			//Sector IDs for hardware interleave
 	byte InterlaveTbl[MAX_SECT_PER_TRACK];
 	static char* ERROR_TYPE_MSG[];
-	ErrorType LastError;		
+	ErrorType LastError;	
+	bool continueOnError = true;
+	ProgressCallbackType* progCallback = nullptr;
 };
 
 

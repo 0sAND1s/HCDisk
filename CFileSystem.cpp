@@ -21,12 +21,13 @@ CFileSystem::CFileSystem(CDiskBase* disk, char* name): CFileArchive(name)
 
 CFileSystem::~CFileSystem()
 {
-	
+	/*
 	if (Disk != NULL)
 	{
 		delete Disk;
 		Disk = NULL;
-	}	
+	}
+	*/
 }
 
 bool CFileSystem::ReadFile(CFile* f)

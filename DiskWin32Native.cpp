@@ -82,12 +82,19 @@ bool CDiskWin32Native::ReadSectors(byte* buf, byte track, byte head, byte sect, 
     if (res && sect > 1)
         SetFilePointer(hVol, DiskDefinition.SectSize * (sect - 1), NULL, FILE_CURRENT);
 
-    res = res && ReadFile(hVol,
-        buf,
-        sectNO * DiskDefinition.SectSize,
-        &dw, NULL);
+    if (res)
+    {
+        byte retryCnt = DEF_RETRY_CNT;
+        do
+        {
+            res = ReadFile(hVol,
+                buf,
+                sectNO * DiskDefinition.SectSize,
+                &dw, NULL);
+        } while (!res && retryCnt-- > 0);
+    }    
 
-    return res;
+    return res || continueOnError;
 }
 
 

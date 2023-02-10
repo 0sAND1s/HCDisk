@@ -82,7 +82,7 @@ bool CDiskWin32LowLevel::ReadSectors(byte *buf,byte track,byte head,byte sect,by
 	if (Seek(track))
 		while (RetryCnt-- && !(OK = CmdRead(h, track, head, sect, sectNO, CDiskBase::SectSize2SectCode(DiskDefinition.SectSize), buf)));
 
-	return OK;
+	return OK || continueOnError;
 }
 
 bool CDiskWin32LowLevel::WriteSectors(byte track, byte side, byte sect, byte sectCnt, byte * buf)
