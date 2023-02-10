@@ -166,21 +166,30 @@ bool Confirm(char* msg)
 	return c == 13;
 }
 
-bool ProgressCallbackRead(word item, word totalItems)
+bool ProgressCallbackRead(word item, word totalItems, bool haveError)
 {
-	printf("\rReading track %d/%d.", item, totalItems);
+	if (!haveError)
+		printf("\rReading track %d/%d.", item, totalItems);
+	else
+		printf("Error reading track %d/%d.\n", item, totalItems);
 	return true;
 }
 
-bool ProgressCallbackWrite(word item, word totalItems)
+bool ProgressCallbackWrite(word item, word totalItems, bool haveError)
 {
-	printf("\rWriting track %d/%d.", item, totalItems);
+	if (!haveError)
+		printf("\rReading track %d/%d.", item, totalItems);
+	else
+		printf("Error writing track %d/%d.\n", item, totalItems);
 	return true;
 }
 
-bool ProgressCallbackFormat(word item, word totalItems)
+bool ProgressCallbackFormat(word item, word totalItems, bool haveError)
 {
-	printf("\rFormatting track %d/%d.", item, totalItems);
+	if (!haveError)
+		printf("\rFormatting track %d/%d.", item, totalItems);
+	else
+		printf("Error formatting track %d/%d.\n", item, totalItems);
 	return true;
 }
 

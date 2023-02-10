@@ -14,7 +14,7 @@ class CDiskBase
 {
 public:
 	static const byte MAX_SECT_PER_TRACK = 32;		//Maximum sector count on a track
-	typedef bool (ProgressCallbackType)(word item, word totalItems);
+	typedef bool (ProgressCallbackType)(word item, word totalItems, bool haveError);
 	
 	typedef enum
 	{

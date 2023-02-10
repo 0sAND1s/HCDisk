@@ -106,7 +106,7 @@ bool CDiskBase::CopyTo(CDiskBase* dest, bool formatDst)
 		{
 			resOK = ReadTrack(trkBuf, track, head);
 			if (progCallback != nullptr)
-				resOK = progCallback(track, DiskDefinition.TrackCnt-1);
+				resOK = progCallback(track, DiskDefinition.TrackCnt-1, !resOK);
 
 			if (resOK && formatDst)
 				resOK = dest->FormatTrack(track, head);
@@ -167,7 +167,7 @@ bool CDiskBase::FormatDisk()
 		{
 			res = this->FormatTrack(track, head);
 			if (progCallback != nullptr)
-				progCallback(track, DiskDefinition.TrackCnt-1);
+				progCallback(track, DiskDefinition.TrackCnt-1, !res);
 		}
 
 	return res;
