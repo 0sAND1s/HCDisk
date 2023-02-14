@@ -229,12 +229,11 @@ bool CDiskImgTD0::Seek(byte trackNo)
 
 bool CDiskImgTD0::GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescType sectors[])
 {	
-	if (side < TDDisk->size() && track < TDDisk[side].size())
+	if (side < this->DiskDefinition.SideCnt && track < this->DiskDefinition.TrackCnt)
 	{
-		sectorCnt = (byte)TDDisk[track][side].sectors.size();
-		sectors = new SectDescType[sectorCnt];
+		sectorCnt = (byte)TDDisk[side][track].sectors.size();
 		
-		for (vector<TDSectorHeader>::iterator it = TDDisk[track][side].sectors.begin(); it != TDDisk[track][side].sectors.end(); it++)
+		for (vector<TDSectorHeader>::iterator it = TDDisk[side][track].sectors.begin(); it != TDDisk[side][track].sectors.end(); it++)
 		{
 			SectDescType sdt;
 			sdt.head = it->Side;
@@ -242,7 +241,7 @@ bool CDiskImgTD0::GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescT
 			sdt.sectSizeCode = it->SLen;
 			sdt.track = it->Cyl;
 
-			sectors[it - TDDisk[track][side].sectors.begin()] = sdt;
+			sectors[it - TDDisk[side][track].sectors.begin()] = sdt;
 		}
 	}
 
@@ -254,8 +253,8 @@ bool CDiskImgTD0::GetDiskInfo(byte& trkCnt, byte& sideCnt, char* comment)
 	if (diskCmnt != NULL)
 		comment = diskCmnt;
 
-	sideCnt = (byte)TDDisk->size();
-	trkCnt = (byte)TDDisk[0].size();
+	sideCnt = this->DiskDefinition.SideCnt;
+	trkCnt = this->DiskDefinition.TrackCnt;
 
 	return true;
 }

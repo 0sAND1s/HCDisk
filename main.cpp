@@ -169,7 +169,7 @@ bool Confirm(char* msg)
 bool ProgressCallbackRead(word item, word totalItems, bool haveError)
 {
 	if (!haveError)
-		printf("\rReading track %d/%d.", item, totalItems);
+		printf("\rReading track %d/%d.%c", item, totalItems, (item == totalItems ? '\n' : ' '));
 	else
 		printf("Error reading track %d/%d.\n", item, totalItems);
 	return true;
@@ -178,7 +178,7 @@ bool ProgressCallbackRead(word item, word totalItems, bool haveError)
 bool ProgressCallbackWrite(word item, word totalItems, bool haveError)
 {
 	if (!haveError)
-		printf("\rReading track %d/%d.", item, totalItems);
+		printf("\rReading track %d/%d.%c", item, totalItems, (item == totalItems ? '\n' : ' '));
 	else
 		printf("Error writing track %d/%d.\n", item, totalItems);
 	return true;
@@ -187,7 +187,7 @@ bool ProgressCallbackWrite(word item, word totalItems, bool haveError)
 bool ProgressCallbackFormat(word item, word totalItems, bool haveError)
 {
 	if (!haveError)
-		printf("\rFormatting track %d/%d.", item, totalItems);
+		printf("\rFormatting track %d/%d.%c", item, totalItems, (item == totalItems ? '\n' : ' '));
 	else
 		printf("Error formatting track %d/%d.\n", item, totalItems);
 	return true;
@@ -262,7 +262,7 @@ public:
 const FileSystemDescription DISK_TYPES[] =
 {
 	//Name, Type,
-	//Geometry
+	//Geometry, filler byte, gap3, density, hardware interleave factor
 	//Block size, block count, catalog capacity, boot track count
 	//Extra params. For CPM: extensions in catalog entry, software interleave factor.
 	//Some values are informative, or for disk detection. Most FS classes recalculate FS params dynamically based on disk geometry.	
@@ -1505,22 +1505,8 @@ bool Open(int argc, char* argv[])
 	vector<byte> foundGeom;
 	byte selGeom = 0;
 	if (argc >= 3 && strcmp(argv[1], "-t") == 0)
-		selGeom = atoi(argv[2]);
+		selGeom = atoi(argv[2]);	
 
-	/*
-	if (theFS != NULL)
-	{
-		delete theFS;
-		theFS = NULL;
-	}
-	
-	
-	if (theDisk != NULL)
-	{
-		delete theDisk;
-		theDisk = NULL;
-	}
-	*/
 	Close(0, NULL);
 
 	strupr(path);	
@@ -3080,6 +3066,38 @@ bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, Stora
 	return true;	
 }
 
+
+bool DiskView(int argc, char* argv[])
+{
+	if (theDisk == NULL)
+		return false;
+	
+	byte trackIdx = (argc >= 0 ? atoi(argv[0]) : 0);
+	byte headIdx = (argc >= 1 ? atoi(argv[1]) : 0);
+	byte sectIdx = (argc >= 2 ? atoi(argv[2]) : 0);
+
+	byte trackCnt, headCnt, sectCnt;
+	word sectSize;
+	CDiskBase::SectDescType sectors[CDiskBase::MAX_SECT_PER_TRACK];
+
+	bool res = theDisk->GetTrackInfo(trackIdx, headIdx, sectCnt, sectors);
+	res = res && theDisk->GetDiskInfo(trackCnt, headCnt);		
+	
+	if (res)
+	{
+		sectSize = theDisk->SectCode2SectSize(sectors[sectIdx].sectSizeCode);
+		printf("T x H x S: %d x %d x %d, size: %d, ID: %d\n", trackIdx, headIdx, sectIdx, sectSize, sectors[sectIdx].sectID);
+		auto secBuf = vector<byte>(CDiskBase::SECT_SZ_4096);
+		res = theDisk->ReadSectors(secBuf.data(), trackIdx, headIdx, sectIdx + 1, 1);
+		TextViewer(GetHexPrint(secBuf.data(), sectSize));		
+	}		
+
+	return res;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const Command theCommands[] = 
 {
 	{{"help", "?"}, "Command list, this message", {{}}, 
@@ -3177,6 +3195,12 @@ static const Command theCommands[] =
 		{"baud rate", false, "baud rate for COM, default is 9600"}
 		},
 		GetFileIF1COM},
+	{{"diskview"}, "View disk sectors",
+		{{"track", false, "track index"},
+		{"head", false, "head index"},
+		{"sector", false, "sector index (not ID)"}
+		},
+		DiskView},
 	{{"exit", "quit"}, "Exit program", 
 	{{}}},	
 };

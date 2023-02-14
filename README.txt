@@ -65,12 +65,12 @@ file catalog is displayed (read text documents from CPM disks, browse your old B
 
 PC					Transfer method				Spectrum
 ---------------------------------------------------------------------
-Audio out jack		PC plays TAP/TZX			Ear in
-Floppy disk	drive	Read/Write disks			Floppy disk drive
-USB floppy disk		Read/Write CP/M disks		Floppy disk drive
-Disk images			PC reads/writes floppy		Floppy disk drive
-Disk images			PC read/writes USB stick	GoTek floppy emulator
-COM port			Upload/download files		IF1 COM port
+Audio out jack		PC plays TAP/TZX			Loading from ear in
+Floppy disk	drive	Read/Write disks			Read/write floppy disks
+USB floppy disk		Read/Write disks			Read/write CP/M floppy disks
+Disk images			PC reads/writes disks		Read/write floppy disks
+Disk images			PC reads/writes images		GoTek emulator reads/writes disk images
+COM port			PC Upload/download files	Read/write files using IF1 COM port
 
 
 4. Where does the name come from?
@@ -234,6 +234,10 @@ getif1  - Get a single file from IF1 trough the COM port
 - [COM port index]: COMx port to use, default 1
 - [baud rate]: baud rate for COM, default is 9600
 
+diskview  - View disk sectors on screen, displayed as hex and ASCII.
+- [track]: track index
+- [head]: head index
+- [sector]: sector index (not ID)
 
 exit quit  - Exit program
 
@@ -262,10 +266,22 @@ that it occupies, a list of catalog entries that is occupies, a file name, attri
 Files can be raw files, or Sinclair Spectrum specific files. The base class for file system is file archive, used for file collections that are not 
 disks, like the tape images, SCL images, or in the future, file archive (ZIP, etc).
 	The code is not as clean as I would like. It is gathered from parts I wrote across several years.
-	The license is GPL, which in my understanding, means that you can use it in your own programs, as long as you specify 
+	The license is GPLv3, which in my understanding, means that you can use it in your own programs, as long as you specify 
 the original author and include the changes you added to the code, when you release your code.
 
 7. What other features are planned?
-- Add support for the FAT file system
+- Add support for the FAT file system, for DOS disk images.
 - Add file system configuration in external config. file, to be able to add varations of a file system without recompiling
 - Add write support for the current read-only file systems, if usefull.
+- Audio tape signal digitisation.
+- COM port transfer speed improvement using 19200 baud for HC computers, from 4800/9600 baud currently supported.
+- Create a GUI using MFC or QT.
+
+8. What are the system requirements?
+- For best compatibility for floppy disk access, an older PC is recomended, with a floppy controller on the motherboard. These were produced up until about 2003-2004. 
+- The operating system is at minimum Windows XP, but any later Windows version will work.
+- USB floppy drives can be used for CP/M disks. Other file systems and disk geometries don't work due to hardware limitations of USB floppy drives and due to Windows floppy driver limitations.
+- For COM port/RS232 usage, an on board controller works (but is not usually found on today's computers) or an USB to serial controller also works.
+- For data transfer via audio, from the PC to the Spectrum, the usual 3.5 audio jack output works fine, using a jack to DIN5 cable. For recording (not yet implemented in HCDisk), 
+an audio splitter can be used to capture Spectrum output using the microphone input of PC via the same audio jack, for computers with mic input on the headphones jack, using Audacity software for example.
+The resulting WAV file can be digitized using MakeTZX from Ramsoft or using audio2tape.exe from the fuse-utils package.
