@@ -41,6 +41,8 @@
 #include "CFSMGT.h"
 #include "FileConverters/BasicDecoder.h"
 #include "FileConverters/scr2gif.c"
+#include "FileConverters/bas2tap.h"
+#include "FileConverters/bas2tap.c"
 #include "FileConverters/dz80/dissz80.h"
 #include "CFileArchive.h"
 #include "CFileArchiveTape.h"
@@ -153,6 +155,15 @@ string GetExtension(string fileName)
 		return res;
 	else
 		return "";
+}
+
+string GetNameWithoutExtension(string fileName)
+{
+	int dotIdx = fileName.find_last_of('.');
+	string res = "";
+	if (dotIdx != string::npos)
+		res = fileName.substr(0, dotIdx);	
+	return res;	
 }
 
 
@@ -887,7 +898,7 @@ string Disassemble(byte* buf, word len, word addr = 0)
 	DISZ80	*d;			/* Pointer to the Disassembly structure */
 	int		err;		/* line count */		
 	string res;
-	bool useHex = true;
+	bool useHex = false;
 
 	d = (DISZ80 *)malloc(sizeof(DISZ80));	
 	if (d != NULL)
@@ -2401,7 +2412,7 @@ bool ImportTape(int argc, char* argv[])
 	}
 
 	bool writeOK = true;
-	if (IsDisk && IsBasic)
+	if (IsBasic)
 	{		
 		CFileArchiveTape tapeSrc(tapSrcName);
 		if (tapeSrc.Open(tapSrcName, false) && tapeSrc.Init())
@@ -3095,84 +3106,104 @@ bool DiskView(int argc, char* argv[])
 	return res;
 }
 
+bool BasImport(int argc, char* argv[])
+{
+	string name = GetNameWithoutExtension(argv[0]);
+	if (argc >= 2)
+		name = argv[1];
+
+	word autorunLine = 0;
+	if (argc >= 3)
+		autorunLine = atoi(argv[2]);
+
+	bool res = bas2tap(argv[0], name.c_str(), autorunLine) == 0;	
+	const char* argsImport[] = {"temp.tap", name.c_str()};
+	if (res)
+	{
+		res = ImportTape(1, (char**)argsImport);
+		remove("temp.tap");
+	}
+	return res;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const Command theCommands[] = 
 {
-	{{"help", "?"}, "Command list, this message", {{}}, 
+	{{"help", "?"}, "Command list, this message", {{}},
 		PrintHelp},
-	{{"fsinfo"}, "Display the known file systems", {{}}, 
+	{{"fsinfo"}, "Display the known file systems", {{}},
 		ShowKnownFS},
 	{{"stat"}, "Display the current file system parameters", {{}}, Stat},
-	{{"open"}, "Open disk or disk image", 
+	{{"open"}, "Open disk or disk image",
 		{{"drive|image", true, "The disk/image to open"},
-		{"-t", false, "The number of file system type to use"}}, 
+		{"-t", false, "The number of file system type to use"}},
 		Open},
-	{{"close"}, "Close disk or disk image", 
-		{{}}, 
+	{{"close"}, "Close disk or disk image",
+		{{}},
 		Close},
-	{{"ls", "dir"}, "List directory", 
-		{{"<folder><\\>file spec.", false, "filespec: *.com or 1\\*, etc"}, 
-		{"-sn|-ss|-st", false, "Sort by name|size|type"},		
-		{"-ne", false, "Don't show extended info, faster"}, 
+	{{"ls", "dir"}, "List directory",
+		{{"<folder><\\>file spec.", false, "filespec: *.com or 1\\*, etc"},
+		{"-sn|-ss|-st", false, "Sort by name|size|type"},
+		{"-ne", false, "Don't show extended info, faster"},
 		{"-del", false, "List deleted files"}},
-		Cat},	
-	{{"get"}, "Copy file(s) to PC", 
-		{{"[\"]filespec[\"]", true, "* or *.com or readme.txt, \"1 2\", etc"}, 
-		{"-t", false, "Copy as text"}}, 
-		GetFile},	
-	{{"type", "cat"}, "Display file", 
-		{{"file spec.", true, "* or *.com or readme.txt, etc"}, 
-		{"-h|-t|-d", false, "display as hex|text|asm"}}, 
-		TypeFile},	
-	{{"copydisk"}, "Copy current disk to another disk or image", 
+		Cat},
+	{{"get"}, "Copy file(s) to PC",
+		{{"[\"]filespec[\"]", true, "* or *.com or readme.txt, \"1 2\", etc"},
+		{"-t", false, "Copy as text"}},
+		GetFile},
+	{{"type", "cat"}, "Display file",
+		{{"file spec.", true, "* or *.com or readme.txt, etc"},
+		{"-h|-t|-d", false, "display as hex|text|asm"}},
+		TypeFile},
+	{{"copydisk"}, "Copy current disk to another disk or image",
 		{{"destination", true, "destination disk/image"},
 		 {"-f", false, "format destination while copying"},
 		 {"-y", false, "format without confirmation"}
 		}, CopyDisk},
-	{{"put"}, "Copy PC file to file system", 
-		{{"source file", true, "the file to copy"}, 
+	{{"put"}, "Copy PC file to file system",
+		{{"source file", true, "the file to copy"},
 		{"-n newname", false, "name for destination file"},
 		{"-d <destination folder>", false, "file folder"},
-		{"-s start, -t p|b|c|n file type", false, "Spectrum file attributes"}}, 
+		{"-s start, -t p|b|c|n file type", false, "Spectrum file attributes"}},
 		PutFile},
-	{{"del", "rm"}, "Delete file(s)", 
-		{{"file spec.", true, "the file(s) to delete"}, 
+	{{"del", "rm"}, "Delete file(s)",
+		{{"file spec.", true, "the file(s) to delete"},
 		{"-y", false, "delete without confirmation"}}, DeleteFiles},
-	{{"ren"}, "Rename file", 
-		{{"file name", true, "the file to rename"}, {"new name", true, "new file name"}}, 
-		RenameFile},			
-	{{"!"}, "Execute DOS command after '!'", 
-		{"DOS command", true, "! dir, ! mkdir, etc"}, 
+	{{"ren"}, "Rename file",
+		{{"file name", true, "the file to rename"}, {"new name", true, "new file name"}},
+		RenameFile},
+	{{"!"}, "Execute DOS command after '!'",
+		{"DOS command", true, "! dir, ! mkdir, etc"},
 		ExecSysCmd},
-	{{"tapplay"}, "Play the tape into a wav file", 
-		{{"-w", false, "play to a .wav file instead of realtime"}}, 
+	{{"tapplay"}, "Play the tape into a wav file",
+		{{"-w", false, "play to a .wav file instead of realtime"}},
 		PlayTape},
-	{{"tapexp"}, "Exports the files to a tape image", 
-		{{".tap name", true, "the TAP file name"}, 
+	{{"tapexp"}, "Exports the files to a tape image",
+		{{".tap name", true, "the TAP file name"},
 		{"file mask", false, "the file name mask"},
 		{"-convldr", false, "convert BASIC loader synthax, file names"}
-		}, 
+		},
 		Export2Tape},
-	{{"tapimp"}, "Imports the TAP file to disk", 
-		{{".tap name", true, "the TAP file name"}, 
+	{{"tapimp"}, "Imports the TAP file to disk",
+		{{".tap name", true, "the TAP file name"},
 		{"file mask", false, "the file name mask"},
 		{"-convldr", false, "convert BASIC loader synthax, file names"}
-		}, 
+		},
 		ImportTape},
 	{{"saveboot"}, "Save boot tracks to file", {"file name", true, "output file"}, SaveBoot},
 	{{"loadboot"}, "Load boot tracks from file", {"file name", true, "input file"}, LoadBoot},
-	{{"format"}, "Format disk", 
-		{{"disk/image", true, "disk/image"}, 
+	{{"format"}, "Format disk",
+		{{"disk/image", true, "disk/image"},
 		{"-t", false, "Format number to pre-select (from fsinfo command)"}},
 		FormatDisk},
-	{{"attrib", "chattr"}, "Change file(s) attributes", 
-		{{"file spec.", true, "file(s) to update"}, 
-		{"+/-ars", true, "set/remove attribute(s) (a)rhive, (r)eadonly, (s)ystem"}}, 
+	{{"attrib", "chattr"}, "Change file(s) attributes",
+		{{"file spec.", true, "file(s) to update"},
+		{"+/-ars", true, "set/remove attribute(s) (a)rhive, (r)eadonly, (s)ystem"}},
 		ChangeAttributes},
 	{{"bin2rem"}, "Transform binary to BASIC block",
-		{{"file", true, "blob to add"},		 
+		{{"file", true, "blob to add"},
 		{"name of block", false, "name of BASIC block"},
 		{"address of execution", false, "address to copy the block to before execution"},
 		},
@@ -3185,13 +3216,13 @@ static const Command theCommands[] =
 	{{"putif1"}, "Send a file or collection to IF1 trough the COM port",
 		{
 		{"file name/mask", true, "file mask to select files for sending"},
-		{"COM port index", false, "COMx port to use, default 1"},		
+		{"COM port index", false, "COMx port to use, default 1"},
 		{"baud rate", false, "baud rate for COM, default is 4800"}
 		},
 		PutFilesIF1COM},
 	{{"getif1"}, "Get a single file from IF1 trough the COM port",
 		{{"file name", true, "file name for the received file"},
-		{"COM port index", false, "COMx port to use, default 1"},		
+		{"COM port index", false, "COMx port to use, default 1"},
 		{"baud rate", false, "baud rate for COM, default is 9600"}
 		},
 		GetFileIF1COM},
@@ -3201,6 +3232,12 @@ static const Command theCommands[] =
 		{"sector", false, "sector index (not ID)"}
 		},
 		DiskView},
+	{{"basimp"}, "Import a BASIC program from a text file",
+		{{"BASIC file", true, "BASIC program file to compile"},
+		{"file name", false, "Program file name (default: file name)"},
+		{"autorun line", false, "Autorun line number (default: 0)"}
+		},
+		BasImport},
 	{{"exit", "quit"}, "Exit program", 
 	{{}}},	
 };

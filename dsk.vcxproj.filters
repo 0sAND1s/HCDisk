@@ -142,6 +142,9 @@
     <ClCompile Include="COMIF1.cpp">
       <Filter>COM</Filter>
     </ClCompile>
+    <ClCompile Include="FileConverters\bas2tap.c">
+      <Filter>FileConverters</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DiskBase.h">
@@ -261,6 +264,9 @@
     </ClInclude>
     <ClInclude Include="COMIF1.h">
       <Filter>COM</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\bas2tap.h">
+      <Filter>FileConverters</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

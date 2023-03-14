@@ -239,6 +239,11 @@ diskview  - View disk sectors on screen, displayed as hex and ASCII.
 - [head]: head index
 - [sector]: sector index (not ID)
 
+basimp  - Import a BASIC program from a text file
+- <BASIC file>: BASIC program file to compile
+- [file name]: Program file name (default: file name)
+- [autorun line]: Autorun line number (default: 0)
+
 exit quit  - Exit program
 
 	Commands can be concatenated using the ":" character. Example: "open -t 1 : ls : close" .
@@ -256,7 +261,8 @@ http://edn.embarcadero.com/article/20633 .
 - SCREEN$ to GIF code is written by M. van der Heide; I had my own implementation, with the added functionality of saving to 
 other formats besides GIF, but it used the GDI+ library, which is harder to use with the Borland compiler.
 - The disassembler is dz80, Copyright 1996-2002 Mark Incley
-- The CQM image driver is based on LIBDSK 1.2.1, Copyright (C) 2001-2,2005  John Elliott <jce@seasip.demon.co.uk>
+- The CQM, TD0 image drivers are based on LIBDSK 1.2.1, Copyright (C) 2001-2,2005  John Elliott <jce@seasip.demon.co.uk>
+- BAS2TAP implementation is written by M. van der Heide, used for the basimp commmand. Code is adapted to accept HC IF1 synthax.
 	
 	The program is designed with Object Oriented Design in mind. The disk object is decoupled from the file system object,
 so that any combination can be used, CPM in DSK image, TRDOS in CQM image, MGT +D on physical disks, etc. The file system is 

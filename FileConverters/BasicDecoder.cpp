@@ -413,6 +413,8 @@ void Basic::BasicDecoder::ConvertLoader(BasicLine* blSrc, BasicLine* blDst, cons
 	blDst->lineSize = blDst->basicSize + 4;
 }
 
+
+//Will return the offset in bufBasic for each LOAD statement, as key, and length of LOAD statement and block name as value.
 map<word, pair<word, std::string>> Basic::BasicDecoder::GetLoadingBlocks(byte* bufBasic, word progLen)
 {
 	map<word, pair<word, std::string>> res;

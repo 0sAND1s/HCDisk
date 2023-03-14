@@ -128,6 +128,7 @@
     <ClCompile Include="CFilePlus3.cpp" />
     <ClCompile Include="CFileSpectrum.cpp" />
     <ClCompile Include="CFileTRD.cpp" />
+    <ClCompile Include="FileConverters\bas2tap.c" />
     <ClCompile Include="FileConverters\BasicDecoder.cpp" />
     <ClCompile Include="FileConverters\scr2gif.c" />
     <ClCompile Include="FileConverters\dz80\dissz80.c" />
@@ -171,6 +172,7 @@
     <ClInclude Include="CFilePlus3.h" />
     <ClInclude Include="CFileSpectrum.h" />
     <ClInclude Include="CFileTRD.h" />
+    <ClInclude Include="FileConverters\bas2tap.h" />
     <ClInclude Include="FileConverters\BasicDecoder.h" />
     <ClInclude Include="FileConverters\dz80\dissz80.h" />
     <ClInclude Include="FileConverters\dz80\dissz80p.h" />
