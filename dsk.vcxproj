@@ -135,6 +135,7 @@
     <ClCompile Include="FileConverters\dz80\loadfile.c" />
     <ClCompile Include="FileConverters\dz80\noscript.c" />
     <ClCompile Include="FileConverters\dz80\tables.c" />
+    <ClCompile Include="FileConverters\Screen.cpp" />
     <ClCompile Include="Tape\tap.cpp" />
     <ClCompile Include="Tape\Tape2Wave.cpp" />
     <ClCompile Include="Tape\TapeBlock.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="FileConverters\dz80\dissz80p.h" />
     <ClInclude Include="FileConverters\dz80\dz80.h" />
     <ClInclude Include="FileConverters\dz80\types.h" />
+    <ClInclude Include="FileConverters\Screen.h" />
     <ClInclude Include="Tape\tap.h" />
     <ClInclude Include="Tape\Tape2Wave.h" />
     <ClInclude Include="Tape\TapeBlock.h" />

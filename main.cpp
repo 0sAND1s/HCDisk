@@ -44,6 +44,7 @@
 #include "FileConverters/bas2tap.h"
 #include "FileConverters/bas2tap.c"
 #include "FileConverters/dz80/dissz80.h"
+#include "FileConverters/Screen.h"
 #include "CFileArchive.h"
 #include "CFileArchiveTape.h"
 #include "Tape\Tape2Wave.h"
@@ -490,7 +491,7 @@ const FileSystemDescription DISK_TYPES[] =
 
 bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, StorageLoaderType ldrType);
 
-long fsize(char* fname)
+long fsize(const char* fname)
 {
 	long fs;
 
@@ -502,6 +503,8 @@ long fsize(char* fname)
 	}
 	else
 		fs = 0;
+	
+	fclose(f);
 
 	return fs;	
 }
@@ -3127,6 +3130,71 @@ bool BasImport(int argc, char* argv[])
 }
 
 
+bool ScreenProcess(int argc, char* argv[])
+{
+	string scrOper = argv[0];
+	string operArg = argv[1];
+	string nameIn = argv[2];
+	string nameOut = argv[3];
+
+	if (fsize(nameIn.c_str()) != sizeof(ScreenType))
+	{
+		cout << "File '" << nameIn << "' is not a valid SCREEN$ file." << endl;
+		return false;
+	}
+	ScreenType scrInBuf;
+	FILE* scrIn = fopen(nameIn.c_str(), "rb");
+	fread(&scrInBuf, 1, sizeof(ScreenType), scrIn);
+	fclose(scrIn);
+
+	byte bufOut[sizeof(ScreenType)];
+
+	if (scrOper == "order")
+	{
+		ScrOrderType ordType = ORD_NONE;
+		if (operArg == ScrOrdNames[ORD_COLUMN])
+			ordType = ORD_COLUMN;
+		else if (operArg == ScrOrdNames[ORD_CELL])
+			ordType = ORD_CELL;
+		else
+		{
+			cout << "SCREEN$ ordering must be " << ScrOrdNames[ORD_COLUMN] << " or " << ScrOrdNames[ORD_CELL] << endl;
+			return false;
+		}
+		
+		switch (ordType)
+		{
+		case ORD_COLUMN:
+			ScrLiniarizeByColumn(&scrInBuf, bufOut);
+			break;
+		case ORD_CELL:
+			ScrLiniarizeByCell(&scrInBuf, bufOut);
+			break;
+		}
+		
+		FILE* scrOut = fopen(nameOut.c_str(), "wb");
+		fwrite(bufOut, 1, sizeof(ScreenType), scrOut);
+		fclose(scrOut);
+		cout << "Created '" << nameOut << "' ordered by " << ScrOrdNames[ordType] << "." << endl;
+	}
+	else if (scrOper == "blank")
+	{
+		word l1 = 5, c1 = 1, l2 = 22, c2 = 31;
+		char x;
+		stringstream ss(operArg);
+		ss >> l1 >> x >> c1 >> x >> l2 >> x >> c2;		
+
+		ScrBlankRectangle(&scrInBuf, l1, c1, l2, c2);
+		FILE* scrOut = fopen(nameOut.c_str(), "wb");
+		fwrite(&scrInBuf, 1, sizeof(ScreenType), scrOut);
+		fclose(scrOut);
+		printf("Created '%s' with blanked rectange %ux%ux%ux%u\n", nameOut.c_str(), l1, c1, l2, c2);
+	}
+			
+
+	return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const Command theCommands[] = 
@@ -3238,6 +3306,14 @@ static const Command theCommands[] =
 		{"autorun line", false, "Autorun line number (default: 0)"}
 		},
 		BasImport},
+	{ {"screen"}, "SCREEN$ block processing functions",
+		{
+			{"operation", true, "order, blank"},
+			{"argument", true, "order: column, cell; blank: rectangle l1xc1xl2xc2"},
+			{"input file", true, "SCREEN$ file on PC read"},
+			{"output file", true, "SCREEN$ file on PC write"}
+		},
+		ScreenProcess},
 	{{"exit", "quit"}, "Exit program", 
 	{{}}},	
 };
