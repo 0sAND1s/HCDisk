@@ -177,7 +177,7 @@ bool CFile::SetFileName(const char* src)
 		Extension[sizeof(Extension) - 1] = '\0';
 
 		const char* dot = strrchr(src, '.');
-		if (dot != NULL && strlen(dot) <= 3+1)
+		if (dot != NULL && strlen(dot) <= 3+1 && strlen(dot) > 1)
 		{
 			word extLen = (word)strlen(dot+1);
 			res = memcpy(Name, src, dot - src) != NULL && memcpy(Extension, dot+1, extLen) != NULL &&

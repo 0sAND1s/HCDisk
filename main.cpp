@@ -3184,7 +3184,7 @@ bool ScreenProcess(int argc, char* argv[])
 		stringstream ss(operArg);
 		ss >> l1 >> x >> c1 >> x >> l2 >> x >> c2;		
 
-		ScrBlankRectangle(&scrInBuf, l1, c1, l2, c2);
+		ScrBlankRectangle(&scrInBuf, (byte)l1, (byte)c1, (byte)l2, (byte)c2);
 		FILE* scrOut = fopen(nameOut.c_str(), "wb");
 		fwrite(&scrInBuf, 1, sizeof(ScreenType), scrOut);
 		fclose(scrOut);
@@ -3194,6 +3194,52 @@ bool ScreenProcess(int argc, char* argv[])
 
 	return true;
 }
+
+
+bool BinCut(int argc, char* argv[])
+{
+	char* fnameIn = argv[0];
+	char* fnameOut = argv[1];
+	char* offsetStr = argv[2];
+	char* lenStr = (argc >= 3 ? argv[3] : "0");
+
+	long offset = atoi(offsetStr);
+	long fsizeIn = fsize(fnameIn);
+	long lenBlock = atoi(lenStr);
+
+	if (lenBlock == 0)
+		lenBlock = fsizeIn - offset;
+
+	if (offset + lenBlock > fsizeIn)
+	{
+		cout << offset << " + " << lenBlock << " do not fit the file " << fnameIn << " lenght of " << fsizeIn << "." << endl;
+		return false;
+	}
+
+	FILE* fin = fopen(fnameIn, "rb");
+	FILE* fout = fopen(fnameOut, "wb");
+	if (fin == nullptr || fout == nullptr)
+	{
+		cout << "Couln't open input or output file." << endl;
+		return false;
+	}
+	
+	fseek(fin, offset, SEEK_SET);
+	long leftBytes = lenBlock;
+	while (leftBytes > 0)
+	{
+		fputc(fgetc(fin), fout);
+		leftBytes--;
+	}
+
+	fclose(fin);
+	fclose(fout);
+
+	cout << "Created file " << fnameOut << " with lenght " << lenBlock << "." << endl;
+
+	return true;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -3314,6 +3360,14 @@ static const Command theCommands[] =
 			{"output file", true, "SCREEN$ file on PC write"}
 		},
 		ScreenProcess},
+	{ {"bincut"}, "File section cut, starting at offset, with size length",
+		{
+			{"input file", true, "input file name"},
+			{"output file", true, "output file name"},
+			{"offset", true, "0 based start offset"},		
+			{"lenght", false, "length of block, default: file len - offset"}
+		},
+		BinCut },
 	{{"exit", "quit"}, "Exit program", 
 	{{}}},	
 };
