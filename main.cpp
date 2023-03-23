@@ -787,8 +787,29 @@ bool GetFile(int argc, char* argv[])
 	if (theFS == NULL)
 		return false;	
 
-	bool asText = (argc >= 2 && strcmp((char*)argv[1], "-t") == 0);
-	CFile* f = theFS->FindFirst((char*)argv[0]);	
+	char* fileName = argv[0];
+	bool asText = false;
+	string pcName;
+
+	byte argIdx = 1;
+	while (argIdx < argc)
+	{
+		string arg = argv[argIdx];
+		if (arg == "-t")
+		{
+			asText = true;
+		}
+		else if (arg == "-n" && argc > argIdx + 1)
+		{
+			pcName = argv[argIdx + 1];
+			argIdx++;
+		}
+
+		argIdx++;
+	}
+
+
+	CFile* f = theFS->FindFirst(fileName);
 	CFileSystem::FileNameType fn;
 	bool res = false;
 		
@@ -799,7 +820,10 @@ bool GetFile(int argc, char* argv[])
 			printf("Couldn't open file '%s'!\n", fn);
 		else
 		{						
-			FILE* pcFile = fopen(fn, "wb");
+			if (pcName.length() == 0)
+				pcName = fn;
+
+			FILE* pcFile = fopen(pcName.c_str(), "wb");
 			if (pcFile != NULL)
 			{							
 				if (theFS->ReadFile(f))
@@ -814,11 +838,11 @@ bool GetFile(int argc, char* argv[])
 					fwrite(buf1, 1, len, pcFile);
 					fclose(pcFile);
 					delete[] buf1;							
-					printf("Wrote file %s\n", fn);		
+					printf("Wrote file '%s'.\n", pcName.c_str());		
 					res = true;
 				}				
 				else
-					printf("Could not read file %s\n", fn);				
+					printf("Could not read file '%s'.\n", fn);				
 			}												
 
 			theFS->CloseFile(f);
@@ -3265,7 +3289,9 @@ static const Command theCommands[] =
 		Cat},
 	{{"get"}, "Copy file(s) to PC",
 		{{"[\"]filespec[\"]", true, "* or *.com or readme.txt, \"1 2\", etc"},
-		{"-t", false, "Copy as text"}},
+		{"-t", false, "Copy as text"},
+		{"-n newName", false, "Set the PC file name, default: original name"}
+		},
 		GetFile},
 	{{"type", "cat"}, "Display file",
 		{{"file spec.", true, "* or *.com or readme.txt, etc"},
@@ -3355,7 +3381,7 @@ static const Command theCommands[] =
 	{ {"screen"}, "SCREEN$ block processing functions",
 		{
 			{"operation", true, "order, blank"},
-			{"argument", true, "order: column, cell; blank: rectangle l1xc1xl2xc2"},
+			{"argument", true, "order: column/cell; blank: line1xcol1xline2xcol2"},
 			{"input file", true, "SCREEN$ file on PC read"},
 			{"output file", true, "SCREEN$ file on PC write"}
 		},
