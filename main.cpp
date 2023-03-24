@@ -500,11 +500,10 @@ long fsize(const char* fname)
 	{
 		fseek(f, 0, SEEK_END);
 		fs = ftell(f);
+		fclose(f);
 	}
 	else
-		fs = 0;
-	
-	fclose(f);
+		fs = 0;	
 
 	return fs;	
 }
