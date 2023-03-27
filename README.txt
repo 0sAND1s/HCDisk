@@ -88,32 +88,61 @@ fsinfo  - Display the known file systems
 
 Displays the known file systems, with details, from the program help (geometry, block size, block count, directory capacity, 
 boot track count):
-Name                    |Geometry       |Bl.Sz. |Bl.Cnt |Dir.   |Boot
---------------------------------------------------------------------
-HC BASIC 5.25"          |40x2x16x256    |2048   |160    |128    |0
-HC BASIC 3.5"           |80x2x16x256    |2048   |320    |128    |0
-CP/M 2.2 5.25"          |40x2x9x512     |2048   |175    |64     |2
-CP/M 2.2 3.5"           |80x2x9x512     |2048   |351    |128    |4
-Spectrum +3 PCW         |40x2x9x512     |2048   |175    |64     |1
-Spectrum +3 CP/M SSDD   |40x1x9x512     |1024   |175    |64     |1
-Spectrum +3 CP/M DSDD   |80x2x9x512     |2048   |357    |256    |1
-Spectrum +3 HiForm 203  |42x1x10x512    |1024   |205    |64     |1
-Electronica CIP-04      |80x1x9x512     |1024   |355    |64     |1
-TRDOS DS 3.5"           |80x2x16x256    |256    |2544   |128    |1
-TRDOS DS 5.25"          |40x2x16x256    |256    |1264   |128    |1
-TRDOS SS 3.5"           |80x1x16x256    |256    |1264   |128    |1
-TRDOS SS 5.25"          |40x1x16x256    |256    |624    |128    |1
-CoBra Devil             |80x2x18x256    |9216   |77     |108    |0
-Opus Discovery          |40x1x18x256    |256    |720    |112    |0
-MGT +D                  |80x2x10x512    |512    |3125   |80     |0
+Idx     Name                    |Geometry       |Bl.Sz. |Bl.Cnt |Dir    |Boot   |Writable
+-----------------------------------------------------------------------------------------
+ 1. HC BASIC 5.25"              |40x2x16x256    |2048   |160    |128    |0      |yes
+ 2. HC BASIC 3.5"               |80x2x16x256    |2048   |320    |128    |0      |yes
+ 3. GENERIC CP/M 2.2 5.25"      |40x2x9x512     |2048   |175    |64     |2      |yes
+ 4. GENERIC CP/M 2.2 3.5"       |80x2x9x512     |2048   |351    |128    |4      |yes
+ 5. Spectrum +3 BASIC 180K      |40x1x9x512     |1024   |175    |64     |1      |yes
+ 6. Spectrum +3 BASIC 203K      |42x1x10x512    |1024   |205    |64     |1      |yes
+ 7. Spectrum +3 BASIC 720K      |80x2x9x512     |2048   |357    |256    |1      |yes
+ 8. Spectrum +3 BASIC PCW       |40x2x9x512     |2048   |175    |64     |1      |yes
+ 9. Spectrum +3 CP/M SSDD       |40x1x9x512     |1024   |175    |64     |1      |yes
+10. Spectrum +3 CP/M DSDD       |80x2x9x512     |2048   |357    |256    |1      |yes
+11. TRDOS DS 3.5"               |80x2x16x256    |256    |2544   |128    |1      |no
+12. TRDOS DS 5.25"              |40x2x16x256    |256    |1264   |128    |1      |no
+13. TRDOS SS 3.5"               |80x1x16x256    |256    |1264   |128    |1      |no
+14. TRDOS SS 5.25"              |40x1x16x256    |256    |624    |128    |1      |no
+15. Opus Discovery 40T SS       |40x1x18x256    |256    |720    |112    |0      |no
+16. Opus Discovery 40T DS       |40x2x18x256    |256    |1440   |112    |0      |no
+17. Opus Discovery 80T SS       |80x1x18x256    |256    |2880   |112    |0      |no
+18. Opus Discovery 80T DS       |80x2x18x256    |256    |5760   |112    |0      |no
+19. MGT +D                      |80x2x10x512    |512    |3125   |80     |0      |no
+20. CoBra Devil                 |80x2x18x256    |9216   |77     |108    |0      |no
+21. Electronica CIP-04          |80x1x9x512     |1024   |355    |64     |1      |yes
+Known containers:
+- A:/B: - PHYSICAL DISK (RW)
+- RAW - DISK IMAGE (RW)
+- DSK - CPCEMU DISK IMAGE (RW)
+- EDSK - CPCEMU DISK IMAGE (RW)
+- TRD - TR-DOS DISK IMAGE
+- SCL - TR-DOS DISK IMAGE
+- CQM - Sydex COPYQM DISK IMAGE
+- OPD - OPUS Discovery DISK IMAGE
+- MGT - Miles Gordon Tech DISK IMAGE
+- TAP - TAPE IMAGE (RW)
+- TZX - TAPE IMAGE
+- TD0 - Sydex Teledisk DISK IMAGE
 
 stat  - Display the current file system parameters: (total/free blocks, total/free space, disk geometry, disk type, etc)
 	Example for HC BASIC:
-Storage: RAW, File system: HC BASIC 3.5"
-Disk geometry: Tracks: 80, Sides: 2, Sectors: 16, Sector Size: 256
-Block size: 2.00 K, Blocks free/max: 10/320, Space free/max KB: 20/640
-Directory entries free/max: 44/128
-File system features: Sinclair Spectrum, File attributes, File folders, Case sensitive names
+
+HC BASIC 3.5">stat
+Container               : EDSK - CPCEMU DISK IMAGE (RW)
+File system             : HC BASIC 3.5"
+Path                    : $ULTIMELE.DSK
+Disk geometry           : 80T x 2H x 16S x 256B/S
+Hard sector skew        : 0
+Raw Size                : 640 KB
+Block size              : 2.00 KB
+Blocks free/max         : 6/320
+Disk free/max KB        : 12/640 = 1.88% free
+Catalog free/max        : 76/128 = 59.38% free
+File system features    : Sinclair Spectrum, File attributes, File folders, Case sensitive names,
+File name structure     : 11.0 (name.extension)
+
+
 
 open  - Open disk or disk image
 - <drive|image>: The disk/image to open
@@ -134,26 +163,14 @@ ls dir  - List directory
 file index, file folder (for CPM), file name and extension, file size on disk, file attributes (if available for the file system). 
 For BASIC file systems, there's also specific info displayed: file type, code start address/program start line, and lenght.
 
-IDX     Folder  Name            Size(KB)        Attr    Type    Start   BasLen
-------------------------------------------------------------------------------
-  1     0       8PAT1           15.00           ---     Program  2700   15025
-  2     0       BURROW1          9.00           ---     Program     1    8590
-  3     0       RUFUS            1.00           ---     Program    10     211
-  4     0       RUFUS   .1       5.00           ---     Bytes   50000    4152
-  5     0       CASH1           11.00           ---     Program     1   10119
-  6     0       CHIRP1           7.00           ---     Program     1    6513
-  7     0       CRASH1           3.00           ---     Program    10    2120
-  8     0       CRASH2           2.00           ---     Bytes   27970    1470
-  9     0       CRASH3           3.00           ---     Bytes   30697    2025
- 10     0       RUFUS   .2      26.00           ---     Bytes   38540   25875
- 11     0       DISK             2.00           ---     Program    10    1024
- 12     0       KRIEG1           4.00           ---     Program     1    3525
- 13     0       LETHOS1          1.00           ---     Program     0     154
- 14     0       LETHOS2          7.00           ---     Bytes   16384    6912
- 15     0       LETHOS3         41.00           ---     Program     0   40970
- 16     0       ORION1          38.00           ---     Program     0   38325
- 17     0       OXO1             9.00           ---     Program     1    8311
-Space free/filled/total : 019/186/205 KB
+IDX     Folder  Name            Size(KB)        Attr    Type    Start   BasLen  VarLen
+-----------------------------------------------------------------------------------
+  1     0       run              2.00           ---     Program     0    1610       0
+  2     0       SOLDIER          2.00           ---     Program    10     335       0
+  3     0       solcode         40.00           ---     Bytes   26359   39177
+  4     0       BATTY            2.00           ---     Program    10     558       0
+  5     0       BATTY_mc        24.00           ---     Bytes   26624   23156
+
 
 get  - Copy file(s) to PC
 - <["]filespec["]>: * or *.com or readme.txt, "1 2", etc - names with spaces are supported, but must be enclosed in quotes
@@ -212,9 +229,21 @@ tapimp  - Imports the TAP file to disk
 - [-convldr]: convert BASIC loader synthax, file names
 The parameter -convldr will cause BASIC program conversion to match the destination file system LOAD syntax.
 
+saveboot  - Save boot tracks to file - usefull for CPM disks with booloader
+- <file name>: output file
+
+loadboot  - Load boot tracks from file - usefull for CPM disks with booloader
+- <file name>: input file
+
 formatdisk - Format a physical disk or a disk image for a certain file system
 - <disk/image> : the disk drive or image to format
 - [-t] : the file system format number to use, as found in fsinfo command
+
+bin2bas  - Put binary to BASIC block, in a REM statement or variable
+- <type>: type of conversion: 'rem' or 'var'
+- <file>: blob file to add
+- [name of block]: name of BASIC block, default blob file name
+- [address of execution]: address to copy the block to before execution, default 0 - no moving blob to an address, > 0 means the blob will be LDIR-ed to the specified address before execution.
 
 convldr - Converts a BASIC loader to work with another storage device
 - <.tap name>: destination TAP file name
@@ -243,6 +272,20 @@ basimp  - Import a BASIC program from a text file
 - <BASIC file>: BASIC program file to compile
 - [file name]: Program file name (default: file name)
 - [autorun line]: Autorun line number (default: 0)
+
+screen  - SCREEN$ block processing functions
+- <operation>: order, blank
+- <argument>: order: column/cell; blank: line1xcol1xline2xcol2
+- <input file>: SCREEN$ file on PC read
+- <output file>: SCREEN$ file on PC write
+Example: screen order column - will order SCREEN$ by columns, to improve compression
+Example: screen blank 0x0x1x1 - will set to 0 the upper left character cell in the SCREEN$, for both pixels and attributes.
+
+bincut  - File section cut, starting at offset, with size length
+- <input file>: input file name
+- <output file>: output file name
+- <offset>: 0 based start offset
+- [lenght]: length of block, default: file len - offset
 
 exit quit  - Exit program
 

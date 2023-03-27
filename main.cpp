@@ -678,10 +678,10 @@ bool Cat(int argc, char* argv[])
 	if (HasAttr)
 		printf("\tAttr");
 	if (IsBasic && bExtendedCat)
-		printf("\tType\tStart\tBasLen\n");
+		printf("\tType\tStart\tBasLen\tVarLen\n");
 	else
 		printf("\n");
-	printf("------------------------------------------------------------------------------\n");	
+	printf("--------------------------------------------------------------------------------------\n");	
 	
 	list<CFile*> lstAllFiles;
 	CFile* f = theFS->FindFirst((char*)wildCard.c_str(), includeDeleted);
@@ -740,11 +740,14 @@ bool Cat(int argc, char* argv[])
 			CFileSpectrum* s = dynamic_cast<CFileSpectrum*>(f);
 			if (s != NULL)
 			{
-				char start[6] = "", len[7] = "";
+				char start[6] = "", len[7] = "", varLen[7] = "";
 				CFileSpectrum::SpectrumFileType st = s->GetType();								
 
 				if (st == CFileSpectrum::SPECTRUM_PROGRAM && s->SpectrumStart != (word)-1)
-					itoa(s->SpectrumStart, start, 10);											
+				{
+					itoa(s->SpectrumStart, start, 10);
+					itoa(s->SpectrumVarLength, varLen, 10);
+				}
 				else if (st == CFileSpectrum::SPECTRUM_BYTES)
 					itoa(s->SpectrumStart, start, 10);
 				else if (st == CFileSpectrum::SPECTRUM_CHAR_ARRAY || st == CFileSpectrum::SPECTRUM_NUMBER_ARRAY)
@@ -755,8 +758,8 @@ bool Cat(int argc, char* argv[])
 				else
 					itoa(theFS->GetFileSize(f, false), len, 10);
 
-				printf("\t%s\t%5s\t%5s", 
-					CFileSpectrum::SPECTRUM_FILE_TYPE_NAMES[st], start, len);										
+				printf("\t%s\t%5s\t%5s\t%5s", 
+					CFileSpectrum::SPECTRUM_FILE_TYPE_NAMES[st], start, len, varLen);
 			}				
 		}
 		
@@ -1822,6 +1825,9 @@ void PutFile2(int argc, char* argv[])
 
 bool PutFile(int argc, char* argv[])
 {
+	if (theFS == nullptr)
+		return false;
+
 	char* name = (char*)argv[0];	
 	
 	//Strip path from file name.
@@ -1865,8 +1871,7 @@ bool PutFile(int argc, char* argv[])
 		byte* buf = new byte[fsz];				
 		fread(buf, 1, fsz, fpc);
 		fclose(fpc);
-		fileNew->SetData(buf, fsz);
-		delete[] buf;		
+		fileNew->SetData(buf, fsz);		
 		
 		if (IsBasic)
 		{
@@ -1909,6 +1914,7 @@ bool PutFile(int argc, char* argv[])
 		}		
 			
 		res = theFS->WriteFile(fileNew);		
+		delete[] buf;
 	}	
 	else		
 		res = false;			
@@ -2855,45 +2861,23 @@ bool ChangeAttributes(int argc, char* argv[])
 	return res;
 }
 
-//Convers a Z80 binary into a BASIC block with a REM line.
-//Before executing the Z80 binary, it moves it to the specified address, if the address is specified.
-bool Bin2REM(int argc, char* argv[])
-{
-	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) > 0;
-	if (!IsBasic)
-	{
-		puts("The file system doesn't hold BASIC files.");
-		return false;
-	}
-
-	char *blobName = nullptr, *setName = nullptr;
-	word addr = 0;
-
-	if (argc >= 1)
-		blobName = argv[0];
-	if (argc >= 2)
-		setName = argv[1];
-	if (argc >= 3)
-		addr = atoi(argv[2]);	
-	
-	if (setName == nullptr)
-		setName = blobName;
-
-	long blobSize = fsize(blobName);
+bool Bin2REM(string blobFileName, word addrForMove, string programName)
+{	
+	const long blobSize = fsize(blobFileName.c_str());
 	if (blobSize > 48 * 1024)
 	{
 		puts("Blob size is too big.");
 		return false;
 	}
 
-	FILE* fBlob = fopen(blobName, "rb");
+	FILE* fBlob = fopen(blobFileName.c_str(), "rb");
 	if (fBlob == NULL)
 	{
-		printf("Could not open blob file %s.", blobName);
+		printf("Could not open blob file %s.", blobFileName.c_str());
 		return false;
 	}
-	
-	byte basLDR[] = {
+
+	byte basLdrREM[] = {
 		Basic::BASICKeywordsIDType::BK_RANDOMIZE,
 		Basic::BASICKeywordsIDType::BK_USR,
 		Basic::BASICKeywordsIDType::BK_VAL,
@@ -2902,48 +2886,180 @@ bool Bin2REM(int argc, char* argv[])
 		Basic::BASICKeywordsIDType::BK_PEEK, '2', '3', '6', '3', '6',
 		'"', ':', Basic::BASICKeywordsIDType::BK_REM
 	};
+	word basLdrSize = sizeof(basLdrREM);
 
-	byte asmLdr[] = {		
+	byte asmLdr[] = {
 		0x21, 14, 0,										//ld hl, lenght of ASM loader, the blob follows it
 		0x09,												//add hl, bc	;BC holds the address called from RANDOMIZE USR.
-		0x11, (byte)(addr%256), (byte)(addr/256),			//ld de, start addr
+		0x11, (byte)(addrForMove % 256), (byte)(addrForMove / 256),			//ld de, start addr
 		0xD5,												//push de		;Jump to start of blob. 
-		0x01, (byte)(blobSize%256), (byte)(blobSize/256),	//ld bc, blob size
+		0x01, (byte)(blobSize % 256), (byte)(blobSize / 256),	//ld bc, blob size
 		0xED, 0xB0,											//ldir
 		0xC9												//ret		
 	};
-					
-	//Create blob with BASIC loader + actual blob.
-	word ldrLen = sizeof(basLDR) + (addr > 0 ? sizeof(asmLdr) : 0);
-	byte* blobBuf = new byte[blobSize + ldrLen];
-	memcpy(blobBuf, basLDR, sizeof(basLDR));
-	if (addr > 0)
-		memcpy(blobBuf + sizeof(basLDR), asmLdr, sizeof(asmLdr));
-	fread(&blobBuf[ldrLen], 1, blobSize, fBlob);
+	word asmLdrSize = (addrForMove > 0 ? sizeof(asmLdr) : 0);
+	
+	const word ldrSize = basLdrSize + asmLdrSize;
+	byte* blobBuf = new byte[ldrSize + blobSize];
+
+	memcpy(blobBuf, basLdrREM, basLdrSize);
+	//Copy LDIR loader in front of the blob.
+	if (addrForMove > 0)
+		memcpy(blobBuf + basLdrSize, asmLdr, asmLdrSize);
+
+	fread(&blobBuf[ldrSize], 1, blobSize, fBlob);
 	fclose(fBlob);
-			
-	//Create BASIC line from buffer.
-	const word progLineNo = 0;	
-	Basic::BasicLine bl(blobBuf, (word)blobSize + ldrLen, progLineNo);
-	delete [] blobBuf;
-				
+
+	//Create BASIC line from buffer.	
+	const word progLineNo = 0;
+	Basic::BasicLine bl(blobBuf, ldrSize + blobSize, progLineNo);
+
 	//Create header for Spectrum file.
-	CFile* f = theFS->NewFile(setName);
+	CFile* f = theFS->NewFile(programName.c_str());
 	CFileSpectrum* fs = dynamic_cast<CFileSpectrum*>(f);
 	fs->SpectrumType = CFileSpectrum::SPECTRUM_PROGRAM;
 	fs->SpectrumStart = bl.lineNumber;
-	fs->SpectrumVarLength = fs->SpectrumArrayVarName = 0;
-	fs->SpectrumLength = bl.lineSize;			
-	
+	fs->SpectrumVarLength = 0;
+	fs->SpectrumArrayVarName = 0;
+	fs->SpectrumLength = bl.lineSize;
+
 	//Write BASIC line to buffer.
 	Basic::BasicDecoder bd;
 	byte* lastBuf = new byte[bl.lineSize];
 	bd.PutBasicLineToLineBuffer(bl, lastBuf);	
 	f->SetData(lastBuf, bl.lineSize);
-	delete [] lastBuf;
+	delete[] lastBuf;
+	delete[] blobBuf;
+
+	bool res = theFS->WriteFile(f);
+	delete f;
+}
+
+
+bool Bin2Var(string blobFileName, word addrForMove, string programName)
+{
+	const long blobSize = fsize(blobFileName.c_str());
+	if (blobSize > 48 * 1024)
+	{
+		puts("Blob size is too big.");
+		return false;
+	}
+
+	FILE* fBlob = fopen(blobFileName.c_str(), "rb");
+	if (fBlob == NULL)
+	{
+		printf("Could not open blob file %s.", blobFileName.c_str());
+		return false;
+	}
+
+	byte asmLdr[] = {
+		0x21, 14, 0,										//ld hl, lenght of ASM loader, the blob follows it
+		0x09,												//add hl, bc	;BC holds the address called from RANDOMIZE USR.
+		0x11, (byte)(addrForMove % 256), (byte)(addrForMove / 256),			//ld de, start addr
+		0xD5,												//push de		;Jump to start of blob. 
+		0x01, (byte)(blobSize % 256), (byte)(blobSize / 256),	//ld bc, blob size
+		0xED, 0xB0,											//ldir
+		0xC9												//ret		
+	};
+	word asmLdrSize = (addrForMove > 0 ? sizeof(asmLdr) : 0);
+
+	byte varHdr[] = { ((Basic::BASVarType::BV_STRING << 5) | ('x' - 'a' + 1)), (byte)((blobSize + asmLdrSize) % 256), (byte)((blobSize + asmLdrSize) / 256) };
+	const word varHdrSize = sizeof(varHdr);
+
+	byte basLdrVar[] = {
+		Basic::BASICKeywordsIDType::BK_RANDOMIZE,
+		Basic::BASICKeywordsIDType::BK_USR,
+		Basic::BASICKeywordsIDType::BK_VAL, '"',
+		//Address of blob is variable area + 3 bytes for variable header
+		(varHdrSize + '0'), '+',
+		Basic::BASICKeywordsIDType::BK_PEEK, '2', '3', '6', '2', '7', '+', '2', '5', '6', '*',
+		Basic::BASICKeywordsIDType::BK_PEEK, '2', '3', '6', '2', '8', '"',
+		0x0D
+	};
+	word basLdrSize = sizeof(basLdrVar);
+
+	const word ldrSize = basLdrSize + asmLdrSize;
+	const word varLen = varHdrSize + asmLdrSize + blobSize;
+	byte* blobBuf = new byte[ldrSize + varHdrSize + blobSize];
+
+	//Copy basic loader.
+	memcpy(blobBuf, basLdrVar, basLdrSize);
+	//Copy variables header.
+	memcpy(blobBuf + basLdrSize, varHdr, varHdrSize);
+
+	if (addrForMove > 0)	
+		//Copy LDIR loader in front of the blob.
+		memcpy(blobBuf + basLdrSize + varHdrSize, asmLdr, asmLdrSize);	
+
+	fread(&blobBuf[ldrSize + varHdrSize], 1, blobSize, fBlob);
+	fclose(fBlob);
+
+	//Create BASIC line from buffer.	
+	const word progLineNo = 0;
+	Basic::BasicLine bl(blobBuf, basLdrSize, progLineNo);	
+
+	//Create header for Spectrum file.
+	CFile* f = theFS->NewFile(programName.c_str());
+	CFileSpectrum* fs = dynamic_cast<CFileSpectrum*>(f);
+	fs->SpectrumType = CFileSpectrum::SPECTRUM_PROGRAM;
+	fs->SpectrumStart = bl.lineNumber;
+	fs->SpectrumVarLength = varLen;
+	fs->SpectrumArrayVarName = 0;
+	fs->SpectrumLength = bl.lineSize + varLen;
+
+	//Write BASIC line to buffer.
+	Basic::BasicDecoder bd;
+	byte* lastBuf = new byte[bl.lineSize + varLen];
+	bd.PutBasicLineToLineBuffer(bl, lastBuf);	
+	memcpy(&lastBuf[bl.lineSize], &blobBuf[basLdrSize], varLen);
+	f->SetData(lastBuf, bl.lineSize + varLen);
+	delete[] lastBuf;
+	delete[] blobBuf;
+
+	bool res = theFS->WriteFile(f);
+	delete f;
+}
+
+
+//Convers a Z80 binary into a BASIC block with a REM line OR in a variable (not visible in program).
+//Before executing the Z80 binary, it moves it to the specified address, if the address is specified.
+bool Bin2BAS(int argc, char* argv[])
+{
+	if (theFS == nullptr)
+		return false;
+
+	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) > 0;
+	if (!IsBasic)
+	{
+		puts("The file system doesn't hold BASIC files.");
+		return false;
+	}
+
+	string blobName, programName;
+	const bool blobToVar = (string(argv[0]) == "var");
+	word addr = 0;
 	
-	bool res = theFS->WriteFile(f);		
-	delete f;	
+	if (argc >= 2)
+		blobName = argv[1];
+	if (argc >= 3)
+		programName = argv[2];
+	if (argc >= 4)
+		addr = atoi(argv[3]);
+	
+	if (programName.length() == 0)
+		programName =  blobName;	
+	
+	bool res;
+
+	if (blobToVar)
+	{
+		res = Bin2Var(blobName, addr, programName);
+	}
+	else
+	{
+		res = Bin2REM(blobName, addr, programName);
+	}											
+		
 	return res;	
 }
 
@@ -3341,12 +3457,14 @@ static const Command theCommands[] =
 		{{"file spec.", true, "file(s) to update"},
 		{"+/-ars", true, "set/remove attribute(s) (a)rhive, (r)eadonly, (s)ystem"}},
 		ChangeAttributes},
-	{{"bin2rem"}, "Transform binary to BASIC block",
-		{{"file", true, "blob to add"},
-		{"name of block", false, "name of BASIC block"},
-		{"address of execution", false, "address to copy the block to before execution"},
+	{{"bin2bas"}, "Put binary to BASIC block, in a REM statement or variable",
+		{
+			{"type", true, "type of conversion: rem or var"},
+			{"file", true, "blob to add"},
+			{"name of block", false, "name of BASIC block, default blob file name"},
+			{"address of execution", false, "address to copy the block to before execution, default 0 - no moving blob to an address"},
 		},
-		Bin2REM},
+		Bin2BAS},
 	{{"convldr"}, "Converts a BASIC loader to work with another storage device",
 		{{".tap name", true, "destination TAP file name"},
 		{"loader type", true, "type of loader: TAPE, MICRODRIVE, OPUS, HCDISK, IF1COM, PLUS3, MGT"}
@@ -3482,7 +3600,7 @@ bool ExecCommand(char* cmd, char params[10][MAX_PATH])
 	}
 
 	if (!foundCmd)
-		printf("Command not understood.\n");
+		printf("Command not understood. Type ? for help.\n");
 
 	return !exitReq;
 }
@@ -3503,7 +3621,7 @@ int main(int argc, char * argv[])
 	bool exitReq = false;
 
 	//setlocale(LC_ALL, "ro-RO");
-	printf("HCDisk 2.0 by George Chirtoaca, compiled on %s %s.\nType ? for help.\n", __DATE__, __TIME__);	
+	printf("HCDisk 2.0 by George Chirtoaca, compiled on %s %s.\n", __DATE__, __TIME__);	
 
 	try
 	{

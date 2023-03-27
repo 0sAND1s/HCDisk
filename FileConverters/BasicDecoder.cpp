@@ -107,8 +107,8 @@ Basic::BasicLine::BasicLine(byte* bufBasic, word basicLen, word lineNo)
 {
 	lineNumber = lineNo;
 	basicSize = basicLen;
-	lineSize = basicSize + 4;
-	copy(bufBasic, bufBasic + lineSize, back_insert_iterator<vector<byte>>(lineBufBasic));
+	lineSize = 4 + basicSize;
+	copy(bufBasic, bufBasic + basicLen, back_insert_iterator<vector<byte>>(lineBufBasic));
 }
 
 
@@ -193,8 +193,12 @@ word Basic::BasicDecoder::GetVarSize(byte* buf, word len)
 
 	while (bufIdx < len && varLen == 0)
 	{
-		if (buf[bufIdx] == 0 || buf[bufIdx] == 1)		
-			bufIdx += *(word*)&buf[bufIdx+2] + 4;		
+		word lineNo = buf[bufIdx] * 256 + buf[bufIdx + 1];
+		if (lineNo <= 9999)
+		{
+			word lineLen = *(word*)&buf[bufIdx + 2] + 4;
+			bufIdx += lineLen;
+		}
 		else
 			varLen = len - bufIdx;
 	}
