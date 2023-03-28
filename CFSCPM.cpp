@@ -163,8 +163,9 @@ bool CFSCPM::ReadDirectory()
 		for (word entIdx = 0; entIdx < FSParams.DirEntryCount; entIdx++)
 		{
 			//Identify a valid directory entry, even if deleted.
-			if (memchr(DirEntries[entIdx].FileName, DEL_MARKER, CFileCPM::MAX_FILE_NAME_LEN) == NULL 
-				&& DirEntries[entIdx].RecCnt > 0 && DirEntries[entIdx].RecCnt != DEL_MARKER)
+			//if (memchr(DirEntries[entIdx].FileName, DEL_MARKER, CFileCPM::MAX_FILE_NAME_LEN) == NULL 
+			//	&& DirEntries[entIdx].RecCnt > 0 && DirEntries[entIdx].RecCnt != DEL_MARKER)
+			if (IsValidDirEntry(entIdx))
 			{
 				CFileCPM f = CFileCPM(this);
 				f.User = DirEntries[entIdx].UsrCode;
@@ -340,7 +341,7 @@ CFile* CFSCPM::FindNext()
 			bDirMatch = CPM_FileList[fnIdx].User == CWD;
 		else if (!includeDeletedFiles)
 		{
-			bDirMatch = CPM_FileList[fnIdx].User != DEL_MARKER;
+			bDirMatch = CPM_FileList[fnIdx].User != DEL_MARKER && CPM_FileList[fnIdx].User < 32;
 		}
 		else
 			bDirMatch = true;
@@ -465,8 +466,16 @@ bool CFSCPM::WriteFile(CFileCPM* file)
 //Returns the length of the data in the last file's allocation unit, based on record count and sector size.
 word CFSCPM::GetLastExtRecCnt(CFileCPM* file)
 {
-	CFSCPM::DirectoryEntryType lastDirEnt = DirEntries[file->FileDirEntries[file->FileDirEntries.size() - 1]];	
-	return lastDirEnt.RecCnt;
+	word lastDirEntryIdx = file->FileDirEntries[file->FileDirEntries.size() - 1];
+	if (IsValidDirEntry(lastDirEntryIdx))
+	{
+		CFSCPM::DirectoryEntryType lastDirEnt = DirEntries[lastDirEntryIdx];
+		return lastDirEnt.RecCnt <= 0x80 ? lastDirEnt.RecCnt : 0;
+	}	
+	else
+	{
+		return 0;
+	}
 }
 
 //Performs physical disk format, but also adds boot and directory information, if any.
@@ -680,4 +689,51 @@ bool CFSCPM::CloseFile(CFile* file)
 	}
 	else
 		return false;
+}
+
+bool CFSCPM::IsValidDirEntry(word dirEntryIdx)
+{	
+	if (dirEntryIdx > FSParams.DirEntryCount)
+		return false;
+
+	auto de = DirEntries[dirEntryIdx];
+
+	//Check record count and user code.
+	bool res = de.RecCnt > 0 && de.RecCnt != DEL_MARKER && (de.UsrCode < 32 || de.UsrCode == DEL_MARKER);
+
+	//Check file name.
+	if (res)
+	{
+		for (char c : de.FileName)
+		{
+			res = IsCharValidForFilename(c & 0x7F);
+			if (!res)
+				break;
+		}
+	}	
+
+	//Check AU numbers to be smaller than max AU number and also, once AU number is 0, can't be followed by non-0 AU numbers.
+	if (res)
+	{
+		bool hadAU0 = false;
+		for (byte auIdxInExt = 0; auIdxInExt < CPM_AUInExt && res; auIdxInExt++)
+		{
+			auto auNo = 0;
+			if (CPM_AUInExt == 8)
+				auNo = de.AllocUnits.wordIdx[auIdxInExt];
+			else if (CPM_AUInExt == 16)
+				auNo = de.AllocUnits.byteIdx[auIdxInExt];
+
+			if (!hadAU0)
+				hadAU0 = (auNo == 0);
+			
+			if (auIdxInExt > 0 && auNo != 0 && hadAU0)
+				res = false;
+
+			if (res)
+				res = auNo < FSParams.BlockCount;
+		}
+	}
+
+	return res;
 }

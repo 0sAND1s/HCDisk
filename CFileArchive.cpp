@@ -119,7 +119,7 @@ bool CFileArchive::WildCmp(char * mask, const FileNameType fileName)
 
 bool CFileArchive::IsCharValidForFilename(char c)
 {
-	return c > ' ' && c < 128 && strchr("\"*?\\/", c) == NULL;
+	return c >= ' ' && c < 128 && strchr("\"*?\\/", c) == NULL;
 }
 
 bool CFileArchive::CreateFileName(const char* fNameIn, CFile* file)
@@ -164,6 +164,8 @@ bool CFileArchive::CreateFileName(const char* fNameIn, CFile* file)
 		for (char& c : fnBuf)
 		{
 			c = c & 0x7F; //Strip attribute bit;
+			if (c > 0 && !IsCharValidForFilename(c))
+				c = '_';
 		}
 
 		char* extStart = nullptr;

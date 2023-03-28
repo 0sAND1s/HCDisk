@@ -131,6 +131,7 @@ protected:
 	//static int FileDirEntSorter(word dirEnt1, word dirEnt2);
 	virtual bool OpenFile(CFile* file);
 	virtual bool CFSCPM::CloseFile(CFile* file);
+	bool IsValidDirEntry(word dirEntryIdx);
 };
 
 #endif//_CPMFS_H_
