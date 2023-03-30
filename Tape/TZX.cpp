@@ -133,6 +133,7 @@ bool CTZXFile::GetNextBlock(CTapeBlock* tb)
 	bool Res = true;
 	word wTmp = 0, Idx = 0;
 	dword dwTmp = 0;
+	byte bTmp = 0;
 	
 	m_CurBlkStts = BLK_RD_STS_VALID;	
 	m_CurBlkIdx++;
@@ -327,6 +328,13 @@ bool CTZXFile::GetNextBlock(CTapeBlock* tb)
 		fread(&dwTmp, sizeof(dwTmp), 1, tapFile);
 		fseek(tapFile, dwTmp, SEEK_CUR);
 		break;
+
+	case BLK_ID_HARD_TYPE:
+		Res = true;
+		m_CurBlkStts = BLK_RD_STS_UNSUPORTED;
+		fread(&bTmp, sizeof(bTmp), 1, tapFile);
+		fseek(tapFile, bTmp * 3, SEEK_CUR);
+		break;
 		
 	default:
 		Res = false;
@@ -345,6 +353,7 @@ bool CTZXFile::IndexTape()
 	bool Res = true;
 	word wTmp = 0, Idx = 0;
 	dword dwTmp = 0;
+	byte bTmp = 0;
 	long off = 0;	
 	TapeBlkIdxType idxItm;	
 	m_CurBlkIdx = -1;
@@ -467,6 +476,11 @@ bool CTZXFile::IndexTape()
 				m_CurBlkStts = BLK_RD_STS_UNSUPORTED;
 				fread(&dwTmp, sizeof(dwTmp), 1, tapFile);
 				fseek(tapFile, dwTmp, SEEK_CUR);
+				break;
+
+			case BLK_ID_HARD_TYPE:  //Just ignore hardware type.
+				Res = (fread(&bTmp, sizeof(bTmp), 1, tapFile) == 1) &&
+					fseek(tapFile, bTmp * 3, SEEK_CUR) == 0;
 				break;
 
 			default:
