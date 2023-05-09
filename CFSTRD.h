@@ -75,8 +75,7 @@ public:
 	DiskDescTypeTRDOS diskDescTRD;
 
 
-	CFSTRDOS(CDiskBase* theDisk, char* name = NULL);
-	virtual ~CFSTRDOS();	
+	CFSTRDOS(CDiskBase* theDisk, char* name = NULL);	
 
 	virtual CFile* NewFile(const char* name, long len = 0, byte* data = NULL);
 	virtual CFile* FindFirst(char* pattern = "*");		

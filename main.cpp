@@ -270,6 +270,7 @@ public:
 	word otherParams[5];
 	bool writeSupport;
 };
+FileSystemDescription theDiskDesc;
 
 const FileSystemDescription DISK_TYPES[] =
 {
@@ -607,6 +608,7 @@ void DisplayTZXComments()
 					bufIdx += blkTxt->TxtLen;																															
 					blkTxt = (CTZXFile::TZXBlkArhiveInfo::TextItem*)&tb.Data[bufIdx];
 				}
+				
 				break;
 			}
 		}			
@@ -1195,11 +1197,13 @@ bool Close(int argc, char* argv[])
 		theFS = NULL;					
 	}
 	
+	/*
 	if (theDisk != NULL)
 	{
 		delete theDisk;
 		theDisk = NULL;
 	}
+	*/
 	
 	return true;
 }
@@ -1497,11 +1501,13 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 			it++;
 		
 		
+		/*
 		if (theDisk != NULL)
 		{
 			delete theDisk;
 			theDisk = NULL;
 		}		
+		*/
 
 		if (theFS != NULL)
 		{
@@ -1538,9 +1544,7 @@ byte AskGeometry(vector<byte> foundGeom)
 
 bool Open(int argc, char* argv[])
 {
-	strcpy(path, argv[0]);	
-	//CDiskBase* theDisk = NULL;
-	FileSystemDescription theDiskDesc;
+	strcpy(path, argv[0]);			
 	word fsIdx = 0;	
 	vector<byte> foundGeom;
 	byte selGeom = 0;
@@ -1790,6 +1794,241 @@ bool CopyDisk(int argc, char* argv[])
 		return false;
 }
 
+
+bool CopyDiskFromCOM(char* remoteName, CFSCPM* fsSrc)
+{
+	bool res = SetCOMForIF1(remoteName, 19200);
+	if (!res)
+	{
+		cout << "Could not open port " << remoteName << endl;
+		return res;
+	}
+	word blockCnt = 0, blockIdx = 0, blockIdxIdx = 0;
+	int blocksLeft = 0;
+	vector<byte> bufCom(theDiskDesc.fsParams.BlockSize);
+
+	res = ReadBufferFromIF1((byte*)&blockCnt, sizeof(word));
+
+	if (blockCnt > fsSrc->FSParams.BlockCount)
+	{
+		cout << "Block count received is too big for the current file system: " << blockCnt << endl;
+		return false;
+	}
+
+	vector<word> blIdx(blockCnt);
+	if (res)
+	{
+		//Read block indexes.
+		res = ReadBufferFromIF1((byte*)blIdx.data(), blockCnt * sizeof(word));
+
+		blocksLeft = blockCnt;
+	}
+
+	while (res && blocksLeft > 0)
+	{
+		res = ReadBufferFromIF1(bufCom.data(), (word)bufCom.size());
+		blockIdx = blIdx[blockIdxIdx++];
+
+		printf("%cCopying block %03d, %03d blocks left.", 13, blockIdx, blocksLeft);
+
+		if (kbhit())
+		{
+			cout << "Transfer canceled." << endl;
+			break;
+		}
+
+		if (blockIdx < fsSrc->FSParams.BlockCount)
+			res = fsSrc->WriteBlock(bufCom.data(), blockIdx);
+		else
+			cout << "Invalid block number " << blockIdx << "." << endl;
+
+		if (!res)
+			cout << "Error writing block " << blockIdx << "." << endl;
+
+		blocksLeft--;
+	}
+
+	res = CloseCOM() && fsSrc->Init();
+
+	return res;
+}
+
+
+bool CopyDiskToCOM(CFSCPM* fsSrc, char* remoteName)
+{	
+	bool res = SetCOMForIF1(remoteName, 19200);
+	if (!res)
+	{
+		cout << "Could not open port " << remoteName << endl;
+		return res;
+	}
+
+	const word blkCntTotal = fsSrc->GetMaxBlockCount();
+	word blkCntUsed = blkCntTotal - fsSrc->GetFreeBlockCount();
+	word blkIdx = 0, blkIdxIdx = 0;	
+	vector<word> blkUsedIdx(blkCntUsed);
+
+	while (blkIdx < blkCntTotal)
+	{
+		if (!fsSrc->IsBlockFree(blkIdx))
+		{
+			blkUsedIdx[blkIdxIdx++] = blkIdx;
+		}
+
+		blkIdx++;
+	}
+
+	res = WriteBufferToIF1((byte*)&blkCntUsed, sizeof(word)) && 
+		WriteBufferToIF1((byte*)blkUsedIdx.data(), blkCntUsed * sizeof(word));
+
+	vector<byte> blockBuf(fsSrc->FSParams.BlockSize);
+	int blocksLeft = blkCntUsed;
+	blkIdxIdx = 0;
+	while (res && blocksLeft > 0)
+	{
+		blkIdx = blkUsedIdx[blkIdxIdx++];
+		printf("%cCopying block %03d, %03d blocks left.", 13, blkIdx, blocksLeft--);
+		res = fsSrc->ReadBlock(blockBuf.data(), blkIdx) && WriteBufferToIF1(blockBuf.data(), blockBuf.size());
+	}
+
+	CloseCOM();
+
+	return res;
+}
+
+bool CopyFSDisk(CFSCPM* fsSrc, CFSCPM* fsDst)
+{
+	bool res = true;
+
+	CDiskBase::DiskDescType ddSrc, ddDst;
+	res = fsSrc->Disk->DetectDiskGeometry(ddSrc) && fsDst->Disk->DetectDiskGeometry(ddDst);
+
+	bool sameGeometry = 
+		ddSrc.TrackCnt == ddDst.TrackCnt &&
+		ddSrc.SideCnt == ddDst.SideCnt &&
+		ddSrc.SPT == ddDst.SPT &&
+		ddSrc.SectSize == ddDst.SectSize;
+
+	if (!sameGeometry)
+	{
+		res = false;
+		cout << "The destination disk has a different format than the source disk. Format it first." << endl;
+		return res;
+	}
+
+	//Copy the used blocks only, ignore the free blocks, for efficiency.		
+	const word blkCntTotal = fsSrc->GetMaxBlockCount();
+	word blkCntUsed = blkCntTotal - fsSrc->GetFreeBlockCount();
+	word blkIdx = 0;
+	vector<byte> buf(fsSrc->GetBlockSize());
+	while (res && blkIdx < blkCntTotal)
+	{
+		if (!fsSrc->IsBlockFree(blkIdx))
+		{
+			printf("%cCopying block %03d, %03d blocks left.", 13, blkIdx, blkCntUsed);
+
+			res = fsSrc->ReadBlock(buf.data(), blkIdx) && fsDst->WriteBlock(buf.data(), blkIdx);
+
+			blkCntUsed--;
+		}
+
+		blkIdx++;
+	}
+
+	return res;
+}
+
+
+//Copy file system blocks from one disk to another or from/to specified COM port. 
+//Currently only supported for CP/M, since it's the only FS with write support.
+bool CopyFS(int argc, char* argv[])
+{
+	bool res = true;
+	enum TransferType
+	{
+		TO_COM,
+		FROM_COM,
+		TO_DISK,
+		FROM_DISK
+	} transType;
+
+	char* remoteName = argv[1];
+	string direction = argv[0];
+	if (direction != "to" && direction != "from")
+	{
+		cout << "Direction must be specified as 'to' or 'from'." << endl;
+		return false;
+	}
+
+	bool isCOM = CFileArchive::StrWildCmp(remoteName, "COM?") || CFileArchive::StrWildCmp(remoteName, "COM??");
+	
+	if (isCOM)
+	{
+		transType = (direction == "to" ? TO_COM : FROM_COM);
+	}
+	else
+	{
+		transType = (direction == "to" ? TO_DISK : FROM_DISK);
+	}
+	
+	if (theFS == nullptr || ((theFS->GetFSFeatures() & CFileSystem::FSFT_DISK) != CFileSystem::FSFT_DISK) ||
+		!(theDiskDesc.fsType == FS_CPM_GENERIC || theDiskDesc.fsType == FS_CPM_HC_BASIC || theDiskDesc.fsType == FS_CPM_PLUS3_BASIC))
+	{		
+		cout << "Current disk is not a CP/M based file system." << endl;		
+		return false;
+	}
+
+	CFSCPM* fsCurrent = dynamic_cast<CFSCPM*>(theFS);	
+	if ((void*)fsCurrent == NULL || (void*)remoteName == NULL || strlen((char*)remoteName) == 0)
+		return false;
+	strupr((char*)remoteName);			
+	
+	if (transType == FROM_COM)
+	{
+		res = CopyDiskFromCOM(remoteName, fsCurrent);
+	}	
+	else if (transType == TO_COM)
+	{
+		res = CopyDiskToCOM(fsCurrent, remoteName);
+	}
+	else if (transType == TO_DISK || transType == FROM_DISK)
+	{
+		CFSCPM* fsRemote = nullptr;
+		CDiskBase* dskRemote = InitDisk(remoteName, &fsCurrent->Disk->DiskDefinition);
+		res = dskRemote->Open((char*)remoteName, CDiskBase::OPEN_MODE_EXISTING);		
+		if (res)
+		{
+			fsRemote = new CFSCPM(dskRemote, fsCurrent->FSParams, fsCurrent->FSDesc);
+			res = fsRemote->Init();
+		}
+		if (!res)
+		{
+			cout << "Could not open " << remoteName << "." << endl;
+			delete fsRemote;
+			return res;
+		}		
+
+		if (transType == TO_DISK)
+		{
+			res = CopyFSDisk(fsCurrent, fsRemote);
+		}
+		else if (transType == FROM_DISK)
+		{
+			res = CopyFSDisk(fsRemote, fsCurrent);
+			fsCurrent->Init();
+		}
+
+		delete fsRemote;
+	}
+
+
+	printf("\n");	
+
+
+	return res;
+}
+
+/*
 vector<string> ListFilesInPath(string path)
 {
 	auto files = vector<string>();
@@ -1822,6 +2061,7 @@ void PutFile2(int argc, char* argv[])
 			nameDest = nameDest.substr(lastSlash + 1, CFSCPM::MAX_FILE_NAME_LEN + 1);
 	}	
 }
+*/
 
 bool PutFile(int argc, char* argv[])
 {
@@ -2021,7 +2261,7 @@ void Tap2Wav(CTapFile* theTap, bool realTime = true)
 		bool blockRead = theTap->GetFirstBlock(&tb);		
 		while (blockRead)
 		{			
-			printf("\n%02d: ", theTap->m_CurBlkIdx);					
+			printf("%02d: ", theTap->m_CurBlkIdx);					
 
 			if (theTap->m_CurBlkStts != CTapFile::BLK_RD_STS_VALID)
 			{
@@ -2049,9 +2289,9 @@ void Tap2Wav(CTapFile* theTap, bool realTime = true)
 						if (tb.m_BlkType == CTapeBlock::TAPE_BLK_STD)
 							printf("%sStandard Block\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
 						else if (tb.m_BlkType == CTapeBlock::TAPE_BLK_TURBO)
-							printf("%sTurbo Block\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
+							printf("%sTurbo Block\t\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
 						else
-							printf("%sRaw data\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
+							printf("%sRaw data\t\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
 
 						if ((tb.m_BlkType == CTapeBlock::TAPE_BLK_STD || tb.m_BlkType == CTapeBlock::TAPE_BLK_TURBO) &&
 							tb.IsBlockHeader())
@@ -2571,6 +2811,7 @@ bool PutFilesIF1COM(int argc, char* argv[])
 	}
 	tap.Close();
 	remove("if1.tap");	
+	CloseCOM();
 
 	return res;
 }
@@ -2912,7 +3153,7 @@ bool Bin2REM(string blobFileName, word addrForMove, string programName)
 
 	//Create BASIC line from buffer.	
 	const word progLineNo = 0;
-	Basic::BasicLine bl(blobBuf, ldrSize + blobSize, progLineNo);
+	Basic::BasicLine bl(blobBuf, ldrSize + (word)blobSize, progLineNo);
 
 	//Create header for Spectrum file.
 	CFile* f = theFS->NewFile(programName.c_str());
@@ -2933,6 +3174,8 @@ bool Bin2REM(string blobFileName, word addrForMove, string programName)
 
 	bool res = theFS->WriteFile(f);
 	delete f;
+
+	return true;
 }
 
 
@@ -2979,8 +3222,8 @@ bool Bin2Var(string blobFileName, word addrForMove, string programName)
 	word basLdrSize = sizeof(basLdrVar);
 
 	const word ldrSize = basLdrSize + asmLdrSize;
-	const word varLen = varHdrSize + asmLdrSize + blobSize;
-	byte* blobBuf = new byte[ldrSize + varHdrSize + blobSize];
+	const word varLen = varHdrSize + asmLdrSize + (word)blobSize;
+	byte* blobBuf = new byte[ldrSize + varHdrSize + (word)blobSize];
 
 	//Copy basic loader.
 	memcpy(blobBuf, basLdrVar, basLdrSize);
@@ -3018,6 +3261,8 @@ bool Bin2Var(string blobFileName, word addrForMove, string programName)
 
 	bool res = theFS->WriteFile(f);
 	delete f;
+
+	return true;
 }
 
 
@@ -3412,11 +3657,16 @@ static const Command theCommands[] =
 		{{"file spec.", true, "* or *.com or readme.txt, etc"},
 		{"-h|-t|-d", false, "display as hex|text|asm"}},
 		TypeFile},
-	{{"copydisk"}, "Copy current disk to another disk or image",
+	{{"copydisk"}, "Copy current disk to another disk or image, sector by sector",
 		{{"destination", true, "destination disk/image"},
 		 {"-f", false, "format destination while copying"},
 		 {"-y", false, "format without confirmation"}
 		}, CopyDisk},
+	{{"copyfs"}, "Copy only used blocks from current file system to another disk (same FS type, CP/M only)",
+		{
+			{"direction", true, "'to'/'from'"},
+			{"remote", true, "source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)"}
+		}, CopyFS},
 	{{"put"}, "Copy PC file to file system",
 		{{"source file", true, "the file to copy"},
 		{"-n newname", false, "name for destination file"},

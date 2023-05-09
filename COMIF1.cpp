@@ -11,13 +11,13 @@
 #include "CFileArchiveTape.h"
 
 char port[6] = "COM1";
+const byte TIMEOUT_SEC = 10;
 HANDLE m_hCom;
 
-HANDLE SetCOMForIF1(char* m_sComPort, int baud)
+BOOL SetCOMForIF1(char* m_sComPort, int baud)
 {
 	// variables used with the com port
-	BOOL     m_bPortReady;
-	HANDLE   m_hCom;
+	BOOL     m_bPortReady;	
 	DCB      m_dcb;
 
 	m_hCom = CreateFile(m_sComPort,
@@ -59,21 +59,33 @@ HANDLE SetCOMForIF1(char* m_sComPort, int baud)
 	if (GetCommTimeouts(m_hCom, &timeouts))
 	{		
 		//Timeout must be enabled for transfer direction HC2PC to work. Set it at 2 seconds.
-		timeouts.ReadTotalTimeoutConstant = timeouts.WriteTotalTimeoutConstant = 2 * 1000;
+		timeouts.ReadTotalTimeoutConstant = timeouts.WriteTotalTimeoutConstant = TIMEOUT_SEC * 1000;
 		SetCommTimeouts(m_hCom, &timeouts);
-	}
+	}	
 
+	return m_bPortReady;
+}
 
-	return m_hCom;
+BOOL CloseCOM()
+{
+	BOOL res = TRUE;
+
+	if (m_hCom != INVALID_HANDLE_VALUE)
+		res = CloseHandle(m_hCom);
+
+	m_hCom = INVALID_HANDLE_VALUE;
+
+	return res;
 }
 
 bool SendByteToIF1(HANDLE m_hCom, byte b)
 {
 	DWORD iBytesWritten = 1;
-	return WriteFile(m_hCom, &b, 1, &iBytesWritten, NULL) && iBytesWritten == 1;
+	BYTE b1 = b;
+	return WriteFile(m_hCom, &b1, 1, &iBytesWritten, NULL) && iBytesWritten == 1;
 }
 
-bool ReadByteFromIF1(HANDLE m_hCom, byte *b)
+bool ReadByteFromIF1(HANDLE m_hCom, byte* b)
 {
 	DWORD iBytesRead = 1;
 	return ReadFile(m_hCom, b, 1, &iBytesRead, NULL) && iBytesRead == 1;
@@ -88,7 +100,7 @@ bool ReadByteFromIF1(HANDLE m_hCom, byte *b)
 bool SendFileToIF1(CFileSpectrumTape* fs, byte comIdx, dword baudWanted)
 {		
 	sprintf(&port[3], "%d", comIdx);
-	m_hCom = SetCOMForIF1(port, baudWanted);
+	SetCOMForIF1(port, baudWanted);
 	if (m_hCom == INVALID_HANDLE_VALUE)
 	{
 		printf("Couldn't open port %s!", port);
@@ -122,7 +134,7 @@ bool SendFileToIF1(CFileSpectrumTape* fs, byte comIdx, dword baudWanted)
 	
 	delete[] data;	
 
-	CloseHandle(m_hCom);
+	CloseCOM();
 
 	return res;
 }
@@ -131,7 +143,7 @@ bool SendFileToIF1(CFileSpectrumTape* fs, byte comIdx, dword baudWanted)
 bool GetFileFromIF1(CFileSpectrumTape* fst, byte comIdx, dword baudWanted)
 {
 	sprintf(&port[3], "%d", comIdx);
-	m_hCom = SetCOMForIF1(port, baudWanted);
+	SetCOMForIF1(port, baudWanted);
 	if (m_hCom == INVALID_HANDLE_VALUE)
 	{
 		printf("Couldn't open port %s!", port);
@@ -151,7 +163,7 @@ bool GetFileFromIF1(CFileSpectrumTape* fst, byte comIdx, dword baudWanted)
 
 	if (!res)
 	{
-		CloseHandle(m_hCom);
+		CloseCOM();
 		puts("Transfer error.");
 		return false;
 	}	
@@ -188,7 +200,29 @@ bool GetFileFromIF1(CFileSpectrumTape* fst, byte comIdx, dword baudWanted)
 	}
 	
 	delete[] buf;
-	CloseHandle(m_hCom);
+	CloseCOM();
+
+	return res;
+}	
+
+bool ReadBufferFromIF1(byte* bufDest, word bufLen)
+{
+	bool res = true;
+	word idx = 0;
+	
+	while (res && idx < bufLen)
+		res = ReadByteFromIF1(m_hCom, &bufDest[idx++]);
+	
+	return res;
+}
+
+bool WriteBufferToIF1(byte* bufSrc, word bufLen)
+{
+	bool res = true;
+	word idx = 0;
+
+	while (res && idx < bufLen)
+		res = SendByteToIF1(m_hCom, bufSrc[idx++]);
 
 	return res;
 }

@@ -23,10 +23,6 @@ CFSTRDOS::CFSTRDOS(CDiskBase* theDisk, char* name) : CFileSystem(theDisk, name)
 	FSParams.BlockCount = (Disk->DiskDefinition.TrackCnt * Disk->DiskDefinition.SideCnt - 1) * Disk->DiskDefinition.SPT;
 }
 
-CFSTRDOS::~CFSTRDOS()
-{	
-}
-
 bool CFSTRDOS::Init()
 {		
 	if (Disk == NULL)

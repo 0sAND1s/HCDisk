@@ -118,6 +118,8 @@ public:
 			*extLen = EXT_LENGTH;
 	}
 
+	static bool StrWildCmp(const char* string, const char* wild);
+
 protected:
 	ErrorType LastError;		
 	const static char* ERROR_TYPE_MSG[];		

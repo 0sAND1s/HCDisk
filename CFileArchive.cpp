@@ -59,21 +59,25 @@ bool CFileArchive::WildCmp(char * mask, const FileNameType fileName)
 
 	bool isCaseSens = (GetFSFeatures() & FSFT_CASE_SENSITIVE_FILENAMES) > 0;
 	if (!isCaseSens)
-		strupr(mask);		
-	const char *cp = NULL, *mp = NULL;
+		strupr(mask);			
 	FileNameType fName = "";	
 	strcpy(fName, fileName);
 	if (!isCaseSens)
 		strupr(fName);	
-	const char* string = fName;
-	const char* wild = mask;
+	
+	return StrWildCmp(fName, mask);
+}
+
+bool CFileArchive::StrWildCmp(const char* string, const char* wild)
+{
+	const char* cp = NULL, * mp = NULL;
 
 	//return false on first mismatch of non-wildcard caracters
 	//while string is not finished and not encountered a '*'
-	while ((*string) && (*wild != '*')) 
+	while ((*string) && (*wild != '*'))
 	{
 		//if chars differ and wild char is not '?', return false
-		if ((*wild != *string) && (*wild != '?'))       
+		if ((*wild != *string) && (*wild != '?'))
 			return 0;
 
 		//get to the next char
@@ -82,22 +86,22 @@ bool CFileArchive::WildCmp(char * mask, const FileNameType fileName)
 	}
 
 	//while string is not finished
-	while (*string) 
+	while (*string)
 	{
 		//if the first char is '*'
-		if (*wild == '*') 
+		if (*wild == '*')
 		{
 			//and ther's no char after '*'
-			if (!*++wild)         
+			if (!*++wild)
 				//return true
 				return 1;
 
 			//else, there are other chars after '*'
 			mp = wild;
-			cp = string+1; //cp is the rest of the string after '*'
-		} 
+			cp = string + 1; //cp is the rest of the string after '*'
+		}
 		//increment while strings match or wildcard string is '?'
-		else if ((*wild == *string) || (*wild == '?')) 
+		else if ((*wild == *string) || (*wild == '?'))
 		{
 			wild++;
 			string++;

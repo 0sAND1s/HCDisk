@@ -241,7 +241,7 @@ bool CTZXFile::GetNextBlock(CTapeBlock* tb)
 		tb->m_BlkType = CTapeBlock::TAPE_BLK_METADATA;
 		Res = (fread(&m_CurrBlk.blkArhiveInfo.Len, sizeof(word), 1, tapFile) == 1);
 		m_CurrBlk.blkArhiveInfo.StrCnt = fgetc(tapFile);
-		tb->Data = new byte[m_CurrBlk.blkArhiveInfo.Len];
+		tb->Data = new byte[m_CurrBlk.blkArhiveInfo.Len + 10];
 		memcpy(tb->Data, &m_CurrBlk.blkArhiveInfo, sizeof(word) + sizeof(byte));
 		Idx += sizeof(word) + sizeof(byte);
 		for (byte sIdx = 0; sIdx < m_CurrBlk.blkArhiveInfo.StrCnt; sIdx++)
@@ -252,6 +252,7 @@ bool CTZXFile::GetNextBlock(CTapeBlock* tb)
 			fread(&tb->Data[Idx], 1, m_CurrBlk.blkArhiveInfo.TxtItem.TxtLen, tapFile);
 			Idx += m_CurrBlk.blkArhiveInfo.TxtItem.TxtLen;
 		}
+		tb->Length = m_CurrBlk.blkArhiveInfo.Len;
 		break;
 	
 	case BLK_ID_STOP_48K:

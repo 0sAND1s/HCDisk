@@ -50,6 +50,7 @@ public:
 	virtual word GetBlockSize() { return FSParams.BlockSize; }	
 	virtual word GetFreeBlockCount();
 	virtual word GetMaxBlockCount() { return this->FSParams.BlockCount; }
+	virtual word IsBlockFree(word blockIdx);
 	virtual word GetFreeDirEntriesCount();	
 	virtual word GetMaxDirEntriesCount() { return this->FSParams.DirEntryCount; }	
 	virtual dword GetDiskMaxSpace();

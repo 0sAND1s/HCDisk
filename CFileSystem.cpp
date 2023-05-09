@@ -20,14 +20,12 @@ CFileSystem::CFileSystem(CDiskBase* disk, char* name): CFileArchive(name)
 }
 
 CFileSystem::~CFileSystem()
-{
-	/*
+{	
 	if (Disk != NULL)
 	{
 		delete Disk;
 		Disk = NULL;
 	}
-	*/
 }
 
 bool CFileSystem::ReadFile(CFile* f)
@@ -46,6 +44,11 @@ bool CFileSystem::ReadFile(CFile* f)
 word CFileSystem::GetFreeBlockCount()
 {
 	return count(FS_BlockMap.begin(), FS_BlockMap.end(), false);
+}
+
+word CFileSystem::IsBlockFree(word blockIdx)
+{
+	return blockIdx < FS_BlockMap.size() && !FS_BlockMap[blockIdx];
 }
 
 word CFileSystem::GetFreeDirEntriesCount()
