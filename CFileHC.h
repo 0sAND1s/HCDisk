@@ -10,7 +10,7 @@
 
 class CFileHC: public CFileCPM, public CFileSpectrum, public CFileIF1
 {
-	friend class CFSCPMHC;
+	friend class CFSHCBasic;
 public:
 	CFileHC(CFSCPM* fs);
 	CFileHC(const CFileHC&);

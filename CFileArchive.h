@@ -57,7 +57,8 @@ public:
 		FSFT_FOLDERS			= 16,	//FS supports folders
 		FSFT_TIMESTAMPS			= 32,	//FS supports file timestamps (CPM 3.0, FAT, etc)
 		FSFT_CASE_SENSITIVE_FILENAMES = 64,
-		FSFT_TAPE				= 128
+		FSFT_TAPE				= 128,
+		FSFT_AUTORUN			= 256
 	} FSFeatures;	
 
 
@@ -89,6 +90,8 @@ public:
 	virtual bool IsCharValidForFilename(char c);
 	virtual bool CreateFileName(const char* fNameIn, CFile* file);
 	virtual bool CreateFSName(CFile* file, char* fNameOut);
+
+	virtual bool GetAutorunFilename(char** runFileName) { LastError = ERR_NOT_SUPPORTED; return false; }
 
 	virtual ErrorType GetLastError(char* errMsg = NULL)
 	{		

@@ -33,7 +33,7 @@
 #include "CFileHC.h"
 #include "CFileTRD.h"
 #include "CFSTRD.h"
-#include "CFSCPMHC.h"
+#include "CFSHCBasic.h"
 #include "CFSCPMPlus3.h"
 #include "CFSTRDSCL.h"
 #include "CFSCobraDEVIL.h"
@@ -1608,8 +1608,8 @@ bool Open(int argc, char* argv[])
 			//These must be processed here, after the user choses the geometry/fs, as the geometry is not known for RAW images.
 			if (storType == STOR_RAW)
 			{				
-				if (theDisk != NULL)
-					delete theDisk;			
+				//if (theDisk != NULL)
+				//	delete theDisk;			
 
 				theDisk = new CDiskImgRaw(theDiskDesc.diskDef);
 				isOpen = ((CDiskImgRaw*)theDisk)->Open(path);				
@@ -1627,7 +1627,7 @@ bool Open(int argc, char* argv[])
 				if (theDiskDesc.fsType == FS_CPM_GENERIC)		
 					theFS = new CFSCPM(theDisk, theDiskDesc.fsParams, *(CFSCPM::CPMParams*)&theDiskDesc.otherParams, theDiskDesc.Name);								
 				else if (theDiskDesc.fsType == FS_CPM_HC_BASIC)		
-					theFS = new CFSCPMHC(theDisk, theDiskDesc.fsParams, *(CFSCPM::CPMParams*)&theDiskDesc.otherParams, theDiskDesc.Name);								
+					theFS = new CFSHCBasic(theDisk, theDiskDesc.fsParams, *(CFSCPM::CPMParams*)&theDiskDesc.otherParams, theDiskDesc.Name);								
 				else if (theDiskDesc.fsType == FS_CPM_PLUS3_BASIC)
 					theFS = new CFSCPMPlus3(theDisk, theDiskDesc.fsParams, *(CFSCPM::CPMParams*)&theDiskDesc.otherParams, theDiskDesc.Name);
 				else if (theDiskDesc.fsType == FS_COBRA_DEVIL)
@@ -1648,22 +1648,7 @@ bool Open(int argc, char* argv[])
 		}		
 		else
 			printf("\n");
-	}
-
-	if (theFS != NULL)		
-	{
-
-		bool HasLabel = (theFS->GetFSFeatures() & (CFileSystem::FSFT_LABEL | CFileSystem::FSFT_DISK)) > 0;
-		if (HasLabel)
-		{
-			char label[CFileSystem::MAX_FILE_NAME_LEN];
-			if (((CFileSystem*)theFS)->GetLabel(label))
-				printf("Disk label is: %s\n", label);
-		}
-		return true;
-	}
-	else
-		return false;
+	}	
 }
 
 word log2(CFileSystem::FileSystemFeature y)
@@ -1702,13 +1687,26 @@ bool Stat(int argc, char* argv[])
 			((float)fs->GetDiskLeftSpace() / fs->GetDiskMaxSpace()) * 100);
 		printf("Catalog free/max\t: %d/%d = %02.2f%% free\n", fs->GetFreeDirEntriesCount(), fs->GetMaxDirEntriesCount(), 
 			((float)fs->GetFreeDirEntriesCount()/fs->GetMaxDirEntriesCount())*100);
+
 		if (fs->Disk->diskCmnt != NULL)
-			printf("%s", fs->Disk->diskCmnt);		
+			printf("%s", fs->Disk->diskCmnt);
+
+		if (theFS->GetFSFeatures() & (CFileSystem::FSFT_LABEL | CFileSystem::FSFT_DISK))		
+		{
+			char label[CFileSystem::MAX_FILE_NAME_LEN];
+			if (((CFileSystem*)theFS)->GetLabel(label))
+				printf("Disk label\t\t: '%s'\n", label);
+		}
+
+		char* runFile = nullptr;
+		if (feat & CFileSystem::FSFT_AUTORUN && fs->GetAutorunFilename(&runFile))
+			printf("Autorun filename\t: '%s'\n", runFile);
 	}
 
 	
 	printf("File system features\t: ");
 	vector<string> vFt;
+	
 	if (feat & CFileSystem::FSFT_ZXSPECTRUM_FILES)
 		vFt.push_back(CFileSystem::FSFeatureNames[log2(CFileSystem::FSFT_ZXSPECTRUM_FILES)]);
 	if (feat & CFileSystem::FSFT_LABEL)
@@ -1721,8 +1719,16 @@ bool Stat(int argc, char* argv[])
 		vFt.push_back(CFileSystem::FSFeatureNames[log2(CFileSystem::FSFT_TIMESTAMPS)]);
 	if (feat & CFileSystem::FSFT_CASE_SENSITIVE_FILENAMES)
 		vFt.push_back(CFileSystem::FSFeatureNames[log2(CFileSystem::FSFT_CASE_SENSITIVE_FILENAMES)]);
+	if (feat & CFileSystem::FSFT_TAPE)
+		vFt.push_back(CFileSystem::FSFeatureNames[log2(CFileSystem::FSFT_TAPE)]);
+	if (feat & CFileSystem::FSFT_AUTORUN)
+		vFt.push_back(CFileSystem::FSFeatureNames[log2(CFileSystem::FSFT_AUTORUN)]);
+
 	for (byte ftIdx = 0; ftIdx < vFt.size(); ftIdx++)
+	{
 		printf("%s, ", vFt[ftIdx].c_str());		
+	}
+
 	printf("\n");
 
 	byte nameLen, extLen;
@@ -1809,9 +1815,9 @@ bool CopyDiskFromCOM(char* remoteName, CFSCPM* fsSrc)
 
 	res = ReadBufferFromIF1((byte*)&blockCnt, sizeof(word));
 
-	if (blockCnt > fsSrc->FSParams.BlockCount)
+	if (blockCnt > fsSrc->FSParams.BlockCount || blockCnt == 0)
 	{
-		cout << "Block count received is too big for the current file system: " << blockCnt << endl;
+		cout << "The received block count is not valid: " << blockCnt << "." << endl;
 		return false;
 	}
 
@@ -2752,9 +2758,9 @@ bool PutFilesIF1COM(int argc, char* argv[])
 
 	char* fspec = (char*)argv[0];		
 
-	byte comIdx = 1;
+	char* comName = "COM1";
 	if (argc >= 2)
-		comIdx = atoi(argv[1]);	
+		comName = argv[1];	
 
 	dword baud = 4800; //HC put transfer is reliable at max 4800 baud.
 	if (argc >= 3)
@@ -2800,7 +2806,7 @@ bool PutFilesIF1COM(int argc, char* argv[])
 		CFileArchive::FileNameType fn;
 		fst->GetFileName(fn);
 		printf("Sending block '%s: %s' using baud %u. Press any key to cancel.\n", CFileSpectrum::SPECTRUM_FILE_TYPE_NAMES[fst->GetType()], fn, baud);
-		res = SendFileToIF1(fst, comIdx, baud);		
+		res = SendFileToIF1(fst, comName, baud);		
 		puts("");
 
 		//Sleep a bit after each block, to let the Spectrum resume the loading. Otherwise, it breaks the current load.
@@ -2822,20 +2828,20 @@ bool GetFileIF1COM(int argc, char* argv[])
 	if (theFS == NULL)
 		return false;
 
-	bool IsBasicDisk = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) == CFileSystem::FSFT_ZXSPECTRUM_FILES && 
-		(theFS->GetFSFeatures() & CFileSystem::FSFT_DISK) == CFileSystem::CFileSystem::FSFT_DISK;
-	if (!IsBasicDisk)
+	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) == CFileSystem::FSFT_ZXSPECTRUM_FILES;
+		//(theFS->GetFSFeatures() & CFileSystem::FSFT_DISK) == CFileSystem::CFileSystem::FSFT_DISK;
+	if (!IsBasic)
 	{
-		puts("Can receive only BASIC files from IF1 trough COM port to a BASIC disk.");
+		puts("Can write BASIC files only to a BASIC file system.");
 		return false;
 	}
 
 	CFileArchive::FileNameType fn;
 	strcpy(fn, argv[0]);
 
-	byte comIdx = 1;
+	char* comName = "COM1";
 	if (argc >= 2)
-		comIdx = atoi(argv[1]);	
+		comName = argv[1];	
 
 	dword baud = 9600; //HC get transfer is reliable at max 9600 baud.
 	if (argc >= 3)
@@ -2845,7 +2851,7 @@ bool GetFileIF1COM(int argc, char* argv[])
 			
 	CFileSpectrumTape* fst = new CFileSpectrumTape();	
 	fst->SetFileName(fn);
-	bool res = GetFileFromIF1(fst, comIdx, baud);	
+	bool res = GetFileFromIF1(fst, comName, baud);
 	if (res)
 	{
 		CFile* fDest = theFS->NewFile(fn);
@@ -3025,7 +3031,7 @@ bool FormatDisk(int argc, char* argv[])
 		if (diskDesc.fsType == FS_CPM_GENERIC)		
 			fs = new CFSCPM(disk, diskDesc.fsParams, *(CFSCPM::CPMParams*)&diskDesc.otherParams, diskDesc.Name);								
 		else if (diskDesc.fsType == FS_CPM_HC_BASIC)		
-			fs = new CFSCPMHC(disk, diskDesc.fsParams, *(CFSCPM::CPMParams*)&diskDesc.otherParams, diskDesc.Name);								
+			fs = new CFSHCBasic(disk, diskDesc.fsParams, *(CFSCPM::CPMParams*)&diskDesc.otherParams, diskDesc.Name);								
 		else if (diskDesc.fsType == FS_CPM_PLUS3_BASIC)
 			fs = new CFSCPMPlus3(disk, diskDesc.fsParams, *(CFSCPM::CPMParams*)&diskDesc.otherParams, diskDesc.Name);
 		else if (diskDesc.fsType == FS_COBRA_DEVIL)
@@ -3629,14 +3635,18 @@ bool BinCut(int argc, char* argv[])
 
 static const Command theCommands[] = 
 {
-	{{"help", "?"}, "Command list, this message", {{}},
+	{{"help", "?"}, "Command list, this message",
+		{
+			{{"command"}, false, "Show help only for the specified command."}
+		},
 		PrintHelp},
 	{{"fsinfo"}, "Display the known file systems", {{}},
 		ShowKnownFS},
 	{{"stat"}, "Display the current file system parameters", {{}}, Stat},
 	{{"open"}, "Open disk or disk image",
-		{{"drive|image", true, "The disk/image to open"},
-		{"-t", false, "The number of file system type to use"}},
+		{
+			{"drive|image", true, "The disk/image to open"},
+			{"-t", false, "The number of file system type to use"}},
 		Open},
 	{{"close"}, "Close disk or disk image",
 		{{}},
@@ -3723,13 +3733,13 @@ static const Command theCommands[] =
 	{{"putif1"}, "Send a file or collection to IF1 trough the COM port",
 		{
 		{"file name/mask", true, "file mask to select files for sending"},
-		{"COM port index", false, "COMx port to use, default 1"},
+		{"COMx", false, "COMx port to use, default COM1"},
 		{"baud rate", false, "baud rate for COM, default is 4800"}
 		},
 		PutFilesIF1COM},
 	{{"getif1"}, "Get a single file from IF1 trough the COM port",
 		{{"file name", true, "file name for the received file"},
-		{"COM port index", false, "COMx port to use, default 1"},
+		{"COMx", false, "COMx port to use, default COM1"},
 		{"baud rate", false, "baud rate for COM, default is 9600"}
 		},
 		GetFileIF1COM},
@@ -3766,26 +3776,62 @@ static const Command theCommands[] =
 };
 
 
+void PrintHelpCmd(Command theCommand)
+{
+	for (auto theAlias : theCommand.cmd)
+	{
+		if (theAlias != nullptr)
+			printf("%s ", theAlias);
+	}
+	printf(" - %s\n", theCommand.desc);
+
+	for (auto theParam : theCommand.Params)
+	{
+		if (theParam.param != NULL)
+		{
+			if (theParam.mandatory)
+				printf("- <%s>: %s\n", theParam.param, theParam.desc);
+			else
+				printf("- [%s]: %s\n", theParam.param, theParam.desc);
+		}
+	}
+}
+
+
 bool PrintHelp(int argc, char* argv[])
-{		
-	printf("This program is designed to manipulate ZX Spectrum computer related file systems on a modern PC.\n");
-	for (byte cmdIdx = 0; cmdIdx < (sizeof(theCommands)/sizeof(theCommands[0])); cmdIdx++)
-	{		
-		for (byte cmdAlias = 0; cmdAlias < (sizeof(theCommands[0].cmd)/sizeof(theCommands[0].cmd[0])); cmdAlias++)
-			if (theCommands[cmdIdx].cmd[cmdAlias] != NULL)
-				printf("%s ", theCommands[cmdIdx].cmd[cmdAlias]);
-		printf(" - %s\n", theCommands[cmdIdx].desc);
-		
-		for (byte paramIdx = 0; paramIdx < sizeof(theCommands[0].Params)/sizeof(theCommands[0].Params[0]); paramIdx++)
-			if (theCommands[cmdIdx].Params[paramIdx].param != NULL)
-			{							
-				if (theCommands[cmdIdx].Params[paramIdx].mandatory)
-					printf("- <%s>: %s\n",
-					theCommands[cmdIdx].Params[paramIdx].param, theCommands[cmdIdx].Params[paramIdx].desc);
-				else
-					printf("- [%s]: %s\n",
-					theCommands[cmdIdx].Params[paramIdx].param, theCommands[cmdIdx].Params[paramIdx].desc);
-			}		
+{			
+	string cmdToShow = argc >= 1 ? argv[0] : "";
+	bool listAllCommands = cmdToShow.length() == 0;
+
+	if (listAllCommands)
+	{
+		printf("This program is designed to manipulate ZX Spectrum computer related file systems on a modern PC.\n");
+
+		for (auto theCommand : theCommands)
+		{
+			PrintHelpCmd(theCommand);
+		}
+	}	
+	else
+	{
+		bool foundCmd = false;
+		for (auto theCommand : theCommands)
+		{
+			for (auto theAlias : theCommand.cmd)
+			{
+				foundCmd = foundCmd || (theAlias != nullptr && theAlias == cmdToShow);
+			}
+
+			if (foundCmd)
+			{
+				PrintHelpCmd(theCommand);
+
+				return true;
+			}							
+		}
+
+		if (!foundCmd)
+			cout << "Command '" << cmdToShow << "' does not exist." << endl;
 	}
 
 	return true;

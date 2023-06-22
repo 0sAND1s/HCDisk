@@ -18,7 +18,7 @@ public:
 	{		
 		NAME_LENGHT = 8;
 		EXT_LENGTH = 3;
-		FSFeatures = (FileSystemFeature)(FSFeatures | FSFT_ZXSPECTRUM_FILES | FSFT_FILE_ATTRIBUTES | FSFT_FOLDERS);
+		FSFeatures = (FileSystemFeature)(FSFeatures | FSFT_ZXSPECTRUM_FILES | FSFT_FILE_ATTRIBUTES | FSFT_FOLDERS | FSFT_AUTORUN);
 	}	
 
 	virtual ~CFSCPMPlus3() {};
@@ -29,6 +29,7 @@ public:
 	virtual bool ReadFile(CFile* file);
 	virtual bool WriteFile(CFile* file);
 	virtual bool OpenFile(CFile* file);
+	virtual bool GetAutorunFilename(char** fileName) { *fileName = "DISK"; return true; }
 
 protected:
 	vector<CFilePlus3> Plus3FileList;

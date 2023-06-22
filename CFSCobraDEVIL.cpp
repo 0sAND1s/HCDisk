@@ -226,12 +226,16 @@ CFileSystem::FileAttributes CFSCobraDEVIL::GetAttributes(CFile* file)
 	byte res = (byte)FileAttributes::ATTR_NONE;
 	if (f->FileDirEntries.size() > 0)
 	{
-		byte attrByte = this->DEVIL_Dir[f->FileDirEntries[0]].Attributes;
+		word dirEnt = f->FileDirEntries[0];
+		if (dirEnt < DEVIL_Dir.size())
+		{
+			byte attrByte = this->DEVIL_Dir[f->FileDirEntries[0]].Attributes;
 
-		if ((attrByte & 1) == 1)
-			res |= (int)FileAttributes::ATTR_SYSTEM;
-		if ((attrByte & 2) == 2)
-			res |= (int)FileAttributes::ATTR_READ_ONLY;
+			if ((attrByte & 1) == 1)
+				res |= (int)FileAttributes::ATTR_SYSTEM;
+			if ((attrByte & 2) == 2)
+				res |= (int)FileAttributes::ATTR_READ_ONLY;
+		}		
 	}	
 
 	return (FileAttributes)res;

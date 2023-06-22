@@ -16,7 +16,7 @@ CFSTRDOS::CFSTRDOS(CDiskBase* theDisk, char* name) : CFileSystem(theDisk, name)
 {
 	NAME_LENGHT = 8;
 	EXT_LENGTH = 1;
-	FSFeatures = (FileSystemFeature)(FSFT_DISK | FSFT_ZXSPECTRUM_FILES | FSFT_LABEL);	
+	FSFeatures = (FileSystemFeature)(FSFT_DISK | FSFT_ZXSPECTRUM_FILES | FSFT_LABEL | FSFT_AUTORUN);	
 
 	FSParams.DirEntryCount = MAX_DIR_ENTRIES;
 	FSParams.BlockSize = Disk->DiskDefinition.SectSize;

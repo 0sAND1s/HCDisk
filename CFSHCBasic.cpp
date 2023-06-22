@@ -1,15 +1,15 @@
-#include "CFSCPMHC.h"
+#include "CFSHCBasic.h"
 #include "CFileHC.h"
 #include "CFileIF1.h"
 #include "CFileArchiveTape.h"
 #include <algorithm>
 
-bool CFSCPMHC::IsCharValidForFilename(char c)
+bool CFSHCBasic::IsCharValidForFilename(char c)
 {
 	return c >= ' ' && c < 128 && strchr("\"*?\\/", c) == NULL;
 }
 
-bool CFSCPMHC::ReadDirectory()
+bool CFSHCBasic::ReadDirectory()
 {
 	if (CFSCPM::ReadDirectory())
 	{
@@ -27,7 +27,7 @@ bool CFSCPMHC::ReadDirectory()
 		return false;
 }
 
-CFile* CFSCPMHC::FindNext()
+CFile* CFSHCBasic::FindNext()
 { 
 	CFileCPM* f = (CFileCPM*)CFSCPM::FindNext();
 	if (f != NULL)
@@ -42,7 +42,7 @@ CFile* CFSCPMHC::FindNext()
 	}
 }
 
-CFile* CFSCPMHC::NewFile(const char* name, long len, byte* data)
+CFile* CFSHCBasic::NewFile(const char* name, long len, byte* data)
 {
 	CFileHC* f = new CFileHC(this);
 	f->User = 0;
@@ -54,7 +54,7 @@ CFile* CFSCPMHC::NewFile(const char* name, long len, byte* data)
 	return f;
 }
 
-bool CFSCPMHC::WriteFile(CFile* file)
+bool CFSHCBasic::WriteFile(CFile* file)
 {
 	bool res = true;	
 	CFileHC* fHC = (CFileHC*)file;	
@@ -96,7 +96,7 @@ bool CFSCPMHC::WriteFile(CFile* file)
 	return res;
 }
 
-bool CFSCPMHC::ReadFile(CFile* f)
+bool CFSHCBasic::ReadFile(CFile* f)
 {	
 	CFileHC* fHC = dynamic_cast<CFileHC*>(f);
 
@@ -119,7 +119,7 @@ bool CFSCPMHC::CreateFSName(CFile* file, char* fNameOut)
 }
 */
 
-bool CFSCPMHC::OpenFile(CFile* file)
+bool CFSHCBasic::OpenFile(CFile* file)
 {	
 	CFileHC* f = (CFileHC*)file;
 	byte* buf = new byte[FSParams.BlockSize];	

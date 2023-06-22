@@ -116,7 +116,7 @@
     <ClCompile Include="CFileSystem.cpp" />
     <ClCompile Include="CFSCobraDEVIL.cpp" />
     <ClCompile Include="CFSCPM.cpp" />
-    <ClCompile Include="CFSCPMHC.cpp" />
+    <ClCompile Include="CFSHCBasic.cpp" />
     <ClCompile Include="CFSCPMPlus3.cpp" />
     <ClCompile Include="CFSMGT.cpp" />
     <ClCompile Include="CFSOpus.cpp" />
@@ -160,7 +160,7 @@
     <ClInclude Include="CFileSystem.h" />
     <ClInclude Include="CFSCobraDEVIL.h" />
     <ClInclude Include="CFSCPM.h" />
-    <ClInclude Include="CFSCPMHC.h" />
+    <ClInclude Include="CFSHCBasic.h" />
     <ClInclude Include="CFSCPMPlus3.h" />
     <ClInclude Include="CFSMGT.h" />
     <ClInclude Include="CFSOpus.h" />

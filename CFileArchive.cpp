@@ -23,7 +23,9 @@ const char* CFileArchive::FSFeatureNames[] =
 	"File attributes",
 	"File folders",
 	"File timestamps",
-	"Case sensitive names"
+	"Case sensitive names",
+	"Tape",
+	"Autorun"
 };
 
 

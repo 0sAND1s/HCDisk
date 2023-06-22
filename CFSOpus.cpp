@@ -7,7 +7,7 @@ CFSOpus::CFSOpus(CDiskBase* disk, char* name /* = NULL */): CFileSystem(disk, na
 {
 	NAME_LENGHT = 10;
 	EXT_LENGTH = 0;
-	FSFeatures = (FileSystemFeature)(FSFeatures | FSFT_DISK | FSFT_ZXSPECTRUM_FILES | FSFT_LABEL | FSFT_CASE_SENSITIVE_FILENAMES);	
+	FSFeatures = (FileSystemFeature)(FSFeatures | FSFT_DISK | FSFT_ZXSPECTRUM_FILES | FSFT_LABEL | FSFT_CASE_SENSITIVE_FILENAMES | FSFT_AUTORUN);
 }
 
 bool CFSOpus::Init()

@@ -190,6 +190,17 @@ copydisk  - Copy current disk to another disk or image
 - <destination>: destination disk/image - if writing to physical a disk, that disk must be properly formatted
 - f: format destination disk while copying
 
+copyfs - Copy only used blocks from current file system to another disk (same file system type, CP/M only)
+- <direction>: 'to'/'from'
+- <remote>: source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)
+
+How to copy HC BASIC disks over serial cable (COM port):
+1. Notice in Windows device manager the name of the COM port (COM1, COM2, etc).
+2. Run the latest HCDisk version and open or create a disk image in the format for HC BASIC 3.5.
+3. In HCDisk use command 'copyfs to COM1' to copy from PC to HC or command 'copyfs from COM1' to copy from HC to PC.
+4. Run the latest HCCmd version and use menu '9-Disk', then option '3. Copy A:->COM' to copy from HC to PC or option '4. Copy COM->A:' to copy from PC to HC.
+5. A message will show on PC and on HC showing how many blocks are left to copy. A full disk takes about 7 minutes to copy.
+
 put  - Copy PC file to file system
 - <source file>: the file to copy
 - [-n newname]: name for destination file

@@ -10,8 +10,8 @@
 #include "CFileIF1.h"
 #include "CFileArchiveTape.h"
 
-char port[6] = "COM1";
-const byte TIMEOUT_SEC = 10;
+char port[10] = "\\\\.\\COM01";
+const byte TIMEOUT_SEC = 60;
 HANDLE m_hCom;
 
 BOOL SetCOMForIF1(char* m_sComPort, int baud)
@@ -97,9 +97,9 @@ bool ReadByteFromIF1(HANDLE m_hCom, byte* b)
 //3. Send the main game block using 19200 BAUD.
 
 
-bool SendFileToIF1(CFileSpectrumTape* fs, byte comIdx, dword baudWanted)
+bool SendFileToIF1(CFileSpectrumTape* fs, const char* comName, dword baudWanted)
 {		
-	sprintf(&port[3], "%d", comIdx);
+	strncpy(port, comName, sizeof(port)-1);
 	SetCOMForIF1(port, baudWanted);
 	if (m_hCom == INVALID_HANDLE_VALUE)
 	{
@@ -140,9 +140,9 @@ bool SendFileToIF1(CFileSpectrumTape* fs, byte comIdx, dword baudWanted)
 }
 
 
-bool GetFileFromIF1(CFileSpectrumTape* fst, byte comIdx, dword baudWanted)
+bool GetFileFromIF1(CFileSpectrumTape* fst, const char* comName, dword baudWanted)
 {
-	sprintf(&port[3], "%d", comIdx);
+	strncpy(port, comName, sizeof(port) - 1);
 	SetCOMForIF1(port, baudWanted);
 	if (m_hCom == INVALID_HANDLE_VALUE)
 	{
@@ -168,8 +168,10 @@ bool GetFileFromIF1(CFileSpectrumTape* fst, byte comIdx, dword baudWanted)
 		return false;
 	}	
 	else
-	{
-		printf("Sending file type '%s' with lenght %u.\n", CFileSpectrum::SPECTRUM_FILE_TYPE_NAMES[fileIF1.IF1Header.Type], fileIF1.IF1Header.Length);
+	{		
+		printf("Receiving file type '%s' with lenght %u.\n", 
+			(fileIF1.IF1Header.Type < CFileSpectrum::SPECTRUM_UNTYPED ? CFileSpectrum::SPECTRUM_FILE_TYPE_NAMES[fileIF1.IF1Header.Type] : "?"),
+			fileIF1.IF1Header.Length);
 	}
 
 	*(CFileSpectrum*)fst = (CFileSpectrum)fileIF1;

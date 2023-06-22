@@ -27,6 +27,7 @@ public:
 	virtual bool CloseFile(CFile* file);
 	virtual bool ReadFile(CFile* f);
 	virtual bool GetLabel(char* dest);
+	virtual bool GetAutorunFilename(char** fileName) { *fileName = "run"; return true; }
 
 protected:	
 	//Block 1 is for disk description, blocks 1-7 are for catalog.

@@ -19,7 +19,7 @@ class CFSMGT: public CFileSystem
 public:
 	CFSMGT(CDiskBase* disk, char* name = NULL) : CFileSystem(disk, name) 
 	{
-		FSFeatures = (FileSystemFeature)(FSFeatures | (FSFT_DISK | FSFT_ZXSPECTRUM_FILES | FSFT_CASE_SENSITIVE_FILENAMES));
+		FSFeatures = (FileSystemFeature)(FSFeatures | (FSFT_DISK | FSFT_ZXSPECTRUM_FILES | FSFT_CASE_SENSITIVE_FILENAMES | FSFT_AUTORUN));
 	};
 	~CFSMGT() 
 	{
@@ -37,6 +37,7 @@ public:
 	virtual bool OpenFile(CFile* file);
 	virtual bool CloseFile(CFile* file);
 	virtual bool ReadFile(CFile* f);	
+	virtual bool GetAutorunFilename(char** fileName) { *fileName = "auto"; return true; }
 
 protected:
 	const static word BLOCK_SIZE = 512;

@@ -102,6 +102,7 @@ public:
 	};
 	virtual bool OpenFile(CFile* file);
 	virtual bool ReadBlock(byte* destBuf, word sectIdx, byte sectCnt = 0);
+	virtual bool GetAutorunFilename(char** fileName) { *fileName = "boot"; return true; }
 	
 protected:		
 	bool ReadDirectory();		
