@@ -1473,6 +1473,7 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 	//Exclude TRD from list if it cannot be opened, because it has a signature, and can be tested.									
 	CFileArchive* theFS = NULL;			
 	CDiskBase* theDisk = NULL;
+	bool isTRDValid = false;
 
 	vector<byte>::iterator it = foundGeom.begin();
 	while (it != foundGeom.end())
@@ -1492,10 +1493,14 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 			
 			if (!theFS->Init())										
 			{
-				it = foundGeom.erase(it);									
+				it = foundGeom.erase(it);		
+				isTRDValid = false;
 			}
 			else
-				it++;								
+			{
+				it++;
+				isTRDValid = true;
+			}
 		}				
 		else
 			it++;
@@ -1509,7 +1514,7 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 		}		
 		*/
 
-		if (theFS != NULL)
+		if (isTRDValid && theFS != NULL)
 		{
 			delete theFS;
 			theFS = NULL;
