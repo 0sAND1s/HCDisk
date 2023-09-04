@@ -121,7 +121,7 @@ bool SendFileToIF1(CFileSpectrumTape* fs, const char* comName, dword baudWanted)
 		res = SendByteToIF1(m_hCom, data[idx]);
 		idx++;
 		if (idx % 10 == 0)
-			printf("\rSent %u/%u bytes (%0.2f%%).", idx, len, (float)idx/len * 100);
+			printf("\rSent %u/%u bytes (%0.2f%%), %d seconds left.", idx, len, (float)idx/len * 100, ((len-idx)*10/baudWanted));
 	}
 
 	if (!res)
@@ -185,7 +185,7 @@ bool GetFileFromIF1(CFileSpectrumTape* fst, const char* comName, dword baudWante
 	{
 		res = ReadByteFromIF1(m_hCom, &buf[idx++]);
 		if (idx % 10 == 0)
-			printf("\rReceived %u/%u bytes (%0.2f%%).", idx, len, (float)idx / len * 100);
+			printf("\rReceived %u/%u bytes (%0.2f%%), %d seconds left.", idx, len, (float)idx / len * 100, ((len - idx) * 10 / baudWanted));
 	}	
 
 	if (res && !_kbhit())

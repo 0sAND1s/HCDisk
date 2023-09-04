@@ -1503,18 +1503,9 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 			}
 		}				
 		else
-			it++;
-		
-		
-		/*
-		if (theDisk != NULL)
-		{
-			delete theDisk;
-			theDisk = NULL;
-		}		
-		*/
+			it++;		
 
-		if (isTRDValid && theFS != NULL)
+		if (theFS != NULL)
 		{
 			delete theFS;
 			theFS = NULL;
@@ -1684,7 +1675,7 @@ bool Stat(int argc, char* argv[])
 		printf("Disk geometry\t\t: %dT x %dH x %dS x %dB/S\n",
 			fs->Disk->DiskDefinition.TrackCnt, fs->Disk->DiskDefinition.SideCnt,
 			fs->Disk->DiskDefinition.SPT, fs->Disk->DiskDefinition.SectSize);
-		printf("Hard sector skew\t: %d\n", fs->Disk->DiskDefinition.HWInterleave);
+		printf("Hard/soft interleave\t: %d/%d\n", fs->Disk->DiskDefinition.HWInterleave, theDiskDesc.otherParams[0]);
 		printf("Raw Size\t\t: %d KB\n", (fs->Disk->DiskDefinition.TrackCnt * fs->Disk->DiskDefinition.SideCnt * fs->Disk->DiskDefinition.SPT * fs->Disk->DiskDefinition.SectSize)/1024);
 		printf("Block size\t\t: %.02f KB\n", (float)fs->GetBlockSize()/1024);
 		printf("Blocks free/max\t\t: %d/%d \n", fs->GetFreeBlockCount(), fs->GetMaxBlockCount());
@@ -3010,7 +3001,7 @@ bool FormatDisk(int argc, char* argv[])
 		for (byte idx = 0; idx < sizeof(DISK_TYPES)/sizeof(DISK_TYPES[0]); idx++)			
 			geometries.push_back(idx);
 		selGeom = AskGeometry(geometries);
-		res = (selGeom > 0 && selGeom != 0xFF);
+		res = (selGeom >= 0 && selGeom != 0xFF);
 	}	
 	
 	CDiskBase* disk;
