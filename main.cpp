@@ -1481,17 +1481,13 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 		FileSystemDescription theDiskDesc = DISK_TYPES[*it];				
 
 		if (theDiskDesc.fsType == FS_TRDOS)
-		{
-			if (theDisk == NULL)
-			{
-				theDisk = new CDiskImgRaw(theDiskDesc.diskDef);						
-				if (theDisk->Open(path, CDiskBase::OPEN_MODE_EXISTING))				
-					theFS = new CFSTRDOS(theDisk, theDiskDesc.Name);				
-			}
-			else
+		{			
+			theDisk = new CDiskImgRaw(theDiskDesc.diskDef);						
+			if (theDisk->Open(path, CDiskBase::OPEN_MODE_EXISTING))				
 				theFS = new CFSTRDOS(theDisk, theDiskDesc.Name);				
 			
-			if (!theFS->Init())										
+			
+			if (theFS != nullptr && !theFS->Init())
 			{
 				it = foundGeom.erase(it);		
 				isTRDValid = false;
@@ -1505,10 +1501,11 @@ void CheckTRD(char* path, vector<byte>& foundGeom)
 		else
 			it++;		
 
-		if (theFS != NULL)
+		//theFS destructor dealocates theDisk.
+		if (theFS != nullptr)
 		{
 			delete theFS;
-			theFS = NULL;
+			theFS = nullptr;
 		}
 	}
 }
@@ -1645,6 +1642,8 @@ bool Open(int argc, char* argv[])
 		else
 			printf("\n");
 	}	
+
+	return true;
 }
 
 word log2(CFileSystem::FileSystemFeature y)
@@ -3626,6 +3625,42 @@ bool BinCut(int argc, char* argv[])
 	return true;
 }
 
+bool BinPatch(int argc, char* argv[])
+{
+	char* fnameIn = argv[0];		
+	char* fnamePatch = argv[1];
+	char* offsetStr = argv[2];
+
+	long offset = atoi(offsetStr);
+	long fsizeIn = fsize(fnameIn);
+	long fsizePatch = fsize(fnamePatch);
+	
+	
+	FILE* fToPatch = fopen(fnameIn, "r+b");
+	FILE* fThePatch = fopen(fnamePatch, "rb");
+	if (fToPatch == nullptr || fToPatch == nullptr)
+	{
+		cout << "Couln't open input or output file." << endl;
+		return false;
+	}
+
+	fseek(fToPatch, offset, SEEK_SET);
+	long leftBytes = fsizePatch;
+	while (leftBytes > 0)
+	{
+		fputc(fgetc(fThePatch), fToPatch);
+		leftBytes--;
+	}
+
+	fclose(fToPatch);
+	fclose(fThePatch);
+
+	cout << "Applied patch file " << fnamePatch << " with lenght " << fsizePatch << " to file " << fnameIn << " at offset " << offset << "." << endl;
+
+	return true;
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -3767,6 +3802,13 @@ static const Command theCommands[] =
 			{"lenght", false, "length of block, default: file len - offset"}
 		},
 		BinCut },
+	{ {"binpatch"}, "Patches a file, with content of another file, at set offset",
+		{
+			{"input file", true, "input file name"},
+			{"patch file", true, "patch content file"},
+			{"offset", true, "0 based start offset in input file"},			
+		},
+		BinPatch },
 	{{"exit", "quit"}, "Exit program", 
 	{{}}},	
 };

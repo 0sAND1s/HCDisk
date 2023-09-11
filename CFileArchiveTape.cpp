@@ -43,7 +43,8 @@ bool CFileArchiveTape::Init()
 		if (tapeBlock != NULL)
 		{
 			tapeBlock->GetFileName(blankNameTemplate, true);
-			byte idxOffset = std::min((byte)strlen(blankNameTemplate), (byte)(CTapeBlock::TAP_FILENAME_LEN - 1));
+			//Allow room for 2 digit index number.
+			byte idxOffset = std::min((byte)strlen(blankNameTemplate), (byte)(CTapeBlock::TAP_FILENAME_LEN - 2));
 			sprintf(&blankNameTemplate[idxOffset], "%s", "%d");
 		}		
 
