@@ -46,7 +46,7 @@ public:
 		this->SpectrumType = src.SpectrumType;
 		this->SpectrumLength = src.SpectrumLength;
 		this->SpectrumVarLength = src.SpectrumVarLength;
-		this->SpectrumVarLength = src.SpectrumVarLength;
+		this->SpectrumArrayVarName = src.SpectrumArrayVarName;
 
 		return *this;
 	}

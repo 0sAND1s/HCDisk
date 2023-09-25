@@ -3503,13 +3503,69 @@ bool BasImport(int argc, char* argv[])
 	word autorunLine = 0;
 	if (argc >= 3)
 		autorunLine = atoi(argv[2]);
+		
 
 	bool res = bas2tap(argv[0], name.c_str(), autorunLine) == 0;	
-	const char* argsImport[] = {"temp.tap", name.c_str()};
+	
+	//Add binary as variable.
+	byte* varBuf = nullptr;
+	word varBufLen = 0;
+	if (res && argc >= 4)
+	{
+		auto varFileName = argv[3];
+		auto varLen = fsize(varFileName);
+		const byte varHdr[] = { ((Basic::BASVarType::BV_STRING << 5) | ('x' - 'a' + 1)), (byte)(varLen % 256), (byte)(varLen / 256) };
+
+		auto varFile = fopen(varFileName, "rb");
+		varBufLen = sizeof(varHdr) + varLen;
+		varBuf = new byte[varBufLen];
+		memcpy(varBuf, varHdr, sizeof(varHdr));
+		fread(varBuf + sizeof(varHdr), 1, varLen, varFile);
+		fclose(varFile);		
+	}
+
+	char* tapToImport = "temp.tap";
+	if (res && varBuf != nullptr)
+	{
+		//Open temporary file created by BasImp.
+		CFileArchiveTape* tapeOld = new CFileArchiveTape(tapToImport);
+		tapeOld->Open(tapToImport);
+		tapeOld->Init();
+		
+		//Get program block blob and copy it into memory.
+		auto oldProg = (CFileSpectrumTape*)tapeOld->FindFirst("*");
+		word progLen = (word)oldProg->GetLength();
+		byte* newProgBuf = new byte[progLen + varBufLen];
+		oldProg->GetData(newProgBuf);
+		memcpy(newProgBuf + progLen, varBuf, varBufLen);
+		delete[] varBuf;
+
+		//Create new program block and copy old program + new variables.
+		CFileSpectrumTape* newProg = new CFileSpectrumTape(*oldProg);
+		newProg->SetData(newProgBuf, progLen + varBufLen);	
+		newProg->SpectrumVarLength = varBufLen;
+		newProg->SpectrumLength = progLen + varBufLen;
+		delete[] newProgBuf;		
+		//delete oldProg;
+		delete tapeOld;		
+
+		//Create new program tape.
+		CFileArchiveTape* tapeNew = new CFileArchiveTape("newProg.tap");
+		tapeNew->Open("newProg.tap", true);
+		tapeNew->AddFile(newProg);
+		tapeNew->Close();
+		delete newProg;
+		delete tapeNew;
+
+		tapToImport = "newProg.tap";
+		remove("temp.tap");
+	}
+
+	const char* argsImport[] = {tapToImport, name.c_str()};
 	if (res)
 	{
-		res = ImportTape(1, (char**)argsImport);
-		remove("temp.tap");
+		res = ImportTape(1, (char**)argsImport);		
+		remove(tapToImport);
 	}
 	return res;
 }
@@ -3638,7 +3694,7 @@ bool BinPatch(int argc, char* argv[])
 	
 	FILE* fToPatch = fopen(fnameIn, "r+b");
 	FILE* fThePatch = fopen(fnamePatch, "rb");
-	if (fToPatch == nullptr || fToPatch == nullptr)
+	if (fToPatch == nullptr || fThePatch == nullptr)
 	{
 		cout << "Couln't open input or output file." << endl;
 		return false;
@@ -3783,7 +3839,8 @@ static const Command theCommands[] =
 	{{"basimp"}, "Import a BASIC program from a text file",
 		{{"BASIC file", true, "BASIC program file to compile"},
 		{"file name", false, "Program file name (default: file name)"},
-		{"autorun line", false, "Autorun line number (default: 0)"}
+		{"autorun line", false, "Autorun line number (default: 0)"},
+		{"variables", false, "Variable buffer to add"}
 		},
 		BasImport},
 	{ {"screen"}, "SCREEN$ block processing functions",
