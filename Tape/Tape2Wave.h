@@ -24,7 +24,7 @@ protected:
 	CWave wav;
 	bool CurPulseLevel;
 
-	void PutByte(byte b, CTapeBlock::TapeTimgins t, byte bitCnt = 8);
+	void PutByte(byte b, CTapeBlock::TapeTimings t, byte bitCnt = 8);
 };
 
 #endif//_TAPE2WAV_H_

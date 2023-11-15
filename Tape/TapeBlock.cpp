@@ -3,8 +3,8 @@
 
 //Use short lead tone.
 //const CTapeBlock::TapeTimgins CTapeBlock::ROM_TIMINGS_HEAD = {2168, 8063, 667, 735, 855, 1710, 1000};
-const CTapeBlock::TapeTimgins CTapeBlock::ROM_TIMINGS_HEAD = {2168, 3223, 667, 735, 855, 1710, 1000};
-const CTapeBlock::TapeTimgins CTapeBlock::ROM_TIMINGS_DATA = {2168, 3223, 667, 735, 855, 1710, 1000};
+const CTapeBlock::TapeTimings CTapeBlock::ROM_TIMINGS_HEAD = {2168, 3223, 667, 735, 855, 1710, 1000};
+const CTapeBlock::TapeTimings CTapeBlock::ROM_TIMINGS_DATA = {2168, 3223, 667, 735, 855, 1710, 1000};
 
 const char* CTapeBlock::TapBlockTypeNames [CTapeBlock::TAP_BLOCK_TYPE_COUNT] =
 {

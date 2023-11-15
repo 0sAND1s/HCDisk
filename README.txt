@@ -38,7 +38,7 @@ File systems based on CPM are read-write, the others are read only (for now).
 - CQM (read only) - Copy QM by Sydex
 - SCL (read only) - Russian emulators
 - TD0 - Teledisk by Sydex (read only)
-- Tape images: TAP, TZX (read only)
+- Tape images: TAP, TZX
 	
 	Note: For accessing floppy disks in physical drive for all supported formats, you need Simon Owen's fdrawcmd driver: http://simonowen.com/fdrawcmd/ .
 For standard geometries supported by Windows, the standard Windows driver is now used (added in January 2022). This also works with USB floppy drives for modern computers without a floppy controller.
@@ -83,6 +83,7 @@ So this tool applies to home computers.
 5. What commands are available?
 
 help ?  - Command list, this message
+- [command]: Show help only for the specified command.
 
 fsinfo  - Display the known file systems
 
@@ -122,7 +123,7 @@ Known containers:
 - OPD - OPUS Discovery DISK IMAGE
 - MGT - Miles Gordon Tech DISK IMAGE
 - TAP - TAPE IMAGE (RW)
-- TZX - TAPE IMAGE
+- TZX - TAPE IMAGE (RW)
 - TD0 - Sydex Teledisk DISK IMAGE
 
 stat  - Display the current file system parameters: (total/free blocks, total/free space, disk geometry, disk type, etc)
@@ -204,8 +205,10 @@ How to copy HC BASIC disks over serial cable (COM port):
 put  - Copy PC file to file system
 - <source file>: the file to copy
 - [-n newname]: name for destination file
-- [-d <destination folder>]: file folder - for CPM
-- [-s start, -t p|b|c|n file type]: Spectrum file attributes; type is [p]rogram, [b]ytes, [c]har arr., [n]umber arr.
+- [-d <destination folder>]: CP/M file folder
+- [-s start]: Spectrum program start line/byte start address
+- [-t p|b|c|n file type]: Spectrum file type: program, bytes, char arr., no. arr
+- [-turbo <1364|2250|3000|6000>]: Turbo baud rate for TZX blocks
 
 del rm  - Delete file(s)
 - <file spec.>: the file(s) to delete, ex: del *.com; A confirmation is displayed.
@@ -297,6 +300,12 @@ bincut  - File section cut, starting at offset, with size length
 - <output file>: output file name
 - <offset>: 0 based start offset
 - [lenght]: length of block, default: file len - offset
+
+binpatch  - Patches a file, with content of another file, at set offset
+- <input file>: input file name
+- <patch file>: patch content file
+- <offset>: 0 based start offset in input file
+
 
 exit quit  - Exit program
 

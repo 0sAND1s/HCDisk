@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iterator>
 #include <exception>
+#include <sys/stat.h>
 
 #include <Windows.h>
 #include <WinCon.h>
@@ -65,6 +66,7 @@ using namespace std;
 CDiskBase* theDisk = NULL;
 CFileArchive* theFS = NULL;
 char path[MAX_PATH];
+#define MAX_PARAMS 15
 
 typedef enum
 {
@@ -99,7 +101,7 @@ static char* StorageTypeNames[] =
 	"OPD - OPUS Discovery DISK IMAGE",
 	"MGT - Miles Gordon Tech DISK IMAGE",
 	"TAP - TAPE IMAGE (RW)",
-	"TZX - TAPE IMAGE",
+	"TZX - TAPE IMAGE (RW)",
 	"TD0 - Sydex Teledisk DISK IMAGE"
 };
 
@@ -508,6 +510,41 @@ long fsize(const char* fname)
 
 	return fs;	
 }
+
+
+//Turbo loader constants from Z802TZX by Tomaz Kac  (tomcat@sgn.net) 
+static struct TurboLoadVars
+{
+	/* Values as stored inside the TurboLoader code */
+	byte      _Compare;    /* Variable 'bd' + starting value (+80) */
+	byte      _Delay;      /* Variable 'a' */
+	/* Timing values as stored in the TZX block header (unless ROM speed) */
+	word      _LenPilot;   /* Number of pilot pulses is calculated to make the pilot take exactly 1 second */
+	/* This is just enough for the largest possible block to decompress and sync again */
+	word      _LenSync0;   /* Both sync values are made equal */
+	word      _Len0;       /* A '1' bit gets twice this value */
+} turbo_vars[4] = { { 0x80 + 41, 20, 2168, 667, 855 },   /*  1364 bps - uses the normal ROM timing values! */
+				{ 0x80 + 24, 11, 2000, 600, 518 },   /*  2250 bps */
+				{ 0x80 + 18,  7, 1900, 550, 389 },   /*  3000 bps */
+				{ 0x80 + 7,  3, 1700, 450, 200 } };  /*  6000 bps */ // 197 works with Spectaculator
+
+enum TurboLoadSpeedIdx
+{
+	TURBO_IDX_1364 = 0,
+	TURBO_IDX_2250 = 1,
+	TURBO_IDX_3000 = 2,
+	TURBO_IDX_6000 = 3
+};
+
+enum TurboLoadSpeedBaud
+{
+	TURBO_BAUD_1364 = 1364,
+	TURBO_BAUD_2250 = 2250,
+	TURBO_BAUD_3000 = 3000,
+	TURBO_BAUD_6000 = 6000
+};
+
+
 
 bool ShowKnownFS(int argc, char* argv[])
 {
@@ -924,12 +961,11 @@ string DecodeBASICProgramToText(byte* buf, word progLen, word varLen = 0)
 	return res.str();
 }
 
-string Disassemble(byte* buf, word len, word addr = 0)
+string Disassemble(byte* buf, word len, word addr = 0, bool useHex=true)
 {
 	DISZ80	*d;			/* Pointer to the Disassembly structure */
 	int		err;		/* line count */		
-	string res;
-	bool useHex = false;
+	string res;	
 
 	d = (DISZ80 *)malloc(sizeof(DISZ80));	
 	if (d != NULL)
@@ -1056,6 +1092,7 @@ bool TypeFile(int argc, char* argv[])
 	bool asHex = argc >= 2 && (strcmp(argv[1], "-h") == 0);	
 	bool asText = argc >= 2 && (strcmp(argv[1], "-t") == 0);
 	bool asDisasm = argc >= 2 && (strcmp(argv[1], "-d") == 0);
+	bool asDisasmDec = argc >= 3 && (strcmp(argv[2], "-dec") == 0);
 	char* fname = argv[0];
 	CFile* f = theFS->FindFirst(fname);		
 	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) > 0;				
@@ -1118,7 +1155,7 @@ bool TypeFile(int argc, char* argv[])
 				CFileSpectrum* s = dynamic_cast<CFileSpectrum*>(f);
 				addr = s->SpectrumStart;
 			}
-			TextViewer(Disassemble(buf1, (word)len, addr));			
+			TextViewer(Disassemble(buf1, (word)len, addr, !asDisasmDec));
 		}
 		else if (asText)
 		{
@@ -2075,14 +2112,15 @@ bool PutFile(int argc, char* argv[])
 	string nameDest(name);
 	size_t lastSlash = nameDest.find_last_of('\\');
 	if (lastSlash != string::npos)
-		nameDest = nameDest.substr(lastSlash + 1, CFSCPM::MAX_FILE_NAME_LEN + 1);
-
+		nameDest = nameDest.substr(lastSlash + 1, CFSCPM::MAX_FILE_NAME_LEN + 1);	
+	bool IsTZX = ((CFileArchiveTape*)theFS)->IsTZX();
 	
 	char* folder = "0";
 	byte argIdx = 1;	
 
 	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) > 0;
 	bool HasFolders = (theFS->GetFSFeatures() & CFileSystem::FSFT_FOLDERS) > 0;
+	bool IsTape = (theFS->GetFSFeatures() & CFileSystem::FSFT_TAPE) > 0;
 		
 	bool res = true;		
 		
@@ -2106,7 +2144,9 @@ bool PutFile(int argc, char* argv[])
 	CFile* fileNew = theFS->NewFile(nameDest.c_str());			
 	theFS->SetFileFolder(fileNew, folder);										
 	dword fsz = fsize(name);	
-	FILE* fpc = fopen(name, "rb");
+	FILE* fpc = fopen(name, "rb");	
+	int turboSpeedBaud = 0;
+
 	if (res && fpc != NULL && fileNew != NULL)
 	{		
 		byte* buf = new byte[fsz];				
@@ -2149,12 +2189,57 @@ bool PutFile(int argc, char* argv[])
 					
 					argIdx++;
 				}
+				else if (strcmp(argv[argIdx], "-turbo") == 0 && IsTZX)
+				{					
+					turboSpeedBaud = atoi(argv[argIdx + 1]);
+					if (turboSpeedBaud != TURBO_BAUD_1364 && turboSpeedBaud != TURBO_BAUD_2250 && turboSpeedBaud != TURBO_BAUD_3000 && turboSpeedBaud != TURBO_BAUD_6000)
+						turboSpeedBaud = 0;
+					argIdx++;
+				}
 
 				argIdx++;
 			}				
 		}		
 			
-		res = theFS->WriteFile(fileNew);		
+		if (!IsTZX)
+			res = theFS->WriteFile(fileNew);		
+		else
+		{
+			auto tzx = (CFileArchiveTape*)theFS;
+			if (turboSpeedBaud == 0)
+				res = tzx->AddFile(dynamic_cast<CFileSpectrumTape*>(fileNew));
+			else
+			{
+				//Convert custom bit timings from Z802TZX table to TapeTimings.
+				CTapeBlock::TapeTimings turboTimes = CTapeBlock::ROM_TIMINGS_DATA;
+				TurboLoadVars tv;
+				switch (turboSpeedBaud)
+				{					
+					case TURBO_BAUD_1364:
+						tv = turbo_vars[TURBO_IDX_1364];
+						break;
+					case TURBO_BAUD_2250:
+						tv = turbo_vars[TURBO_IDX_2250];
+						break;
+					case TURBO_BAUD_3000:
+						tv = turbo_vars[TURBO_IDX_3000];
+						break;
+					case TURBO_BAUD_6000:
+						tv = turbo_vars[TURBO_IDX_6000];
+						break;
+					default:
+						tv = turbo_vars[TURBO_IDX_6000];
+				}					
+				
+				turboTimes.Bit0 = tv._Len0;
+				turboTimes.Bit1 = turboTimes.Bit0 * 2;
+				turboTimes.Pilot = tv._LenPilot;
+				turboTimes.PilotPulseCnt = (word)((dword)CTape2Wav::Z80TSTATES / tv._LenPilot) * 2; //1 second pilot.
+				turboTimes.Sync1 = turboTimes.Sync2 = tv._LenSync0;				
+				
+				res = tzx->AddFile(dynamic_cast<CFileSpectrumTape*>(fileNew), &turboTimes);
+			}
+		}
 		delete[] buf;
 	}	
 	else		
@@ -2229,7 +2314,7 @@ struct Command
 		char* param;
 		bool mandatory;
 		char* desc;
-	} Params[4];			
+	} Params[6];			
 
 	CommandDelegate cmdDlg;
 };
@@ -2549,15 +2634,10 @@ bool Export2Tape(int argc, char* argv[])
 		return false;
 	}
 
-
-	char* tmpName = "temp.tap";
-	string outName = argv[0];
-	transform(outName.begin(), outName.end(), outName.begin(), (int (*)(int))::toupper);
-	string ext = GetExtension(outName);			
-	if (ext != "TAP")
-		outName += ".TAP";
-	CFileArchiveTape tapeDest(tmpName);
-	tapeDest.Open(tmpName, true);
+	
+	char* outName = argv[0];			
+	CFileArchiveTape tapeDest(outName);
+	tapeDest.Open(outName, true);
 	
 	char* fspec = "*";
 	if (argc >= 2)
@@ -2620,25 +2700,26 @@ bool Export2Tape(int argc, char* argv[])
 		}					
 	}				
 	tapeDest.Close();
-
-								
+	
 	if (convertLoader)
-	{
-		//Update the BASIC loader to match tape LOAD synthax.								
-		CFileArchiveTape tapeDest2((char*)outName.c_str());
-		tapeDest2.Open((char*)outName.c_str(), true);
+	{				
+		//Rename original output file to temporary name and create new file with original name and updated loader.
+		string tmpName = string("temp.") + GetExtension(string(outName));
+		rename(outName, tmpName.c_str());
+		
+		CFileArchiveTape tapeDest2(outName);
+		tapeDest2.Open(outName, true);
 
-		tapeDest.Open(tmpName);
+		tapeDest.Open((char*)tmpName.c_str());
 		tapeDest.Init();
 
+		//Update the BASIC loader to match tape LOAD synthax.								
 		ConvertBASICLoaderForDevice(&tapeDest, &tapeDest2, LDR_TAPE);
 
 		tapeDest.Close();
 		tapeDest2.Close();
-		remove(tmpName);
+		remove(tmpName.c_str());
 	}
-	else
-		rename(tmpName, outName.c_str());	
 
 
 	return true;
@@ -2708,7 +2789,9 @@ bool ImportTape(int argc, char* argv[])
 				
 					dword len = fSrc->GetLength();
 					byte* buf = new byte[len];										
-					writeOK = fSrc->GetData(buf) && fDest->SetData(buf, len) && theFS->WriteFile(fDest);
+					writeOK = fSrc->GetData(buf) && fDest->SetData(buf, len);
+					//Ignore error if one of the files could not be written because it may exist already.
+					theFS->WriteFile(fDest);
 					delete [] buf;										
 				}
 				else
@@ -2974,23 +3057,30 @@ bool FormatDisk(int argc, char* argv[])
 	if (argc >= 3 && strcmp(argv[1], "-t") == 0)
 		selGeom = atoi(argv[2])-1;	
 
-	bool formatWithoutConfirmation = false;	
-
 	auto ext = GetExtension(path);
+	bool formatWithoutConfirmationRequested = (ext == "TAP" || ext == "TZX" ? (argc >= 2 && stricmp(argv[1], "-y") == 0) : (argc >= 4 && stricmp(argv[3], "-y") == 0));
+	struct stat statRes;	
+	if (!formatWithoutConfirmationRequested && stat(path, &statRes) == 0 && !Confirm("The format operation will erase existing data. Are you sure?"))
+	{
+		return false;
+	}
+	
 	if (ext == "TAP")
 	{
 		ofstream tapFile(path);
-		tapFile.close();
-		formatWithoutConfirmation = (argc >= 2 && stricmp(argv[3], "-y") == 0);
-		return true;
+		res = tapFile.good();
+		tapFile.close();		
+		return res;
 	}
-	else
-	{ 
-		formatWithoutConfirmation = (argc >= 4 && stricmp(argv[3], "-y") == 0);
-	}
-	
-	if (!formatWithoutConfirmation && !Confirm("The format operation will erase existing data. Are you sure?"))
-		return false;
+	else if (ext == "TZX")
+	{		
+		CTZXFile* tzx = new CTZXFile();
+		bool res = tzx->Open(path, CTapFile::TAP_OPEN_NEW);
+		tzx->Close();
+		delete tzx;
+		return res;
+	}	
+			
 
 	CDiskBase::DiskDescType dd;
 
@@ -3752,7 +3842,9 @@ static const Command theCommands[] =
 		GetFile},
 	{{"type", "cat"}, "Display file",
 		{{"file spec.", true, "* or *.com or readme.txt, etc"},
-		{"-h|-t|-d", false, "display as hex|text|asm"}},
+		{"-h|-t|-d", false, "display as hex|text|asm"},
+		{"-dec", false, "disassemble in decimal instead of hex"}
+		},
 		TypeFile},
 	{{"copydisk"}, "Copy current disk to another disk or image, sector by sector",
 		{{"destination", true, "destination disk/image"},
@@ -3765,10 +3857,14 @@ static const Command theCommands[] =
 			{"remote", true, "source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)"}
 		}, CopyFS},
 	{{"put"}, "Copy PC file to file system",
-		{{"source file", true, "the file to copy"},
-		{"-n newname", false, "name for destination file"},
-		{"-d <destination folder>", false, "file folder"},
-		{"-s start, -t p|b|c|n file type", false, "Spectrum file attributes"}},
+		{
+			{"source file", true, "the file to copy"},
+			{"-n newname", false, "name for destination file"},
+			{"-d <destination folder>", false, "CP/M file folder"},
+			{"-s start", false, "Spectrum program start line/byte start address"},
+			{"-t p|b|c|n file type", false, "Spectrum file type: program, bytes, char arr., no. arr"},
+			{"-turbo <1364|2250|3000|6000>", false, "Turbo baud rate for TZX blocks"}
+		},
 		PutFile},
 	{{"del", "rm"}, "Delete file(s)",
 		{{"file spec.", true, "the file(s) to delete"},
@@ -3933,11 +4029,11 @@ bool PrintHelp(int argc, char* argv[])
 }
 
 
-bool ExecCommand(char* cmd, char params[10][MAX_PATH])
+bool ExecCommand(char* cmd, char params[MAX_PARAMS][MAX_PATH])
 {
 	bool foundCmd = false;
 	bool exitReq = false;	
-	char* pParams[10] = {params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]};	
+	char* pParams[MAX_PARAMS] = {params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9], params[10], params[11], params[12], params[13], params[14] };
 
 	for (byte cmdIdx = 0; cmdIdx < sizeof(theCommands)/sizeof(theCommands[0]) && !foundCmd; cmdIdx++)
 	{
@@ -4005,7 +4101,7 @@ int main(int argc, char * argv[])
 	#endif
 #endif
 
-	char params[10][MAX_PATH];	
+	char params[MAX_PARAMS][MAX_PATH];	
 	char cmd[MAX_PATH] = "";
 	char bufc[128];	
 	memset(bufc, 0, sizeof(bufc));
@@ -4063,9 +4159,9 @@ int main(int argc, char * argv[])
 
 				//Parse parameters.
 				word = strtok(NULL, sep);
-				bool isCmdSep = (word != NULL && strcmp(word, ":") == 0);
-				while (prmIdx < 10 && word != NULL && !isCmdSep)
-				{					
+				bool isCmdSep = false;
+				while (prmIdx < MAX_PARAMS && word != NULL && !isCmdSep)
+				{										
 					if (word[0] == '"')
 					{
 						//Reset first space.
@@ -4083,15 +4179,20 @@ int main(int argc, char * argv[])
 					}
 					else
 					{
-						strcpy(params[prmIdx++], word);
-						word = strtok(NULL, sep);
+						isCmdSep = (word != NULL && strcmp(word, ":") == 0);
+						if (isCmdSep)
+						{
+							word = strtok(NULL, sep);
+						}
+						else
+						{
+							strcpy(params[prmIdx++], word);
+							word = strtok(NULL, sep);
+						}
 					}
 				}
 
-				cancelReq = !ExecCommand(cmd, params);
-
-				if (isCmdSep)
-					word = strtok(NULL, sep);
+				cancelReq = !ExecCommand(cmd, params);				
 			}
 		} while (!cancelReq);
 

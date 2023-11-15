@@ -50,7 +50,7 @@ public:
 		word Bit0;			//Bit 0 pulse length
 		word Bit1;			//Bit 1 pulse length
 		word Pause;			//Inter-block pause length (ms)
-	} TapeTimgins;	
+	} TapeTimings;	
 		
 	//Tape blocks for samples
 	typedef enum
@@ -76,7 +76,7 @@ public:
 	byte LastBitCnt;
 
 	TapeBlockType m_BlkType;
-	TapeTimgins m_Timings;
+	TapeTimings m_Timings;
 
 	typedef struct  
 	{
@@ -94,8 +94,8 @@ public:
 	 TapeBlockPureTone m_PureTone;
 	 TapeBlockPulseSequence m_PulseSeq;
 
-	static const TapeTimgins ROM_TIMINGS_HEAD;	
-	static const TapeTimgins ROM_TIMINGS_DATA;	
+	static const TapeTimings ROM_TIMINGS_HEAD;	
+	static const TapeTimings ROM_TIMINGS_DATA;	
 	word Index;
 #pragma pack()
 

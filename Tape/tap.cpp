@@ -158,7 +158,8 @@ bool CTapFile::IndexTape()
 	bool Res = true;
 	
 	m_Idx.clear();
-
+	
+	fflush(tapFile);
 	fseek(tapFile, 0, SEEK_END);
 	long fSize = ftell(tapFile);
 	fseek(tapFile, 0, SEEK_SET);
@@ -242,7 +243,7 @@ bool CTapFile::FindTapeBlock(unsigned long blkIdx, TapeBlock & tb)
 }
 */
 
-bool CTapFile::AddTapeBlock(void* data, word dataLen, byte flag)
+bool CTapFile::AddTapeBlock(void* data, word dataLen, byte flag, CTapeBlock::TapeTimings* customTimings)
 {
 	CTapeBlock TB;
 

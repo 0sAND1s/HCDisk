@@ -38,11 +38,15 @@ public:
 	virtual bool Open(char* name, bool create = false);
 	virtual CFile* FindFirst(char* pattern);
 	virtual CFile* FindNext();		
-	virtual bool AddFile(CFileSpectrumTape* fSpec);
+	virtual bool AddFile(CFileSpectrumTape* fSpec, CTapeBlock::TapeTimings* customTimings = nullptr);
 	virtual bool Close();
 	virtual bool ReadFile(CFile* file);		
 	bool HasStandardBlocksOnly() { return theTap->HasStandardBlocksOnly(); }
 	bool IsTZX() { return theTap->IsTZX(); };
+	bool IsCharValidForFilename(char c)
+	{
+		return c >= ' ' && c < 128 && strchr("\"\\/", c) == NULL;
+	}
 
 	CTapFile* theTap;
 protected:	
@@ -57,7 +61,8 @@ protected:
 
 class CFileSpectrumTape: public CFileSpectrum, public CFile
 {
-public:	
+public:		
+
 	virtual bool GetFileName(char* dest, bool trim = true)
 	{
 		bool res = CFile::GetFileName(dest, trim);

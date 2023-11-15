@@ -14,7 +14,7 @@ bool CTape2Wav::Close()
 	return wav.Close();
 }
 
-void CTape2Wav::PutByte(byte b, CTapeBlock::TapeTimgins t, byte bitCnt)
+void CTape2Wav::PutByte(byte b, CTapeBlock::TapeTimings t, byte bitCnt)
 {
 	dword sampWr = 0;
 

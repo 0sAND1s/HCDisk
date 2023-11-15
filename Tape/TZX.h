@@ -187,7 +187,7 @@ public:
 	static const char* TZXBlkTypeNames[];
 
 	CTZXFile();
-	~CTZXFile();
+	virtual ~CTZXFile();
 
 	virtual bool Open(char * fileName, TapeOpenMode mode = TAP_OPEN_EXISTING);
 	virtual bool GetFirstBlock(CTapeBlock* tb);
@@ -197,6 +197,7 @@ public:
 	bool Jump(short iRelBlkIdx);
 	virtual bool HasStandardBlocksOnly();
 	virtual bool IsTZX() { return true; };
+	virtual bool AddTapeBlock(void* data, word dataLen, byte flag, CTapeBlock::TapeTimings* customTimings = nullptr);
 };
 
 #endif//_TZX_H_

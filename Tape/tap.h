@@ -63,7 +63,7 @@ protected:
 
 public:
 	CTapFile();	
-	~CTapFile();
+	virtual ~CTapFile();
 
 	virtual bool Open(char * fileName, TapeOpenMode mode = TAP_OPEN_EXISTING);
 	virtual bool Close();
@@ -85,7 +85,7 @@ public:
 	bool FindTapeBlock(unsigned long idx, TapeBlock & tb);
 	*/
 
-	virtual bool AddTapeBlock(void* data, word dataLen, byte flag);
+	virtual bool AddTapeBlock(void* data, word dataLen, byte flag, CTapeBlock::TapeTimings* customTimings = nullptr);
 	virtual void AddTapeHeaderBlock(CTapeBlock::TapeBlockHeaderBasicType blType, char* name, word dataLen, word param1, word param2);	
 	virtual void AddTapeProgramHeader(char* name, word dataLen, word startLine, word varLen);
 	virtual void AddTapeCodeHeader(char* name, word dataLen, word startAddr);

@@ -22,6 +22,8 @@ bool CFileArchiveTape::Init()
 	bool res = true;
 	if (theTap == nullptr)
 		res = Open(Name);
+	
+	theTap->IndexTape();
 
 	//res = res && theTap->Open(Name);
 	
@@ -254,19 +256,23 @@ bool CFileArchiveTape::FileSpectrum2TapeBlock(CFileSpectrumTape* fSpec, CTapeBlo
 }
 
 
-bool CFileArchiveTape::AddFile(CFileSpectrumTape* fSpec)
+bool CFileArchiveTape::AddFile(CFileSpectrumTape* fSpec, CTapeBlock::TapeTimings* customTimings)
 {
 	CTapeBlock tbHdr, tbData;
 	bool res = true;
 
 	res = FileSpectrum2TapeBlock(fSpec, tbHdr, tbData);	
-	if (res)
-		res = theTap->AddTapeBlock(tbHdr.Data, (word)tbHdr.Length, CTapeBlock::TAPE_BLOCK_FLAG_HEADER) &&
-			theTap->AddTapeBlock(tbData.Data, (word)tbData.Length, CTapeBlock::TAPE_BLOCK_FLAG_DATA);	
+	
+	if (res && tbHdr.Length > 0)
+		res = theTap->AddTapeBlock(tbHdr.Data, (word)tbHdr.Length, CTapeBlock::TAPE_BLOCK_FLAG_HEADER, customTimings);
+	if (res && tbData.Length > 0)
+		res = theTap->AddTapeBlock(tbData.Data, (word)tbData.Length, CTapeBlock::TAPE_BLOCK_FLAG_DATA, customTimings);	
 		
 	//Re-index tape after a block was appended.
 	if (res)
+	{		
 		res = Init();
+	}
 
 	return res;
 }

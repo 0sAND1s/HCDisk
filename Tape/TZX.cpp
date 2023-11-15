@@ -1,6 +1,8 @@
 #include "TZX.h"
 #include "memory.h"
 
+const char* TZXCreateMsg = "Created with HCDisk 2.0";
+
 const char CTZXFile::SIGNATURE[] = {'Z','X','T','a','p','e','!','\x1A'};
 const char* CTZXFile::TZXArhBlkNames[] = 
 {
@@ -54,21 +56,20 @@ CTZXFile::CTZXFile()
 
 CTZXFile::~CTZXFile()
 {
-
+	Close();
 }
 
 bool CTZXFile::Open(char* fileName, TapeOpenMode mode)
 {
 	TZXHeader hdr;
 
-	this->fileName = fileName;
-	
-	tapFile = fopen(fileName, "rb");
+	this->fileName = fileName;	
 
 	bool OK = false;
 
 	if (mode == TAP_OPEN_EXISTING)
 	{
+		tapFile = fopen(fileName, "rb+");
 		if (tapFile != NULL)
 		{	
 			fseek(tapFile, 0, SEEK_END);
@@ -84,20 +85,23 @@ bool CTZXFile::Open(char* fileName, TapeOpenMode mode)
 			OK = false;
 	}
 	else if (mode == TAP_OPEN_NEW)
-	{
-		if (tapFile == NULL)
+	{			
+		tapFile = fopen(fileName, "wb+");
+		if (tapFile != NULL)
 		{
-			tapFile = fopen(fileName, "wb");
-			if (tapFile != NULL)
-			{
-				memcpy(hdr.Signature, SIGNATURE, sizeof(SIGNATURE));
-				hdr.VerMajor = VER_MAJOR;
-				hdr.VerMinor = VER_MINOR;
-				OK = fwrite(&hdr, sizeof(hdr), 1, tapFile) == 1;
-			}
-			else
-				OK = false;
+			memcpy(hdr.Signature, SIGNATURE, sizeof(SIGNATURE));
+			hdr.VerMajor = VER_MAJOR;
+			hdr.VerMinor = VER_MINOR;
+			OK = fwrite(&hdr, sizeof(hdr), 1, tapFile) == 1;
+
+			//Also add HCDisk signature.
+			TZXBlkMessage msg;
+			memcpy(msg.Msg, TZXCreateMsg, strlen(TZXCreateMsg));
+			msg.Len = strlen(TZXCreateMsg);
+			OK = fputc(BLK_ID_TXT_DESCR, tapFile) != EOF && fwrite(&msg, 1, sizeof(msg.Len) + msg.Len, tapFile) == sizeof(msg.Len) + msg.Len;
 		}
+		else
+			OK = false;		
 	}
 			
 	return OK;
@@ -359,9 +363,12 @@ bool CTZXFile::IndexTape()
 	TapeBlkIdxType idxItm;	
 	m_CurBlkIdx = -1;
 
-	while (ftell(tapFile) < m_FileSz && Res)
-	{
-		off = ftell(tapFile);
+	fflush(tapFile);			
+	fseek(tapFile, 0, SEEK_SET);
+	off = ftell(tapFile);
+
+	while (off < m_FileSz && Res)
+	{		
 		m_CurrBlkID = (TZXBlockTypeID)fgetc(tapFile);			
 		m_CurBlkIdx++;
 		m_CurBlkStts = BLK_RD_STS_VALID;	
@@ -495,6 +502,8 @@ bool CTZXFile::IndexTape()
 		idxItm.Offset = off;
 		idxItm.RdSts = m_CurBlkStts;		
 		m_Idx.push_back(idxItm);
+
+		off = ftell(tapFile);
 	}	
 
 	return Res;	
@@ -523,4 +532,55 @@ bool CTZXFile::HasStandardBlocksOnly()
 	};
 
 	return hasStandardBlocks;
+}
+
+bool CTZXFile::AddTapeBlock(void* data, word dataLen, byte flag, CTapeBlock::TapeTimings* customTimings)
+{
+	CTapeBlock TB;
+
+	TB.Length = dataLen + 2;
+	TB.Flag = flag;
+	TB.Data = new byte[dataLen];
+	memcpy(TB.Data, data, dataLen);
+	TB.Checksum = TB.GetBlockChecksum();	
+
+	fseek(tapFile, 0, SEEK_END);
+	bool res = true;
+
+	if (customTimings == nullptr)
+	{
+		TZXBlkStd blkStd;
+		blkStd.Len = TB.Length;
+		blkStd.Pause = CTapeBlock::ROM_TIMINGS_HEAD.Pause;
+
+		res = fputc((int)BLK_ID_STD, tapFile) != EOF;
+		res = res &&
+			fwrite(&blkStd, 1, sizeof(blkStd), tapFile) == sizeof(blkStd) &&
+			fwrite(&TB.Flag, 1, sizeof(TB.Flag), tapFile) == sizeof(TB.Flag) &&
+			fwrite(TB.Data, 1, dataLen, tapFile) == dataLen &&
+			fwrite(&TB.Checksum, 1, sizeof(TB.Checksum), tapFile) == sizeof(TB.Checksum);
+	}	
+	else
+	{
+		TZXBlkTurbo blkTurbo = {};
+		blkTurbo.Pilot = customTimings->Pilot;
+		blkTurbo.Sync1 = customTimings->Sync1;
+		blkTurbo.Sync2 = customTimings->Sync2;
+		blkTurbo.Zero = customTimings->Bit0;
+		blkTurbo.One = customTimings->Bit1;
+		blkTurbo.PilotLen = customTimings->PilotPulseCnt;
+		blkTurbo.Pause = customTimings->Pause;
+		
+		blkTurbo.LastBitsCnt = 8;		
+		blkTurbo.Len1 = TB.Length;
+
+		res = fputc((int)BLK_ID_TURBO, tapFile) != EOF;
+		res = res &&
+			fwrite(&blkTurbo, 1, sizeof(blkTurbo), tapFile) == sizeof(blkTurbo) &&
+			fwrite(&TB.Flag, 1, sizeof(TB.Flag), tapFile) == sizeof(TB.Flag) &&
+			fwrite(TB.Data, 1, dataLen, tapFile) == dataLen &&
+			fwrite(&TB.Checksum, 1, sizeof(TB.Checksum), tapFile) == sizeof(TB.Checksum);
+	}
+
+	return res;
 }
