@@ -2234,8 +2234,9 @@ bool PutFile(int argc, char* argv[])
 				turboTimes.Bit0 = tv._Len0;
 				turboTimes.Bit1 = turboTimes.Bit0 * 2;
 				turboTimes.Pilot = tv._LenPilot;
-				turboTimes.PilotPulseCnt = (word)((dword)CTape2Wav::Z80TSTATES / tv._LenPilot) * 2; //1 second pilot.
-				turboTimes.Sync1 = turboTimes.Sync2 = tv._LenSync0;				
+				turboTimes.PilotPulseCnt = (word)((dword)CTape2Wav::Z80TSTATES / tv._LenPilot); //1/2 second pilot.
+				turboTimes.Sync1 = turboTimes.Sync2 = tv._LenSync0;		
+				turboTimes.Pause = 500;		//half a second pause
 				
 				res = tzx->AddFile(dynamic_cast<CFileSpectrumTape*>(fileNew), &turboTimes);
 			}
