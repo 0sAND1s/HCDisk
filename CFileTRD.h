@@ -12,16 +12,14 @@ class CFileTRD: public CFile, public CFileSpectrum
 
 public:	
 	CFileTRD(CFileArchive* fs);		
-	virtual ~CFileTRD(){};
+	virtual ~CFileTRD(){};	
 
 protected:	
 	word FileDirEntry;
 	byte StartTrack;
 	byte StartSector;	
 	byte SectorCnt;
-	CFileArchive* fs;
-
-	word GetBASStartLine();		
+	CFileArchive* fs;	
 };
 
 #endif//_CFILETRD_H_

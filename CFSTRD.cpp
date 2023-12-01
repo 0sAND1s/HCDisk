@@ -3,6 +3,10 @@
 #include <ctype.h>
 #include "CFSTRD.h"
 #include "CFileTRD.h"
+#include <algorithm>
+
+const word PROGRAM_LINE_MARKER = 0xAA80;
+const byte END_OF_DIR_MARKER = 0;
 
 const CDiskBase::DiskDescType CFSTRDOS::TRDDiskTypes[] = 
 {
@@ -16,7 +20,7 @@ CFSTRDOS::CFSTRDOS(CDiskBase* theDisk, char* name) : CFileSystem(theDisk, name)
 {
 	NAME_LENGHT = 8;
 	EXT_LENGTH = 1;
-	FSFeatures = (FileSystemFeature)(FSFT_DISK | FSFT_ZXSPECTRUM_FILES | FSFT_LABEL | FSFT_AUTORUN);	
+	FSFeatures = (FileSystemFeature)(FSFT_DISK | FSFT_ZXSPECTRUM_FILES | FSFT_CASE_SENSITIVE_FILENAMES | FSFT_LABEL | FSFT_AUTORUN);
 
 	FSParams.DirEntryCount = MAX_DIR_ENTRIES;
 	FSParams.BlockSize = Disk->DiskDefinition.SectSize;
@@ -86,7 +90,7 @@ bool CFSTRDOS::ReadDirectory()
 	FS_DirEntryMap.clear();
 	FS_BlockMap.clear();
 
-	Disk->ReadSectors((byte*)&TRD_Directory, 0, 0, 0, 
+	Disk->ReadSectors((byte*)&TRD_Directory, 0, 0, 1, 
 		MAX_DIR_ENTRIES * (byte)sizeof(DirEntryType)/Disk->DiskDefinition.SectSize);	
 
 	for (word dirIdx = 0; dirIdx < MAX_DIR_ENTRIES; dirIdx++)
@@ -98,7 +102,7 @@ bool CFSTRDOS::ReadDirectory()
 	for (dirEntIdx = 0; dirEntIdx < MAX_DIR_ENTRIES && !bDirFinished; dirEntIdx++)		
 	{
 		dirEnt = *(DirEntryType*)&TRD_Directory[dirEntIdx];		 
-		bDirFinished = dirEnt.FileName[0] == 0;		
+		bDirFinished = dirEnt.FileName[0] == END_OF_DIR_MARKER;		
 	
 		if (!bDirFinished && dirEnt.FileName[0] != DEL_FLAG)		
 		{
@@ -122,7 +126,7 @@ bool CFSTRDOS::ReadDirectory()
 				FS_BlockMap[logicalStartSect + secIdx] = true;
 			}
 			
-			if (file.Extension[0] != 'P' && file.Extension[0] != 'B' && file.Extension[0] != 'D' &&
+			if (file.Extension[0] != 'C' && file.Extension[0] != 'B' && file.Extension[0] != 'D' &&
 				file.Extension[0] != '#')
 			{				 
 				int c1 = (dirEnt.CodeStart & 0xFF);
@@ -194,14 +198,80 @@ bool CFSTRDOS::Format()
 
 bool CFSTRDOS::Delete(char* names)
 {
-	LastError = ERR_NOT_SUPPORTED;
-	return false;//TBD
+	byte delFilesCnt = 0, nonDelFilesCnt = 0;
+	CFileTRD* file = (CFileTRD*)FindFirst(names);
+	while (file != nullptr)
+	{
+		DirEntryType* dirEnt = (DirEntryType*)&TRD_Directory[file->FileDirEntry];
+		dirEnt->FileName[0] = DEL_FLAG;
+		
+		file = (CFileTRD*)FindNext();		
+	}
+
+	bool bDirFinished = false;
+	DirEntryType* dirEnt = (DirEntryType*)&TRD_Directory[0];
+	for (word dirIdx = 0; dirIdx < MAX_DIR_ENTRIES && !bDirFinished; dirIdx++)
+	{
+		bDirFinished = (dirEnt->FileName[0] == END_OF_DIR_MARKER);
+		if (!bDirFinished)
+		{
+			if (dirEnt->FileName[0] == DEL_FLAG)
+				delFilesCnt++;
+			else
+				nonDelFilesCnt++;
+		}		
+	}
+
+	bool res = true; 
+	//res = Disk->ReadSectors((byte*)&diskDescTRD, 0, 0, DISK_INFO_SECTOR, 1);	
+	diskDescTRD.DelFilesCnt = delFilesCnt;
+	diskDescTRD.FileCnt = nonDelFilesCnt;
+	res = Disk->WriteSectors(0, 0, DISK_INFO_SECTOR, 1, (byte*)&diskDescTRD);
+	if (!res)
+		return res;
+		
+	res = Disk->WriteSectors(0, 0, 1,
+		MAX_DIR_ENTRIES * (byte)sizeof(DirEntryType) / Disk->DiskDefinition.SectSize,
+		(byte*)&TRD_Directory);	
+	if (!res)
+		return res;
+
+	res = ReadDirectory();
+
+	return res;
 }
 
 bool CFSTRDOS::Rename(CFile* file, char* newName)
 {
-	LastError = ERR_NOT_SUPPORTED;
-	return false;//TBD
+	bool res = true;	
+	if (file == nullptr || newName == nullptr)
+		return false;
+
+	CFileTRD* fTRD = (CFileTRD*)file;
+	DirEntryType* dirEnt = (DirEntryType*)&TRD_Directory[fTRD->FileDirEntry];
+
+	res = this->CreateFileName(newName, fTRD);
+	if (!res)
+		return res;
+
+	memset(dirEnt->FileName, ' ', sizeof(dirEnt->FileName));
+	memcpy(dirEnt->FileName, fTRD->Name, min(strlen(fTRD->Name), sizeof(dirEnt->FileName)));
+	dirEnt->FileExt = fTRD->Extension[0];
+	if (dirEnt->FileExt != 'C' && dirEnt->FileExt != 'B' && dirEnt->FileExt != 'D' && dirEnt->FileExt != '#' &&
+		isprint(fTRD->Extension[1]) && isprint(fTRD->Extension[2]))
+	{
+		dirEnt->CodeStart = ((word)fTRD->Extension[1] << 8) | fTRD->Extension[2];
+	}
+
+	res = Disk->WriteSectors(0, 0, 1,
+		MAX_DIR_ENTRIES * (byte)sizeof(DirEntryType) / Disk->DiskDefinition.SectSize,
+		(byte*)&TRD_Directory);
+	if (!res)
+		return res;
+
+	res = ReadDirectory();
+
+	return res;
 }
 
 bool CFSTRDOS::ReadBlock(byte* destBuf, word sectIdx, byte sectCnt)
@@ -210,6 +280,14 @@ bool CFSTRDOS::ReadBlock(byte* destBuf, word sectIdx, byte sectCnt)
 	
 	LogicalToPhysicalSector(sectIdx, &trk, &side, &sector);	
 	return Disk->ReadSectors(destBuf, trk, side, sector, 1);
+}
+
+bool CFSTRDOS::WriteBlock(byte* srcBuf, word sectIdx, byte sectCnt)
+{
+	byte trk, side, sector;
+
+	LogicalToPhysicalSector(sectIdx, &trk, &side, &sector);
+	return Disk->WriteSectors(trk, side, sector, 1, srcBuf);
 }
 
 bool CFSTRDOS::ReadFile(CFileTRD* file)
@@ -230,8 +308,142 @@ bool CFSTRDOS::ReadFile(CFileTRD* file)
 
 bool CFSTRDOS::WriteFile(CFileTRD* file)
 {
-	LastError = ERR_NOT_SUPPORTED;
-	return false;
+	bool res = true;
+
+	//Set program start line on the last 4 bytes.	
+	if (file->SpectrumType == CFileSpectrum::SPECTRUM_PROGRAM)
+	{
+		file->Length += 4;
+		byte* buf = new byte[file->Length];
+		memcpy(buf, file->buffer, file->Length - 4);
+		delete[] file->buffer;
+		file->buffer = buf;
+
+		*(word*)&file->buffer[file->Length - 4] = PROGRAM_LINE_MARKER;
+		*(word*)&file->buffer[file->Length - 2] = file->SpectrumStart;		
+	}
+
+	const byte fileSectorCount = (byte)ceil((float)file->Length / Disk->DiskDefinition.SectSize);
+
+	//Allocate the last partial sector, using a clean buffer.	
+	if (file->Length % Disk->DiskDefinition.SectSize != 0)
+	{		
+		byte unusedLen = fileSectorCount * Disk->DiskDefinition.SectSize - file->Length;
+		file->Length = fileSectorCount * Disk->DiskDefinition.SectSize;		
+		byte* buf = new byte[file->Length];
+		memcpy(buf, file->buffer, file->Length - unusedLen);
+		delete[] file->buffer;
+		file->buffer = buf;
+		memset(&file->buffer[file->Length - unusedLen], 0, unusedLen);		
+	}			
+	
+	const word freeSectCount = GetFreeBlockCount();
+	if (freeSectCount < fileSectorCount)
+	{
+		LastError = ERR_NO_SPACE_LEFT;
+		return false;
+	}
+	
+	if (GetFreeDirEntriesCount() < 1)
+	{
+		LastError = ERR_NO_CATALOG_LEFT;
+		return false;
+	}	
+
+	//Search next free dir entry.
+	DirEntryType* dirEnt = nullptr;
+	bool bDirFinished = false;
+	for (dirEntIdx = 0; dirEntIdx < MAX_DIR_ENTRIES && !bDirFinished; dirEntIdx++)
+	{
+		dirEnt = (DirEntryType*)&TRD_Directory[dirEntIdx];
+		bDirFinished = dirEnt->FileName[0] == END_OF_DIR_MARKER;
+	}
+
+	//Set spectrum parameters.
+	switch (file->SpectrumType)
+	{
+	case CFileSpectrum::SPECTRUM_PROGRAM:
+		dirEnt->ProgramLength = file->CFileSpectrum::SpectrumLength;
+		//Length is variables offset for Programs.
+		dirEnt->Length = file->CFileSpectrum::SpectrumLength - file->SpectrumVarLength;
+		dirEnt->FileExt = 'B';
+		break;
+	case CFileSpectrum::SPECTRUM_BYTES:
+		dirEnt->Length = file->CFileSpectrum::SpectrumLength;
+		dirEnt->CodeStart = file->CFileSpectrum::SpectrumStart;
+		dirEnt->FileExt = 'C';
+		break;
+	case CFileSpectrum::SPECTRUM_CHAR_ARRAY:
+		dirEnt->Length = file->CFileSpectrum::SpectrumLength;
+		dirEnt->FileExt = 'D';
+		break;
+	case CFileSpectrum::SPECTRUM_NUMBER_ARRAY:
+		dirEnt->PrintExtent = file->CFileSpectrum::SpectrumStart;
+		dirEnt->Length = file->CFileSpectrum::SpectrumLength;
+		dirEnt->FileExt = '#';
+		break;
+	default:
+		dirEnt->Length = file->CFileSpectrum::SpectrumLength;
+		dirEnt->CodeStart = file->CFileSpectrum::SpectrumStart;
+		break;
+	}
+
+	//Set file name.	
+	memset(dirEnt->FileName, ' ', sizeof(dirEnt->FileName));
+	memcpy(dirEnt->FileName, file->FileName, min(strlen(file->FileName), sizeof(dirEnt->FileName)));
+	if (dirEnt->FileExt != 'C' && dirEnt->FileExt != 'B' && dirEnt->FileExt != 'D' && dirEnt->FileExt != '#' &&
+		isprint(file->Extension[1]) && isprint(file->Extension[2]))
+	{
+		dirEnt->CodeStart = ((word)file->Extension[1] << 8) | file->Extension[2];
+	}
+
+	//Check if file exists already.
+	CFile* existingFile = FindFirst(file->FileName);
+	if (existingFile != nullptr)
+	{
+		LastError = ERR_FILE_EXISTS;
+		return false;
+	}
+
+	//Write file data.
+	byte startTrack = diskDescTRD.NextFreeSectTrack;
+	byte startSector = diskDescTRD.NextFreeSect;					
+	for (word sectIdx = 0; sectIdx < fileSectorCount && res; sectIdx++)
+	{
+		word blockIdx = startTrack * Disk->DiskDefinition.SPT + startSector + sectIdx;			
+		res = WriteBlock(file->buffer + (sectIdx * Disk->DiskDefinition.SectSize), blockIdx);
+	}	
+
+	//Update next free position in disk description.			
+	diskDescTRD.NextFreeSectTrack = diskDescTRD.NextFreeSectTrack + (fileSectorCount / Disk->DiskDefinition.SPT) + 
+		//When advancing the track, must also consider an aditional track, when filling the previous track.
+		(diskDescTRD.NextFreeSect + fileSectorCount % Disk->DiskDefinition.SPT)/Disk->DiskDefinition.SPT;
+	diskDescTRD.NextFreeSect = (diskDescTRD.NextFreeSect + fileSectorCount) % Disk->DiskDefinition.SPT;
+	diskDescTRD.FreeSectCnt -= fileSectorCount;	
+	diskDescTRD.FileCnt++;
+
+	//Fill directory entry for the new file.	
+	dirEnt->LenghtSect = fileSectorCount;
+	dirEnt->StartSect = startSector;
+	dirEnt->StartTrack = startTrack;		
+	
+
+	//Update disk description.
+	res = Disk->WriteSectors(0, 0, DISK_INFO_SECTOR, 1, (byte*)&diskDescTRD);
+	if (!res)
+		return res;
+
+	//Update disk catalog.
+	res = Disk->WriteSectors(0, 0, 1,
+		MAX_DIR_ENTRIES * (byte)sizeof(DirEntryType) / Disk->DiskDefinition.SectSize,
+		(byte*)&TRD_Directory);
+	if (!res)
+		return res;
+
+	//Re-read catalog.
+	res = ReadDirectory();
+	
+	return res;
 }
 
 CFile* CFSTRDOS::NewFile(const char* name, long len, byte* data)
@@ -282,18 +494,41 @@ void CFSTRDOS::LogicalToPhysicalSector(word logicalSect, byte* track, byte* side
 	*sectorID = (logicalSect % Disk->DiskDefinition.SPT) + 1;
 }
 
+void CFSTRDOS::ReadProgramStartLine(CFileTRD* file)
+{
+	word line = -1;
+
+	if (file->buffer != nullptr)
+	{
+		delete[] file->buffer;
+		file->buffer = nullptr;
+	}
+
+	file->buffer = new byte[FSParams.BlockSize];
+	//Read last block from file to get program start line.
+	ReadBlock(file->buffer, file->StartTrack * Disk->DiskDefinition.SPT + file->StartSector + file->SectorCnt - 1);
+	word lineNo = -1;
+	word* lineNoPtr = (word*)&file->buffer[file->SpectrumLength % Disk->DiskDefinition.SectSize];
+	if (*lineNoPtr == PROGRAM_LINE_MARKER && (*(lineNoPtr + 1) & 0x8000) == 0)
+		lineNo = *(lineNoPtr + 1);
+	file->CFileSpectrum::SpectrumStart = lineNo;
+	delete[] file->buffer;
+	file->buffer = nullptr;	
+}
+
 bool CFSTRDOS::OpenFile(CFile* file)
 {		
-	CFileTRD* f = (CFileTRD*)file;
-	f->buffer = new byte[FSParams.BlockSize];
-	ReadBlock(f->buffer, f->StartSector);
+	CFileTRD* f = (CFileTRD*)file;	
+	word lineNo = -1;
+	word* lineNoPtr = nullptr;
 	switch (f->Extension[0])
 	{
 	case 'B':	
 		f->CFileSpectrum::SpectrumType = CFileSpectrum::SPECTRUM_PROGRAM;		
-		f->CFileSpectrum::SpectrumLength = TRD_Directory[f->FileDirEntry].BasicProgVarLength;			
-		f->CFileSpectrum::SpectrumStart = f->GetBASStartLine();
-		f->CFileSpectrum::SpectrumVarLength = TRD_Directory[f->FileDirEntry].BasicProgVarLength - TRD_Directory[f->FileDirEntry].Length;
+		f->CFileSpectrum::SpectrumLength = TRD_Directory[f->FileDirEntry].ProgramLength;					
+		//Length is actually variables offset in program block.
+		f->CFileSpectrum::SpectrumVarLength = TRD_Directory[f->FileDirEntry].ProgramLength - TRD_Directory[f->FileDirEntry].Length;
+		ReadProgramStartLine(f);
 		break;
 	case 'C':
 		f->CFileSpectrum::SpectrumType = CFileSpectrum::SPECTRUM_BYTES;
@@ -319,8 +554,6 @@ bool CFSTRDOS::OpenFile(CFile* file)
 	}
 
 	f->Length = GetFileSize(f, true);
-	delete f->buffer;
-	f->buffer = NULL;
 
 	return true;
 }

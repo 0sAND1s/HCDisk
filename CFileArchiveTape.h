@@ -41,8 +41,8 @@ public:
 	virtual bool AddFile(CFileSpectrumTape* fSpec, CTapeBlock::TapeTimings* customTimings = nullptr);
 	virtual bool Close();
 	virtual bool ReadFile(CFile* file);		
-	bool HasStandardBlocksOnly() { return theTap->HasStandardBlocksOnly(); }
-	bool IsTZX() { return theTap->IsTZX(); };
+	bool HasStandardBlocksOnly() { return theTap != nullptr && theTap->HasStandardBlocksOnly(); }
+	bool IsTZX() { return theTap != nullptr && theTap->IsTZX(); };
 	bool IsCharValidForFilename(char c)
 	{
 		return c >= ' ' && c < 128 && strchr("\"\\/", c) == NULL;
@@ -96,7 +96,7 @@ public:
 
 	virtual dword GetLength()
 	{
-		return SpectrumLength;
+		return GetType() != CFileSpectrum::SPECTRUM_UNTYPED ? SpectrumLength : CFile::Length;
 	}
 	
 	virtual bool Read() {return true; };		

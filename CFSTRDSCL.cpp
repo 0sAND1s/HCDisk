@@ -2,6 +2,8 @@
 #include "CFileTRD.h"
 #include "DiskImgRaw.h"
 
+const word PROGRAM_LINE_MARKER = 0xAA80;
+
 CFSTRDSCL::CFSTRDSCL(char* imgFile, char* name)	
 {
 	this->imgFileName = imgFile;
@@ -99,16 +101,27 @@ CFile* CFSTRDSCL::FindNext()
 
 bool CFSTRDSCL::OpenFile(CFile* file)
 {		
-	CFileTRD* f = (CFileTRD*)file;
-	f->buffer = new byte[SECT_SIZE];
-	ReadBlock(f, f->StartSector, f->buffer);
+	CFileTRD* f = (CFileTRD*)file;	
+	word lineNo = -1;
+	word* lineNoPtr = nullptr;	
+
 	switch (f->Extension[0])
 	{
 	case 'B':	
 		f->CFileSpectrum::SpectrumType = CFileSpectrum::SPECTRUM_PROGRAM;		
-		f->CFileSpectrum::SpectrumLength = TRD_Directory[f->FileDirEntry].BasicProgVarLength;			
-		f->CFileSpectrum::SpectrumStart = f->GetBASStartLine();
-		f->CFileSpectrum::SpectrumVarLength = TRD_Directory[f->FileDirEntry].BasicProgVarLength - TRD_Directory[f->FileDirEntry].Length;
+		f->CFileSpectrum::SpectrumLength = TRD_Directory[f->FileDirEntry].ProgramLength;					
+		f->CFileSpectrum::SpectrumVarLength = TRD_Directory[f->FileDirEntry].ProgramLength - TRD_Directory[f->FileDirEntry].Length;
+		
+		//Read line number for program file.
+		f->buffer = new byte[SECT_SIZE];
+		ReadBlock(f, f->SectorCnt - 1, f->buffer);
+		lineNoPtr = (word*)&f->buffer[f->SpectrumLength % SECT_SIZE];
+		if (*lineNoPtr == PROGRAM_LINE_MARKER && (*(lineNoPtr + 1) & 0x8000) == 0)
+			lineNo = *(lineNoPtr + 1);
+		f->CFileSpectrum::SpectrumStart = lineNo;
+		delete[] f->buffer;
+		f->buffer = nullptr;
+
 		break;
 	case 'C':
 		f->CFileSpectrum::SpectrumType = CFileSpectrum::SPECTRUM_BYTES;
@@ -133,9 +146,7 @@ bool CFSTRDSCL::OpenFile(CFile* file)
 		break;		
 	}
 
-	f->Length = GetFileSize(f, true);
-	delete f->buffer;
-	f->buffer = NULL;
+	f->Length = GetFileSize(f, true);	
 
 	return true;
 }
@@ -150,7 +161,7 @@ bool CFSTRDSCL::ReadFile(CFile* file)
 
 	for (word sectIdx = 0; sectIdx < f->SectorCnt && res; sectIdx++)
 	{
-		word blockIdx = f->StartTrack * 16 + f->StartSector + sectIdx;
+		word blockIdx = sectIdx;
 		res = ReadBlock(f, blockIdx, f->buffer + (sectIdx * sectSz));
 	}
 	return res;
@@ -163,7 +174,7 @@ bool CFSTRDSCL::ReadBlock(CFileTRD* file, word sectIdx, byte* destBuf)
 	for (byte fileIdx = 0; fileIdx < file->FileDirEntry; fileIdx++)
 		logicalStartSect += TRD_Directory[fileIdx].LenghtSect;
 
-	word imgOffset = 8 + 1 + TRD_Files.size() * (sizeof(CFSTRDOS::DirEntryType) - 2) + (logicalStartSect * SECT_SIZE);
+	dword imgOffset = 8 + 1 + TRD_Files.size() * (sizeof(CFSTRDOS::DirEntryType) - 2) + (logicalStartSect * SECT_SIZE);
 	bool res = fseek(imgFile, imgOffset, SEEK_SET) == 0;
 
 	if (res)

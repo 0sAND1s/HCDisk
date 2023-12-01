@@ -246,13 +246,19 @@ bool CFileArchiveTape::FileSpectrum2TapeBlock(CFileSpectrumTape* fSpec, CTapeBlo
 			th->Param2 = fSpec->SpectrumArrayVarName;
 		else if (th->BlockType == CFileSpectrum::SPECTRUM_BYTES)
 			th->Param2 = 32768;		
+
+		//Tape block destructor will free buffer.
+		tbData.Length = fSpec->GetLength();
+		tbData.Data = new byte[tbData.Length];
+		return fSpec->GetData(tbData.Data);
+	}
+	else //Must handle header-less/type-less blocks
+	{		
+		tbData.Length = fSpec->GetLength();
+		tbData.Data = new byte[tbData.Length];
+		return fSpec->GetData(tbData.Data);
 	}
 	
-	//Tape block destructor will free buffer.
-	tbData.Data = new byte[fSpec->SpectrumLength];
-	tbData.Length = fSpec->SpectrumLength;			
-	
-	return fSpec->GetData(tbData.Data);
 }
 
 

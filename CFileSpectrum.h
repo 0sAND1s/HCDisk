@@ -16,10 +16,10 @@ public:
 	};	
 
 	SpectrumFileType SpectrumType;
-	word SpectrumStart;
-	word SpectrumLength;
-	byte SpectrumArrayVarName;
-	word SpectrumVarLength;
+	word SpectrumStart;				//Code start address OR program start line
+	word SpectrumLength;			//Program lenght WITH variables
+	byte SpectrumArrayVarName;		//Char/number array variable
+	word SpectrumVarLength;			//Variables lenght
 
 	static char* SPECTRUM_FILE_TYPE_NAMES[];
 

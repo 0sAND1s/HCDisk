@@ -301,7 +301,7 @@ const FileSystemDescription DISK_TYPES[] =
 		"GENERIC CP/M 2.2 5.25\"", FS_CPM_GENERIC,
 		{40, 2, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_5_25, 0},
 		{2048, 175, 64, 2}, 
-		{2, 1},
+		{2, 1}, //2 extents in 1 dir entry.
 		true
 	},
 
@@ -828,9 +828,9 @@ bool GetFile(int argc, char* argv[])
 	if (theFS == NULL)
 		return false;	
 
-	char* fileName = argv[0];
+	string fileNameRequested = argv[0];
 	bool asText = false;
-	string pcName;
+	string pcName, pcNameRequested;
 
 	byte argIdx = 1;
 	while (argIdx < argc)
@@ -842,7 +842,7 @@ bool GetFile(int argc, char* argv[])
 		}
 		else if (arg == "-n" && argc > argIdx + 1)
 		{
-			pcName = argv[argIdx + 1];
+			pcNameRequested = argv[argIdx + 1];
 			argIdx++;
 		}
 
@@ -850,7 +850,7 @@ bool GetFile(int argc, char* argv[])
 	}
 
 
-	CFile* f = theFS->FindFirst(fileName);
+	CFile* f = theFS->FindFirst((char*)fileNameRequested.c_str());
 	CFileSystem::FileNameType fn;
 	bool res = false;
 		
@@ -861,8 +861,10 @@ bool GetFile(int argc, char* argv[])
 			printf("Couldn't open file '%s'!\n", fn);
 		else
 		{						
-			if (pcName.length() == 0)
-				pcName = fn;
+			//We can set PC file name as requested, only if not using wildcards. Otherwise, use original file name as PC file name.			
+			pcName = fn;
+			if (pcNameRequested.length() > 0 && fileNameRequested.find_first_of("*?", 0) == -1)
+				pcName = pcNameRequested;
 
 			FILE* pcFile = fopen(pcName.c_str(), "wb");
 			if (pcFile != NULL)
@@ -895,12 +897,12 @@ bool GetFile(int argc, char* argv[])
 	return res;
 }
 
-list<string> GetLoadedBlocksInProgram(byte* buf, word progLen, word varLen = 0)
+vector<string> GetLoadedBlocksInProgram(byte* buf, word progLen, word varLen = 0)
 {
 	Basic::BasicDecoder BasDec;
 	word bufPos = 0;	
 	Basic::BasicLine bl;
-	list<string> blocksLoaded;
+	vector<string> blocksLoaded;
 
 	do
 	{
@@ -1327,8 +1329,9 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 
 		if (diskWin32 != nullptr)
 		{
-			if (diskWin32->Open(path, CDiskBase::OPEN_MODE_EXISTING) && 
-				diskWin32->DetectDiskGeometry(diskWin32->DiskDefinition))
+			bool didOpen = diskWin32->Open(path, CDiskBase::OPEN_MODE_EXISTING);
+			bool didDetect = diskWin32->DetectDiskGeometry(diskWin32->DiskDefinition);
+			if (didOpen && didDetect)
 			{									
 				fsIdx = 0;				
 				foundGeom = GetMatchingGeometriesByGeometry(diskWin32->DiskDefinition);
@@ -1338,6 +1341,7 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 				delete diskWin32;
 				diskWin32 = NULL;
 				PrintLastErrMsg();
+				printf("Did disk opened? %d\t Was disk detected: %d\n", didOpen, didDetect);
 			}
 
 			//delete diskWin32;			
@@ -1395,6 +1399,7 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 				}
 
 				delete theDisk;
+				theDisk = NULL;
 			}	
 			else
 			{
@@ -2112,8 +2117,7 @@ bool PutFile(int argc, char* argv[])
 	string nameDest(name);
 	size_t lastSlash = nameDest.find_last_of('\\');
 	if (lastSlash != string::npos)
-		nameDest = nameDest.substr(lastSlash + 1, CFSCPM::MAX_FILE_NAME_LEN + 1);	
-	bool IsTZX = ((CFileArchiveTape*)theFS)->IsTZX();
+		nameDest = nameDest.substr(lastSlash + 1, CFSCPM::MAX_FILE_NAME_LEN + 1);		
 	
 	char* folder = "0";
 	byte argIdx = 1;	
@@ -2121,6 +2125,7 @@ bool PutFile(int argc, char* argv[])
 	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) > 0;
 	bool HasFolders = (theFS->GetFSFeatures() & CFileSystem::FSFT_FOLDERS) > 0;
 	bool IsTape = (theFS->GetFSFeatures() & CFileSystem::FSFT_TAPE) > 0;
+	bool IsTZX = IsTape && ((CFileArchiveTape*)theFS)->IsTZX();
 		
 	bool res = true;		
 		
@@ -2648,35 +2653,39 @@ bool Export2Tape(int argc, char* argv[])
 	if (argc >= 3 && stricmp(argv[2], "-convldr") == 0)
 		convertLoader = true;
 
-	auto exportedBlocks = list<string>();				
+	//First export programs and their loaded blocks, to keep the logical order for tapes. On disks, the blocks can be listed randomly.
+	auto exportedNames = vector<string>();			
+	auto originalNames = vector<string>();
+
 	CFile* f = theFS->FindFirst(fspec);
 	while (f != NULL && theFS->OpenFile(f) && theFS->ReadFile(f))
 	{
 		CFileSpectrumTape* fst = new CFileSpectrumTape(*dynamic_cast<CFileSpectrum*>(f),
-			*dynamic_cast<CFile*>(f));
-
-		CFileArchive::FileNameType fn;
-		fst->GetFileName(fn);					
-		if (find(exportedBlocks.begin(), exportedBlocks.end(), fn) == exportedBlocks.end())
-			exportedBlocks.push_back(fn);					
-
-		//Also add blocks loaded by a basic block if not already exported by name.
+			*dynamic_cast<CFile*>(f));		
+		
 		if (fst->GetType() == CFileSpectrum::SPECTRUM_PROGRAM)
-		{						
+		{	
+			CFileArchive::FileNameType fn;
+			fst->GetFileName(fn);	
+
+			exportedNames.push_back(fn);
+
+			f->GetFileName(fn);
+			originalNames.push_back(fn);
+
 			byte* buf = new byte[fst->GetLength()];
 			fst->GetData(buf);
 												
 			auto loadedBlocks = GetLoadedBlocksInProgram(buf, (word)fst->GetLength(), fst->SpectrumVarLength);	
 			for (auto loadedName : loadedBlocks)
-			{
-				if (find(exportedBlocks.begin(), exportedBlocks.end(), loadedName) == exportedBlocks.end())
-				{
-					//Trim loaded block name.
-					CFileArchive::FileNameType fn;
-					strcpy(fn, loadedName.c_str());
-					CFileArchive::TrimEnd(fn);
-					exportedBlocks.push_back(fn);
-				}
+			{								
+				originalNames.push_back(loadedName);
+
+				//Convert loaded block name.				
+				strcpy(fn, loadedName.c_str());
+				fst->SetFileName(fn);
+				fst->GetFileName(fn);
+				exportedNames.push_back(fn);				
 			}
 												
 			delete[] buf;												
@@ -2685,17 +2694,46 @@ bool Export2Tape(int argc, char* argv[])
 
 		f = theFS->FindNext();
 		delete fst;
+	}	
+
+	//Add non-program blocks at the end of tape, if not already included by a program block.
+	f = theFS->FindFirst(fspec);
+	while (f != NULL && theFS->OpenFile(f) && theFS->ReadFile(f))
+	{
+		CFileSpectrumTape* fst = new CFileSpectrumTape(*dynamic_cast<CFileSpectrum*>(f),
+			*dynamic_cast<CFile*>(f));
+
+		if (fst->GetType() != CFileSpectrum::SPECTRUM_PROGRAM)
+		{
+			CFileArchive::FileNameType fn;
+			fst->GetFileName(fn);			
+
+			if (find(originalNames.begin(), originalNames.end(), fn) == originalNames.end())
+			{								
+				exportedNames.push_back(fn);
+
+				f->GetFileName(fn);
+				originalNames.push_back(fn);
+			}			
+		}
+
+		f = theFS->FindNext();
+		delete fst;
 	}
 
-	for (auto name : exportedBlocks)
+	for (byte nameIdx = 0; nameIdx < originalNames.size(); nameIdx++)
 	{
-		CFile* f = theFS->FindFirst((char *)name.c_str());
+		//Names can be truncated from 11 to 10 chars, when exporting from disk to tape.
+		CFile* f = theFS->FindFirst((char *)(originalNames[nameIdx]).c_str());
 		if (f != NULL)
 		{
 			theFS->OpenFile(f);
 			theFS->ReadFile(f);
 			CFileSpectrumTape* fst = new CFileSpectrumTape(*dynamic_cast<CFileSpectrum*>(f),
-				*dynamic_cast<CFile*>(f));
+				*dynamic_cast<CFile*>(f));			
+			
+			//Set new name.
+			fst->SetFileName(exportedNames[nameIdx].c_str());
 			tapeDest.AddFile(fst);
 			delete fst;
 		}					
@@ -3417,65 +3455,51 @@ bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, Stora
 		return false;
 	}
 
-	bool hasHeaderless = false;
-	word blockCnt = 0;
+	bool hasHeaderless = false;	
 	Basic::BasicDecoder bd;
 	CFileSpectrumTape* fileToCheck = (CFileSpectrumTape*)src->FindFirst("*");
-	list<string> loadedBlocks;
-	vector<string> actualBlockNames;
+	map<string, vector<string>> loadedBlocks;	
+	byte loadedBlocksCnt = 0, nonProgramBlocksCount = 0;
+	string programName;
 
-	while (fileToCheck != nullptr && !hasHeaderless)
-	{
-		if (fileToCheck->GetType() == CFileSpectrum::SPECTRUM_UNTYPED)
-			hasHeaderless = true;
+	while (fileToCheck != nullptr)
+	{					
+		CFileArchive::FileNameType fileName;				
+		fileToCheck->GetFileName(fileName);				
+
+		if (fileToCheck->GetType() == CFileSpectrum::SPECTRUM_PROGRAM)
+		{
+			dword fileLen = fileToCheck->GetLength();
+			byte* fileData = new byte[fileLen];
+			fileToCheck->GetData(fileData);
+			loadedBlocks[fileName] = GetLoadedBlocksInProgram(fileData, fileToCheck->SpectrumLength, fileToCheck->SpectrumVarLength);
+			loadedBlocksCnt += loadedBlocks[fileName].size();
+			delete[] fileData;
+			programName = fileName;
+		}		
+		else if (fileToCheck->GetType() != CFileSpectrum::SPECTRUM_UNTYPED)
+		{
+			//Update the loaded name to match the converted block name for destination TAP.
+			if (nonProgramBlocksCount < loadedBlocks[programName].size())
+				loadedBlocks[programName][nonProgramBlocksCount] = fileName;
+			nonProgramBlocksCount++;
+		}
 		else
 		{
-			if (fileToCheck->GetType() == CFileSpectrum::SPECTRUM_PROGRAM)
-			{
-				dword fileLen = fileToCheck->GetLength();
-				byte* fileData = new byte[fileLen];
-				fileToCheck->GetData(fileData);
-				loadedBlocks = GetLoadedBlocksInProgram(fileData, fileToCheck->SpectrumLength, fileToCheck->SpectrumVarLength);
-				delete[] fileData;
-			}
-			else
-			{
-				CFileArchive::FileNameType fileName;				
-				//Convert file name to match destination FS naming rules.
-				//dst->CreateFileName(fileName, fileToCheck);
-				//fileToCheck->GetFileName(fileName);
-				// 
-				//For +3 the name in the BASIC loader must contain dot if lenght is > 8.
-								
-				char name[sizeof(CFileArchive::FileNameType)];
-				char ext[4];															
-				fileToCheck->GetFileName(fileName);
-				CFile fTmp;
-				theFS->CreateFileName(fileName, &fTmp);
-				fTmp.GetFileName(name, ext);
-				if (strlen(ext) > 0)
-					sprintf(fileName, "%s.%s", name, ext);				
-				else
-					sprintf(fileName, "%s", name);
-				
-				actualBlockNames.push_back(fileName);
-			}					
-
-			blockCnt++;
-			fileToCheck = (CFileSpectrumTape*)src->FindNext();
-		}				
-	}
+			hasHeaderless = true;
+		}
+			
+		fileToCheck = (CFileSpectrumTape*)src->FindNext();				
+	}	
 
 	if (hasHeaderless)
 	{
-		puts("The tape has headerless (untyped) blocks, it cannot be converted.\n");
-		return false;
+		puts("Warning: The source has headerless/untyped blocks.");		
 	}
 
-	if ((word)loadedBlocks.size() < blockCnt - 1)
+	if (loadedBlocksCnt < nonProgramBlocksCount)
 	{
-		printf("The BASIC loader should load %d blocks, but is loading %d blocks.\n", blockCnt-1, loadedBlocks.size());
-		return false;
+		printf("Warning: The BASIC loader(s) are referencing %d blocks, but %d non-program blocks are available on disk!\n", loadedBlocksCnt, nonProgramBlocksCount);
 	}
 	
 	Basic::BasicLine blSrc, blDst;	
@@ -3483,14 +3507,21 @@ bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, Stora
 	while (srcFile != nullptr)
 	{		
 		CFileSpectrumTape* srcFileSpec = (CFileSpectrumTape*)srcFile;
+		CFileArchive::FileNameType fileName;
+		srcFile->GetFileName(fileName);
+		string programName;
+		byte loadedBlockIndex = 0;
+
 		if (srcFileSpec->GetType() == CFileSpectrum::SPECTRUM_PROGRAM)
-		{	
+		{						
 			word bufPosIn = 0, bufPosOut = 0;
 			dword srcLen = srcFile->GetLength();
 			byte* bufSrc = new byte[srcLen];
 			byte* bufDst = new byte[srcLen + 100];
 
 			srcFile->GetData(bufSrc);
+			programName = fileName;
+			loadedBlockIndex = 0;
 			
 			byte nameIdx = 0;
 			do
@@ -3500,9 +3531,9 @@ bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, Stora
 					break;				
 								
 				//Some BASIC loaders have more LOAD commands than the actual blocks.
-				if (nameIdx < actualBlockNames.size())
+				if (nameIdx < loadedBlocks[fileName].size())
 				{
-					bd.ConvertLoader(&blSrc, &blDst, STORAGE_LOADER_EXPR[ldrType], &actualBlockNames, &nameIdx);
+					bd.ConvertLoader(&blSrc, &blDst, STORAGE_LOADER_EXPR[ldrType], &loadedBlocks[fileName], &nameIdx);
 					bd.PutBasicLineToLineBuffer(blDst, bufDst + bufPosOut);
 
 					bufPosIn += blSrc.lineSize;
@@ -3522,20 +3553,12 @@ bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, Stora
 				memcpy(bufDst + bufPosOut, bufSrc + bufPosIn, srcFileSpec->SpectrumVarLength);
 				bufPosOut += srcFileSpec->SpectrumVarLength;
 			}
-
-			CFileArchive::FileNameType fileName;
-			srcFileSpec->GetFileName(fileName);
+						
 			CFile* file = new CFile(fileName, bufPosOut, bufDst);
 			CFileSpectrumTape* dstFile = new CFileSpectrumTape(*srcFileSpec, *file);
 			dstFile->SpectrumLength = bufPosOut;
 			dst->AddFile(dstFile);
 
-/*
-#ifdef _DEBUG
-			TextViewer(DecodeBASICProgramToText(bufSrc, bufPosIn));
-			TextViewer(DecodeBASICProgramToText(bufDst, bufPosOut));
-#endif
-*/
 			delete file;	
 			delete dstFile;
 

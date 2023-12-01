@@ -40,7 +40,7 @@ public:
 		
 		union
 		{
-			word BasicProgVarLength;
+			word ProgramLength;
 			word ArrayUnused;
 			word CodeStart;						
 			word PrintExtent;			
@@ -102,13 +102,15 @@ public:
 	};
 	virtual bool OpenFile(CFile* file);
 	virtual bool ReadBlock(byte* destBuf, word sectIdx, byte sectCnt = 0);
+	virtual bool WriteBlock(byte* srcBuf, word sectIdx, byte sectCnt = 0);
 	virtual bool GetAutorunFilename(char** fileName) { *fileName = "boot"; return true; }
 	
 protected:		
 	bool ReadDirectory();		
 	//Converts a logical sector number to physical sector location.
 	void LogicalToPhysicalSector(word logicalSect, byte* track, byte* side, byte* sectorID);	
-	//Read the sectIdx'th file sector for file.	
+	void ReadProgramStartLine(CFileTRD* file);
+	
 	CFSTRDOS::DirEntryType TRD_Directory[MAX_DIR_ENTRIES];
 	byte dirEntIdx;
 	char* FindPattern;

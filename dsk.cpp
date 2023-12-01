@@ -221,18 +221,24 @@ bool CDSK::SeekSide(byte side)
 //This is required because some images don't have a valid currTrack.sectorSize and also, the track may have mixed sized sectors.
 bool CDSK::SeekSector(byte sector)
 {
-	byte s = 1;	
-	while (s < sector)
-	{
-		if (fseek(dskFile, CDiskBase::SectCode2SectSize((currSectorInfo[s-1].sectorSizeCode)), SEEK_CUR)  != 0 )
-		{
-			LastError = ERR_SEEK;
-			return false;
-		}
-		s++;
-	}
+	byte sectIdx = 0, sectIdx1 = 0;		
+	bool res = true;
 
-	return true;
+	//Find sector by ID.
+	while (sectIdx < currTrack.sectorCount && currSectorInfo[sectIdx].sectorID != sector)
+		sectIdx++;
+
+	//Find sector in file.
+	while (sectIdx1 < sectIdx && res)
+	{
+		res = fseek(dskFile, CDiskBase::SectCode2SectSize((currSectorInfo[sectIdx1].sectorSizeCode)), SEEK_CUR) == 0;
+		sectIdx1++;
+	}
+	
+	if (!res)
+		LastError = ERR_SEEK;
+
+	return res;
 }
 
 
@@ -250,22 +256,29 @@ bool CDSK::ReadSectors(byte * buff, byte track, byte side, byte sector, byte sec
 	if (side > 0 && !SeekSide(side))		
 		return false;
 
+	//If sector ID not found (probably missing from image), return fake data, to allow continue on error and set a standard geometry disk.
 	if (!SeekSector(sector))
-		return false;
-	
-	static word cnt = 0;
-	cnt++;
+	{
+		memset(buff, this->DiskDefinition.Filler, CDiskBase::SectCode2SectSize(currTrack.sectorSizeCode));
+		if (progCallback != nullptr)
+			progCallback(track, DiskDefinition.TrackCnt - 1, true);
+	}
+	else
+	{
+		static word cnt = 0;
+		cnt++;
 
-	word off = 0;
-	for (byte s = 0; s < sectCnt; s++)
-	{	
-		word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[(sector - 1) + s].sectorSizeCode);		
-		if (fread(buff + off, sectSize, 1, dskFile) != 1)
+		word off = 0;
+		for (byte s = 0; s < sectCnt; s++)
 		{
-			LastError = ERR_READ;
-			return false;
+			word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[(sector - 1) + s].sectorSizeCode);
+			if (fread(buff + off, sectSize, 1, dskFile) != 1)
+			{
+				LastError = ERR_READ;
+				return false;
+			}
+			off += sectSize;
 		}
-		off += sectSize;		
 	}	
 
 	return true;

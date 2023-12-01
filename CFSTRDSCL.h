@@ -14,7 +14,7 @@ class CFSTRDSCL: public CFileArchive
 
 public:
 	CFSTRDSCL(char* imgFile, char* name);
-	~CFSTRDSCL();
+	virtual ~CFSTRDSCL();
 	bool Init();	
 	virtual CFile* FindFirst(char* pattern = "*");		
 	virtual CFile* FindNext();	
@@ -29,6 +29,7 @@ protected:
 	char* FindPattern;
 	const static byte MAX_DIR_ENTRIES = 128;
 	const static word SECT_SIZE = 256;
+	const static word SPT = 16;
 	CFSTRDOS::DirEntryType TRD_Directory[MAX_DIR_ENTRIES];	
 	
 	bool ReadBlock(CFileTRD* file, word sectIdx, byte* destBuf);
