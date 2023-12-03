@@ -4,9 +4,6 @@
     <Filter Include="Disk">
       <UniqueIdentifier>{faf9fd4f-553d-4085-af30-dfc718da9953}</UniqueIdentifier>
     </Filter>
-    <Filter Include="FS">
-      <UniqueIdentifier>{febb152e-32fb-4fee-b0ea-184704fef92c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="File">
       <UniqueIdentifier>{581f0cb0-7b1d-44fb-b0b5-6e79525927c1}</UniqueIdentifier>
     </Filter>
@@ -21,6 +18,9 @@
     </Filter>
     <Filter Include="COM">
       <UniqueIdentifier>{c3616e7a-ea3c-4bbd-a232-d283b3da0218}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileSystem">
+      <UniqueIdentifier>{febb152e-32fb-4fee-b0ea-184704fef92c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -43,37 +43,37 @@
       <Filter>Disk</Filter>
     </ClCompile>
     <ClCompile Include="CFileArchive.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFileArchiveTape.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFileSystem.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFSCobraDEVIL.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFSCPM.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFSHCBasic.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFSCPMPlus3.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFSMGT.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFSOpus.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFSTRD.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFSTRDSCL.cpp">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFile.cpp">
       <Filter>File</Filter>
@@ -148,6 +148,14 @@
     <ClCompile Include="FileConverters\Screen.cpp">
       <Filter>FileConverters</Filter>
     </ClCompile>
+    <ClCompile Include="BASICUtil.cpp">
+      <Filter>FileConverters</Filter>
+    </ClCompile>
+    <ClCompile Include="FileUtil.cpp">
+      <Filter>FileConverters</Filter>
+    </ClCompile>
+    <ClCompile Include="GUIUtil.cpp" />
+    <ClCompile Include="TapeUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DiskBase.h">
@@ -169,37 +177,37 @@
       <Filter>Disk</Filter>
     </ClInclude>
     <ClInclude Include="CFileArchive.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFileArchiveTape.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFileSystem.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFSCobraDEVIL.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFSCPM.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFSHCBasic.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFSCPMPlus3.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFSMGT.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFSOpus.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFSTRD.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFSTRDSCL.h">
-      <Filter>FS</Filter>
+      <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFile.h">
       <Filter>File</Filter>
@@ -274,6 +282,14 @@
     <ClInclude Include="FileConverters\Screen.h">
       <Filter>FileConverters</Filter>
     </ClInclude>
+    <ClInclude Include="BASICUtil.h">
+      <Filter>FileConverters</Filter>
+    </ClInclude>
+    <ClInclude Include="FileUtil.h">
+      <Filter>FileConverters</Filter>
+    </ClInclude>
+    <ClInclude Include="GUIUtil.h" />
+    <ClInclude Include="TapeUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt" />

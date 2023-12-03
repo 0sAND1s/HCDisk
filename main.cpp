@@ -21,7 +21,6 @@
 #include <Windows.h>
 #include <WinCon.h>
 
-
 #include "dsk.h"
 #include "edsk.h"
 #include "cfscpm.h"
@@ -40,16 +39,17 @@
 #include "CFSCobraDEVIL.h"
 #include "CFSOpus.h"
 #include "CFSMGT.h"
-#include "FileConverters/BasicDecoder.h"
 #include "FileConverters/scr2gif.c"
-#include "FileConverters/bas2tap.h"
-#include "FileConverters/bas2tap.c"
-#include "FileConverters/dz80/dissz80.h"
 #include "FileConverters/Screen.h"
 #include "CFileArchive.h"
 #include "CFileArchiveTape.h"
 #include "Tape\Tape2Wave.h"
 #include "COMIF1.h"
+
+#include "BASICUtil.h"
+#include "FileUtil.h"
+#include "GUIUtil.h"
+#include "TapeUtil.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -59,7 +59,6 @@
 #define new new( _NORMAL_BLOCK , __FILE__ , __LINE__ )	
 #endif
 #endif
-
 
 using namespace std;
 
@@ -95,90 +94,17 @@ static char* StorageTypeNames[] =
 	"RAW - DISK IMAGE (RW)",
 	"DSK - CPCEMU DISK IMAGE (RW)",
 	"EDSK - CPCEMU DISK IMAGE (RW)",
-	"TRD - TR-DOS DISK IMAGE",
-	"SCL - TR-DOS DISK IMAGE",
-	"CQM - Sydex COPYQM DISK IMAGE",
-	"OPD - OPUS Discovery DISK IMAGE",
-	"MGT - Miles Gordon Tech DISK IMAGE",
+	"TRD - TR-DOS DISK IMAGE (RW)",
+	"SCL - TR-DOS DISK IMAGE (RO)",
+	"CQM - Sydex COPYQM DISK IMAGE (RO)",
+	"OPD - OPUS Discovery DISK IMAGE (RO)",
+	"MGT - Miles Gordon Tech DISK IMAGE (RO)",
 	"TAP - TAPE IMAGE (RW)",
 	"TZX - TAPE IMAGE (RW)",
-	"TD0 - Sydex Teledisk DISK IMAGE"
+	"TD0 - Sydex Teledisk DISK IMAGE (RO)"
 };
 
 StorageType storType;
-
-string GetHexPrint(byte * buff, dword len)
-{
-	string res;		
-
-	char buf[80];
-	byte bufIdx = 0;
-	dword lenEven = (dword)ceil((float)len/16) * 16;	
-
-	for (dword c = 0; c < lenEven; c++)
-	{		
-		if (c % 16 == 0)
-			bufIdx += sprintf(&buf[bufIdx], "%04X: ", c);			
-
-		if (c < len)
-			bufIdx += sprintf(&buf[bufIdx], "%02X ",  buff[c]);
-		else
-			bufIdx += sprintf(&buf[bufIdx], "   ");
-
-		if ((c+1) % 16 == 0)
-		{
-			bufIdx += sprintf(&buf[bufIdx], "| ");
-			for (int a = 0; a < 16; a++)
-			{
-				byte chr = buff[c - 15 + a];
-				if (chr < ' ' || chr > 128)
-					chr = '.';
-				bufIdx += sprintf(&buf[bufIdx], "%c", (c - 15 + a  < len ? chr : ' '));
-			}
-			
-			bufIdx += sprintf(&buf[bufIdx], "\r\n");
-			
-			res += string(buf);			
-			bufIdx = 0;
-		}
-		else if ((c+1) % 8 == 0)
-			bufIdx += sprintf(&buf[bufIdx], "- ");
-	}
-	
-	return res;
-}
-
-string GetExtension(string fileName)
-{
-	int dotIdx = fileName.find_last_of('.');
-	string res = "";
-	if (dotIdx != string::npos)
-		res = fileName.substr(dotIdx + 1);
-	if (res.length() <= 3)
-		return res;
-	else
-		return "";
-}
-
-string GetNameWithoutExtension(string fileName)
-{
-	int dotIdx = fileName.find_last_of('.');
-	string res = "";
-	if (dotIdx != string::npos)
-		res = fileName.substr(0, dotIdx);	
-	return res;	
-}
-
-
-bool Confirm(char* msg)
-{
-	printf("%s Press [ENTER] to confirm, [ESC] to cancel.\n", msg);
-	char c = getch();
-	while (c != 27 && c != 13)
-		c = getch();
-
-	return c == 13;
-}
 
 bool ProgressCallbackRead(word item, word totalItems, bool haveError)
 {
@@ -222,45 +148,6 @@ typedef enum
 } FSType;
 
 
-//Loader synthax for storage devices. Using '?' to signal the place of file/block name. Using NOT PI instead of 0, to avoid having to embed the 5 byte number value and it's shorter too.
-typedef enum
-{
-	LDR_TAPE,
-	LDR_MICRODRIVE,
-	LDR_OPUS,
-	LDR_HC_DISK,
-	LDR_IF1_COM,
-	LDR_SPECTRUM_P3_DISK,
-	LDR_MGT
-} StorageLoaderType;
-
-//Tape:			LOAD "NAME"
-const char LDR_TAPE_STR[] = {'"', '?', '"', 0};
-//Microdrive:	LOAD *"m";0;"NAME"
-const char LDR_MICRODRIVE_STR[] = { '*', '"', 'm', '"', ';', (char)Basic::BK_NOT, (char)Basic::BK_PI, ';', '"', '?', '"', 0 };
-//Opus:			LOAD *"m";0;"NAME"
-const char LDR_OPUS_STR[] = { '*', '"', 'm', '"', ';', (char)Basic::BK_NOT, (char)Basic::BK_PI, ';', '"', '?', '"', 0 };
-//HC disk:		LOAD *"d";0;"NAME"
-const char LDR_HC_DISK_STR[] = { '*', '"', 'd', '"', ';', (char)Basic::BK_NOT, (char)Basic::BK_PI, ';', '"', '?', '"', 0 };
-//IF1 COM:		LOAD *"b";
-const char LDR_IF1_COM_STR[] = { '*', '"', 'b', '"', 0 };
-//Spectrum +3:	LOAD "A:NAME"
-const char LDR_SPECTRUM_P3_DISK_STR[] = { '"', '?', '"', 0 };
-//MGT +D:		LOAD d1"NAME"; Microdrive synthax is also supported.
-const char LDR_MGT_STR[] = { 'd', '1', '"', '?', '"', 0 };
-
-const char* STORAGE_LOADER_EXPR[] =
-{
-	LDR_TAPE_STR,
-	LDR_MICRODRIVE_STR,
-	LDR_OPUS_STR,
-	LDR_HC_DISK_STR,
-	LDR_IF1_COM_STR,
-	LDR_SPECTRUM_P3_DISK_STR,
-	LDR_MGT_STR
-};
-
-const char* LDR_TAG[] = { "TAPE", "MICRODRIVE", "OPUS", "HCDISK", "IF1COM", "PLUS3", "MGT"};
 
 class FileSystemDescription 
 {
@@ -492,25 +379,6 @@ const FileSystemDescription DISK_TYPES[] =
 };
 */
 
-bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, StorageLoaderType ldrType);
-
-long fsize(const char* fname)
-{
-	long fs;
-
-	FILE* f = fopen(fname, "rb");
-	if (f != NULL)
-	{
-		fseek(f, 0, SEEK_END);
-		fs = ftell(f);
-		fclose(f);
-	}
-	else
-		fs = 0;	
-
-	return fs;	
-}
-
 
 //Turbo loader constants from Z802TZX by Tomaz Kac  (tomcat@sgn.net) 
 static struct TurboLoadVars
@@ -584,81 +452,6 @@ int FileSorterByType(CFile* f1, CFile* f2)
 	return dynamic_cast<CFileSpectrum*>(f1)->SpectrumType < dynamic_cast<CFileSpectrum*>(f2)->SpectrumType;
 }
 
-void DisplayTZXComments()
-{
-	CTapFile* theTap = ((CFileArchiveTape*)theFS)->theTap;
-	CTapeBlock tb;
-	bool bOK = theTap->GetFirstBlock(&tb);
-
-	while (bOK)
-	{				
-		if (tb.m_BlkType == CTapeBlock::TAPE_BLK_METADATA)
-		{		
-			CTZXFile* tzx = (CTZXFile*)theTap;
-			char msg[256];
-			CTZXFile::TZXBlkArhiveInfo* blkArh;
-			CTZXFile::TZXBlkArhiveInfo::TextItem* blkTxt;
-
-			switch (tzx->m_CurrBlkID)
-			{					
-			case CTZXFile::BLK_ID_TXT_DESCR:
-			case CTZXFile::BLK_ID_MSG:
-				printf("Message/Description:\n");
-				strncpy(msg, tzx->m_CurrBlk.blkMsg.Msg, tzx->m_CurrBlk.blkMsg.Len);
-				msg[tzx->m_CurrBlk.blkMsg.Len] = 0;
-				char* line;
-				if ((line = strtok(msg, "\r")) != NULL)
-				{
-					do
-					{
-						printf("%s\n", line);
-					} while ((line = strtok(NULL, "\r")) != nullptr);
-				}				
-				break;
-			case CTZXFile::BLK_ID_ARH_INF:
-				blkArh = (CTZXFile::TZXBlkArhiveInfo*)tb.Data;
-				dword bufIdx = sizeof(word) + sizeof(byte);
-				blkTxt = &blkArh->TxtItem;
-
-				printf("Arhive Info:\n");
-				for (byte txtIdx = 0; txtIdx < blkArh->StrCnt; txtIdx++)
-				{													
-					char* line;
-					byte txtMsgIdx = (blkTxt->TxtID == CTZXFile::TXT_ID_COMMENTS ? 
-						CTZXFile::TXT_ID_ORIGIN + 1 : blkTxt->TxtID);
-
-					bufIdx += sizeof(byte)*2;								
-
-					printf("\t%-10s:\t", CTZXFile::TZXArhBlkNames[txtMsgIdx]);
-					line = msg;
-					strncpy(msg, (char*)&tb.Data[bufIdx], blkTxt->TxtLen);
-					msg[blkTxt->TxtLen] = 0;
-
-					if ((line = strtok(msg, "\r")) != NULL)
-					{
-						do 
-						{
-							printf("%s%s\n", line == msg ? "" : "\t\t\t", line);									
-						} while(line = strtok(NULL, "\r"));									
-					}
-
-					bufIdx += blkTxt->TxtLen;																															
-					blkTxt = (CTZXFile::TZXBlkArhiveInfo::TextItem*)&tb.Data[bufIdx];
-				}
-				
-				break;
-			}
-		}			
-
-		if (tb.Length > 0 && tb.Data != nullptr)
-		{
-			delete[] tb.Data;
-			tb.Data = nullptr;
-		}
-		bOK = theTap->GetNextBlock(&tb);
-	}					
-}
-
 bool Cat(int argc, char* argv[])
 {	
 	if (theFS == NULL)
@@ -669,6 +462,7 @@ bool Cat(int argc, char* argv[])
 	bool HasFolders = (theFS->GetFSFeatures() & CFileSystem::FSFT_FOLDERS) > 0;	
 	bool IsDisk = (theFS->GetFSFeatures() & CFileSystem::FSFT_DISK) > 0;
 	bool IsTape = (theFS->GetFSFeatures() & CFileSystem::FSFT_TAPE) > 0;
+	bool IsTZX = IsTape && ((CFileArchiveTape*)theFS)->IsTZX();
 
 	enum SortType
 	{
@@ -707,8 +501,8 @@ bool Cat(int argc, char* argv[])
 
 
 	//For tzx files, display comments and archive info.
-	if (IsTape)			
-		DisplayTZXComments();
+	if (IsTZX)			
+		TapeUtil::DisplayTZXComments((CFileArchiveTape*)theFS);
 
 	printf("\nIDX");
 	if (HasFolders)
@@ -897,194 +691,6 @@ bool GetFile(int argc, char* argv[])
 	return res;
 }
 
-vector<string> GetLoadedBlocksInProgram(byte* buf, word progLen, word varLen = 0)
-{
-	Basic::BasicDecoder BasDec;
-	word bufPos = 0;	
-	Basic::BasicLine bl;
-	vector<string> blocksLoaded;
-
-	do
-	{
-		bl = BasDec.GetBasicLineFromLineBuffer(buf + bufPos, progLen - varLen - bufPos);
-		//Some loaders have extra data after the BASIC program that is not valid BASIC nor variables.
-		if (bl.lineSize > 0)
-		{			
-			auto loadsInLine = BasDec.GetLoadingBlocks(bl.lineBufBasic.data(), (word)bl.lineBufBasic.size());
-			for (auto load : loadsInLine)
-				blocksLoaded.push_back(load.second.second);
-		}
-
-		bufPos += bl.lineSize;
-	} while (bl.lineSize > 0 && bufPos < progLen - varLen);
-
-	return blocksLoaded;
-}
-
-string DecodeBASICProgramToText(byte* buf, word progLen, word varLen = 0)
-{
-	stringstream res;
-	Basic::BasicDecoder BasDec;
-	Basic::BasicLine bl;
-	word bufPos = 0;	
-	list<string> blocksLoaded;
-
-	do
-	{
-		bl = BasDec.GetBasicLineFromLineBuffer(buf + bufPos, progLen - varLen - bufPos);
-		//Some loaders have extra data after the BASIC program that is not valid BASIC nor variables.
-		if (bl.lineSize > 0)
-		{
-			BasDec.DecodeBasicLineToText(bl, res);
-
-			auto loadsInLine = BasDec.GetLoadingBlocks(bl.lineBufBasic.data(), (word)bl.lineBufBasic.size());
-			for (auto load : loadsInLine)
-				blocksLoaded.push_back(load.second.second);
-		}
-
-		bufPos += bl.lineSize;
-	} while (bl.lineSize > 0 && bufPos < progLen - varLen);
-	
-	if (varLen > 0)	
-		BasDec.DecodeVariables(&buf[progLen-varLen], varLen, res);
-
-	//Display block names for blocks loaded by this BASIC block.	
-	if (blocksLoaded.size() > 0)
-		res << "Loading blocks: ";
-	auto blIt = blocksLoaded.begin();	
-	while (blIt != blocksLoaded.end())
-	{
-		res << "\"" << *blIt << "\" ";
-		blIt++;
-	}
-	res << endl;
-	
-	
-	return res.str();
-}
-
-string Disassemble(byte* buf, word len, word addr = 0, bool useHex=true)
-{
-	DISZ80	*d;			/* Pointer to the Disassembly structure */
-	int		err;		/* line count */		
-	string res;	
-
-	d = (DISZ80 *)malloc(sizeof(DISZ80));	
-	if (d != NULL)
-	{
-		memset(d, 0, sizeof(DISZ80));
-		dZ80_SetDefaultOptions(d);		
-
-		d->cpuType = DCPU_Z80;		
-		d->flags |= (DISFLAG_SINGLE | DISFLAG_ADDRDUMP | DISFLAG_OPCODEDUMP | DISFLAG_UPPER | DISFLAG_ANYREF | DISFLAG_RELCOMMENT | DISFLAG_VERBOSE);
-		if (useHex)
-			d->layoutRadix = DRADIX_HEX;
-
-		//Fix address.
-		byte* buf1 = new byte[64 * 1024];
-		memcpy(&buf1[addr], buf, len);		
-		d->mem0Start = buf1;
-		d->start = d->end = addr;
-		err = dZ80_Disassemble(d);
-
-		stringstream s;
-		s.unsetf(ios::skipws);
-		s.setf(ios::uppercase);
-		while (err == DERR_NONE && len > 0) 		
-		{										
-			if (useHex)
-				s << hex;
-
-			s << setw(4) << setfill('0') << addr << "\t" << setfill(' ') << setw(8) << d->hexDisBuf << "\t" << d->disBuf << "\t" << d->commentBuf << "\r\n";
-			
-			addr += (word)d->bytesProcessed;		
-			//Instruction/buffer boundary mismatch.
-			if (d->bytesProcessed < len)
-				len -= (word)d->bytesProcessed;
-			else
-				len = 0;
-			d->start = d->end = addr;
-
-			err = dZ80_Disassemble(d);						
-		}
-
-		res = s.str();
-		delete[] buf1;
-	}
-
-	free(d);	
-	return res;
-}
-
-void GetWindowSize( int& lines, int& columns )
-{
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	if (GetConsoleScreenBufferInfo(
-		GetStdHandle( STD_OUTPUT_HANDLE ),
-		&csbi
-		))
-	{
-		lines   = csbi.srWindow.Bottom -csbi.srWindow.Top  +1;
-		columns = csbi.srWindow.Right  -csbi.srWindow.Left +1;
-	}
-	else 
-		lines = columns = 0;
-}
-
-void PrintIntense(char* str)
-{
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	HANDLE hCMD = GetStdHandle( STD_OUTPUT_HANDLE );
-
-	if (GetConsoleScreenBufferInfo(hCMD,&csbi))
-	{		
-		SetConsoleTextAttribute(hCMD, csbi.wAttributes | FOREGROUND_INTENSITY);
-
-		WriteConsole(hCMD, str, strlen(str), NULL, NULL);
-		
-		SetConsoleTextAttribute(hCMD, csbi.wAttributes);
-	}
-}
-
-void TextViewer(string str)
-{		
-	int winLines, winColumns;
-	GetWindowSize(winLines, winColumns);
-
-	const word lnCnt = winLines - 2;
-	long off1 = 0, off2 = 0;
-	long lnIdx = 0;
-	long len = str.length();	
-
-		
-	while (off1 < len && off2 != string::npos)
-	{
-		do
-		{
-			off2 = str.find("\r\n", off1);	
-			if (off1 != off2)
-				cout << str.substr(off1, off2 - off1) << endl;
-			else
-				cout << endl;
-
-			off1 = off2+2;		
-			lnIdx++;
-		}
-		while (off2 != string::npos && lnIdx < lnCnt && off1 < len);
-
-		if (off1 < len && off2 != string::npos)
-		{			
-			char buf[80];
-			sprintf(buf, "Press a key to continue, ESC to cancel. Progress: %d%%\n", (int)(((float)off1/len)*100));			
-			PrintIntense(buf);
-			char key = getch();
-			if (key == 27)
-				break;
-			else			
-				lnIdx = 0;							
-		}		
-	}
-}
 
 bool TypeFile(int argc, char* argv[])
 {
@@ -1119,7 +725,7 @@ bool TypeFile(int argc, char* argv[])
 			if (isProgram)
 			{
 				f->GetData(buf1);
-				TextViewer(DecodeBASICProgramToText(buf1, (word)f->GetLength(), fileSpectrum->SpectrumVarLength));
+				GUIUtil::TextViewer(BASICUtil::DecodeBASICProgramToText(buf1, (word)f->GetLength(), fileSpectrum->SpectrumVarLength));
 			}
 			else if (isSCR)
 			{
@@ -1146,7 +752,7 @@ bool TypeFile(int argc, char* argv[])
 		if (asHex)
 		{						
 			f->GetData(buf1);			
-			TextViewer(GetHexPrint(buf1, len));
+			GUIUtil::TextViewer(FileUtil::GetHexPrint(buf1, len));
 		}						
 		else if (asDisasm)
 		{			
@@ -1157,7 +763,7 @@ bool TypeFile(int argc, char* argv[])
 				CFileSpectrum* s = dynamic_cast<CFileSpectrum*>(f);
 				addr = s->SpectrumStart;
 			}
-			TextViewer(Disassemble(buf1, (word)len, addr, !asDisasmDec));
+			GUIUtil::TextViewer(BASICUtil::Disassemble(buf1, (word)len, addr, !asDisasmDec));
 		}
 		else if (asText)
 		{
@@ -1170,7 +776,7 @@ bool TypeFile(int argc, char* argv[])
 			dword txtLen = f->GetDataAsText(buf2, wrap);
 			if (txtLen > 0)
 				buf2[txtLen - 1] = '\0';
-			TextViewer((char*)buf2);
+			GUIUtil::TextViewer((char*)buf2);
 			delete buf2;
 		}
 
@@ -1319,7 +925,7 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 	FileSystemDescription theDiskDesc;
 	theFS = NULL;
 
-	string fileExt = GetExtension(path);
+	string fileExt = FileUtil::GetExtension(path);
 
 	if (stricmp(path, "A:") == 0 || stricmp(path, "B:") == 0)
 	{
@@ -1398,8 +1004,8 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 					theFS = NULL;
 				}
 
-				delete theDisk;
-				theDisk = NULL;
+				//delete theDisk;
+				//theDisk = NULL;
 			}	
 			else
 			{
@@ -1499,7 +1105,7 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 
 	if (srcType == STOR_NONE) //Assume raw disk image.
 	{
-		dword imgSz = fsize(path);
+		dword imgSz = FileUtil::fsize(path);
 
 		//detect fs by image size			
 		foundGeom = GetMatchingGeometriesByImgSize(imgSz);				
@@ -1780,7 +1386,7 @@ bool CopyDisk(int argc, char* argv[])
 {
 	bool format = (argc >= 2 && stricmp(argv[1], "-f") == 0);
 	bool formatWithoutConfirmation = (argc >= 3 && stricmp(argv[2], "-y") == 0);
-	if (theFS != nullptr && (format ? formatWithoutConfirmation || Confirm("This copy operation will overwrite data on destination drive/image, if it exists already. Are you sure?") : true))
+	if (theFS != nullptr && (format ? formatWithoutConfirmation || GUIUtil::Confirm("This copy operation will overwrite data on destination drive/image, if it exists already. Are you sure?") : true))
 	{		
 		if (theFS->GetFSFeatures() && CFileSystem::FSFT_DISK)
 		{
@@ -1840,7 +1446,7 @@ bool CopyDisk(int argc, char* argv[])
 
 bool CopyDiskFromCOM(char* remoteName, CFSCPM* fsSrc)
 {
-	bool res = SetCOMForIF1(remoteName, 19200);
+	bool res = (bool)SetCOMForIF1(remoteName, 19200);
 	if (!res)
 	{
 		cout << "Could not open port " << remoteName << endl;
@@ -1899,7 +1505,7 @@ bool CopyDiskFromCOM(char* remoteName, CFSCPM* fsSrc)
 
 bool CopyDiskToCOM(CFSCPM* fsSrc, char* remoteName)
 {	
-	bool res = SetCOMForIF1(remoteName, 19200);
+	bool res = (bool)SetCOMForIF1(remoteName, 19200);
 	if (!res)
 	{
 		cout << "Could not open port " << remoteName << endl;
@@ -1931,7 +1537,7 @@ bool CopyDiskToCOM(CFSCPM* fsSrc, char* remoteName)
 	{
 		blkIdx = blkUsedIdx[blkIdxIdx++];
 		printf("%cCopying block %03d, %03d blocks left.", 13, blkIdx, blocksLeft--);
-		res = fsSrc->ReadBlock(blockBuf.data(), blkIdx) && WriteBufferToIF1(blockBuf.data(), blockBuf.size());
+		res = fsSrc->ReadBlock(blockBuf.data(), blkIdx) && WriteBufferToIF1(blockBuf.data(), (word)blockBuf.size());
 	}
 
 	CloseCOM();
@@ -2148,7 +1754,7 @@ bool PutFile(int argc, char* argv[])
 
 	CFile* fileNew = theFS->NewFile(nameDest.c_str());			
 	theFS->SetFileFolder(fileNew, folder);										
-	dword fsz = fsize(name);	
+	dword fsz = FileUtil::fsize(name);
 	FILE* fpc = fopen(name, "rb");	
 	int turboSpeedBaud = 0;
 
@@ -2274,7 +1880,7 @@ bool DeleteFiles(int argc, char* argv[])
 	{
 		char msg[32];
 		sprintf(msg, "Delete %d files?", fCnt);
-		if (withoutConfirmation || Confirm(msg))
+		if (withoutConfirmation || GUIUtil::Confirm(msg))
 			return theFS->Delete(fspec);
 		else
 			return false;
@@ -2327,240 +1933,6 @@ struct Command
 
 bool PrintHelp(int argc, char* argv[]);
 
-void Tap2Wav(CTapFile* theTap, bool realTime = true)
-{				
-	CTape2Wav tape2wav;
-	CTZXFile* tzx = theTap->IsTZX() ? (CTZXFile*)theTap : nullptr;
-	//CTZXFile::TZXBlkArhiveInfo* blkArh;
-	//CTZXFile::TZXBlkArhiveInfo::TextItem* blkTxt;
-	//dword bufIdx;
-
-	if (theTap != NULL)
-	{	
-		if (realTime)
-			printf("Playing the tape. Press ESC to quit, SPACE to pause. ");
-		printf("Block count: %d.\n",  theTap->GetBlockCount());
-		
-		CTapeBlock tb;
-		char Name[CTapeBlock::TAP_FILENAME_LEN + 1];	
-		stringstream wavName;		
-		if (!realTime)
-		{
-			wavName << theTap->fileName << ".wav";
-			tape2wav.Open((char*)wavName.str().c_str());
-		}		
-
-		bool blockRead = theTap->GetFirstBlock(&tb);		
-		while (blockRead)
-		{			
-			printf("%02d: ", theTap->m_CurBlkIdx);					
-
-			if (theTap->m_CurBlkStts != CTapFile::BLK_RD_STS_VALID)
-			{
-				if (tzx != nullptr)
-					printf("%s block, ID 0x%X, skipping.\n",
-						CTapFile::TapeBlkReadStatusNames[theTap->m_CurBlkStts], (byte)tzx->m_CurrBlkID);						
-			}
-			else 
-			{					
-				if (tb.m_BlkType != CTapeBlock::TAPE_BLK_METADATA)
-				{				
-					if (tb.m_BlkType == CTapeBlock::TAPE_BLK_PAUSE)
-					{							
-						if (tzx != nullptr && tzx->m_CurrBlk.pauseLen > 0)
-							tape2wav.PutSilence(tzx->m_CurrBlk.pauseLen);
-						else
-						{								
-							if (!Confirm("'Stop the tape' block encountered. Continue?"))
-								break;
-						}							
-						tape2wav.SetPulseLevel(false);
-					}
-					else
-					{
-						if (tb.m_BlkType == CTapeBlock::TAPE_BLK_STD)
-							printf("%sStandard Block\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
-						else if (tb.m_BlkType == CTapeBlock::TAPE_BLK_TURBO)
-							printf("%sTurbo Block\t\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
-						else
-							printf("%sRaw data\t\t", tzx != nullptr && tzx->m_bInGroup ? "\t" : "");
-
-						if ((tb.m_BlkType == CTapeBlock::TAPE_BLK_STD || tb.m_BlkType == CTapeBlock::TAPE_BLK_TURBO) &&
-							tb.IsBlockHeader())
-						{
-							tb.GetName(Name);
-							printf("%-7s: %s\t%d\t%02X\n", 
-								tb.TapBlockTypeNames[((CTapeBlock::TapeBlockHeaderBasic*)tb.Data)->BlockType], 
-								Name, tb.Length, tb.Flag);
-						}
-						else
-							printf("Data   :\t\t%d\t%02X\n", tb.Length, tb.Flag);
-
-						//play along
-						if (realTime)
-						{		
-							wavName.str("");
-							wavName << theTap->fileName << theTap->m_CurBlkIdx << ".wav";
-							tape2wav.Open((char*)wavName.str().c_str());
-							tape2wav.AddBlock(&tb);
-							tape2wav.Close();
-							dword lenMs = tape2wav.GetWrittenLenMS();
-							dword timeIdx = 0;
-
-							PlaySound((wavName.str().c_str()), NULL, SND_FILENAME | SND_ASYNC);
-
-							while (!GetAsyncKeyState(VK_ESCAPE) && !GetAsyncKeyState(VK_SPACE) && timeIdx < lenMs)
-							{
-								Sleep(1000);
-								timeIdx += 1000;
-								printf("\rProgress: %3d %%, %3d/%3d seconds\t", (int)(((float)timeIdx/lenMs)*100), timeIdx/1000, lenMs/1000);
-							}
-
-							if (timeIdx < lenMs)
-							{
-								char c = getch();
-								if (c == 27)
-								{
-									PlaySound(NULL, NULL, 0);
-									printf("Canceled\n");
-									break;
-								}
-								else if (c == ' ')
-								{
-									printf("Paused. Press a key to continue.\n");
-									getch();
-								}
-							}							
-
-							Sleep(500); //Need to sleep, to let PlaySound finish before starting a new block.
-							remove(wavName.str().c_str());
-						}							
-						else
-							tape2wav.AddBlock(&tb);
-
-					}						
-				}					
-				else if (tzx != nullptr) //Metadata block
-				{
-					char msg[256];
-
-					switch (tzx->m_CurrBlkID)
-					{
-					case CTZXFile::BLK_ID_TXT_DESCR:
-					case CTZXFile::BLK_ID_MSG:
-						strncpy(msg, tzx->m_CurrBlk.blkMsg.Msg, tzx->m_CurrBlk.blkMsg.Len);
-						msg[tzx->m_CurrBlk.blkMsg.Len] = 0;
-						printf("Message/Description: '%s'\n", msg);
-						break;
-					case CTZXFile::BLK_ID_GRP_STRT:
-						strncpy(msg, tzx->m_CurrBlk.blkGrpStrt.GrpName, tzx->m_CurrBlk.blkGrpStrt.Len);
-						msg[tzx->m_CurrBlk.blkGrpStrt.Len] = 0;
-						printf("Group: \"%s\"\n", msg);							
-						break;
-					case CTZXFile::BLK_ID_GRP_END:
-						printf("Group end.\n");
-						break;
-					case CTZXFile::BLK_ID_JMP:
-						printf("Jump to block: %d.\n", tzx->m_CurBlkIdx + tzx->m_CurrBlk.jmpType);							
-						//if (Confirm(" Make jump?"))
-						tzx->Jump(tzx->m_CurrBlk.jmpType);														
-						break;
-					/*
-					case CTZXFile::BLK_ID_ARH_INF:
-						blkArh = (CTZXFile::TZXBlkArhiveInfo*)tb.Data;
-						bufIdx = sizeof(word) + sizeof(byte);
-						blkTxt = &blkArh->TxtItem;
-
-						printf("Arhive Info:\n");
-						for (byte txtIdx = 0; txtIdx < blkArh->StrCnt; txtIdx++)
-						{													
-							char* line;
-							byte txtMsgIdx = (blkTxt->TxtID == CTZXFile::TXT_ID_COMMENTS ? CTZXFile::TXT_ID_ORIGIN + 1 : blkTxt->TxtID);
-
-							bufIdx += sizeof(byte)*2;								
-
-							printf("\t%-10s:\t", CTZXFile::TZXArhBlkNames[txtMsgIdx]);
-							line = msg;
-							strncpy(msg, (char*)&tb.Data[bufIdx], blkTxt->TxtLen);
-							msg[blkTxt->TxtLen] = 0;
-
-							if ((line = strtok(msg, "\r")) != NULL)
-							{
-								do 
-								{
-									printf("%s%s\n", line == msg ? "" : "\t\t\t", line);									
-								} while(line = strtok(NULL, "\r"));									
-							}
-
-							bufIdx += blkTxt->TxtLen;																															
-							blkTxt = (CTZXFile::TZXBlkArhiveInfo::TextItem*)&tb.Data[bufIdx];
-						}
-						break;
-					*/
-					case CTZXFile::BLK_ID_STOP_48K:
-						if (Confirm("'Stop tape if 48K' encountered. Stop?"))
-							goto ExitLoop;
-						break;
-
-					case CTZXFile::BLK_ID_LOOP_STRT:
-						printf("Loop start: %d repeats.\n", tzx->m_LoopRptCnt);
-						tzx->m_BlkLoopIdx = 0;
-						break;
-
-					case CTZXFile::BLK_ID_LOOP_END:
-						printf("Loop end %d.\n", tzx->m_BlkLoopIdx);
-						if (++tzx->m_BlkLoopIdx < tzx->m_LoopRptCnt)
-						{
-							tzx->Seek((word)tzx->m_BlkLoopStrt);																						
-						}
-						break;							
-
-					case CTZXFile::BLK_ID_CALL_SEQ:
-						printf("Call sequence, %d calls.\n", tzx->m_CallSeq->CallCnt);														
-						tzx->Jump(tzx->m_CallSeq->CallItem[tzx->m_CallSeqIdx]);
-						break;
-
-					case CTZXFile::BLK_ID_RET_SEQ:
-						printf("Ret. from call to block ");
-						if (tzx->m_CallSeqIdx < tzx->m_CallSeq->CallCnt)
-						{
-							printf("%d.\n", tzx->m_CallSeq->CallItem[tzx->m_CallSeqIdx]);
-							tzx->Jump(tzx->m_CallSeq->CallItem[tzx->m_CallSeqIdx]);								
-						}
-						else
-						{
-							printf("%d.\n", tzx->m_CallSeqRetIdx);
-							tzx->Seek(tzx->m_CallSeqRetIdx);
-							tzx->m_CurBlkIdx--;
-							delete [] tzx->m_CallSeq;
-						}
-						break;
-
-					default:
-						printf("Block type %d skipped.\n", tzx->m_CurrBlkID);
-					}					
-				}
-			}
-			
-			if (tb.m_BlkType != CTapeBlock::TAPE_BLK_METADATA && tb.Length > 0 && tb.Data != nullptr)
-			{
-				delete[] tb.Data;
-				tb.Data = nullptr;
-			}
-
-			blockRead = theTap->GetNextBlock(&tb);
-		};
-ExitLoop:		
-
-		if (!realTime)				
-		{
-			//theTap->Close();
-			tape2wav.Close();
-			dword sec = tape2wav.GetWrittenLenMS()/1000;
-			printf("Wrote %s with length is: %02d:%02d.\n", wavName.str().c_str(), sec/60, sec%60);
-		}
-	}		
-}
 
 bool PlayTape(int argc, char* argv[])
 {
@@ -2576,7 +1948,7 @@ bool PlayTape(int argc, char* argv[])
 				playToWav = true;
 				puts("The tape image has non-standard blocks, playing to wave file instead of real time.");
 			}
-			Tap2Wav(((CFileArchiveTape*)theFS)->theTap, !playToWav);
+			TapeUtil::Tap2Wav(((CFileArchiveTape*)theFS)->theTap, !playToWav);
 		}
 		else
 		{
@@ -2592,13 +1964,13 @@ bool ConvertBASICLoader(int argc, char* argv[])
 	if (theFS == NULL)
 		return false;
 	
-	StorageLoaderType ldrType = LDR_TAPE;
+	BASICUtil::StorageLoaderType ldrType = BASICUtil::LDR_TAPE;
 	char* ldrTypeStr = argv[1];
-	for (int ldrIdx = 0; ldrIdx < sizeof(STORAGE_LOADER_EXPR) / sizeof(STORAGE_LOADER_EXPR[0]); ldrIdx++)
+	for (int ldrIdx = 0; ldrIdx < sizeof(BASICUtil::STORAGE_LOADER_EXPR) / sizeof(BASICUtil::STORAGE_LOADER_EXPR[0]); ldrIdx++)
 	{
-		if (strcmp(ldrTypeStr, LDR_TAG[ldrIdx]) == 0)
+		if (strcmp(ldrTypeStr, BASICUtil::LDR_TAG[ldrIdx]) == 0)
 		{
-			ldrType = (StorageLoaderType)ldrIdx;
+			ldrType = (BASICUtil::StorageLoaderType)ldrIdx;
 			break;
 		}
 	}	
@@ -2613,13 +1985,13 @@ bool ConvertBASICLoader(int argc, char* argv[])
 	
 	string fname = argv[0];
 	transform(fname.begin(), fname.end(), fname.begin(), (int (*)(int))::toupper);
-	string ext = GetExtension(fname);
+	string ext = FileUtil::GetExtension(fname);
 	if (ext != "TAP")
 		fname += ".TAP";
 
 	CFileArchiveTape tapeDst((char*)fname.c_str());
 	tapeDst.Open((char*)fname.c_str(), true);		
-	bool res = ConvertBASICLoaderForDevice(theFS, &tapeDst, ldrType);
+	bool res = BASICUtil::ConvertBASICLoaderForDevice(theFS, &tapeDst, ldrType);
 	tapeDst.Close();		
 	
 
@@ -2676,7 +2048,7 @@ bool Export2Tape(int argc, char* argv[])
 			byte* buf = new byte[fst->GetLength()];
 			fst->GetData(buf);
 												
-			auto loadedBlocks = GetLoadedBlocksInProgram(buf, (word)fst->GetLength(), fst->SpectrumVarLength);	
+			auto loadedBlocks = BASICUtil::GetLoadedBlocksInProgram(buf, (word)fst->GetLength(), fst->SpectrumVarLength);	
 			for (auto loadedName : loadedBlocks)
 			{								
 				originalNames.push_back(loadedName);
@@ -2743,7 +2115,7 @@ bool Export2Tape(int argc, char* argv[])
 	if (convertLoader)
 	{				
 		//Rename original output file to temporary name and create new file with original name and updated loader.
-		string tmpName = string("temp.") + GetExtension(string(outName));
+		string tmpName = string("temp.") + FileUtil::GetExtension(string(outName));
 		rename(outName, tmpName.c_str());
 		
 		CFileArchiveTape tapeDest2(outName);
@@ -2753,7 +2125,7 @@ bool Export2Tape(int argc, char* argv[])
 		tapeDest.Init();
 
 		//Update the BASIC loader to match tape LOAD synthax.								
-		ConvertBASICLoaderForDevice(&tapeDest, &tapeDest2, LDR_TAPE);
+		BASICUtil::ConvertBASICLoaderForDevice(&tapeDest, &tapeDest2, BASICUtil::LDR_TAPE);
 
 		tapeDest.Close();
 		tapeDest2.Close();
@@ -2768,19 +2140,29 @@ bool ImportTape(int argc, char* argv[])
 {
 	if (theFS == NULL)
 		return false;
-
-	bool IsDisk = (theFS->GetFSFeatures() & CFileSystem::FSFT_DISK) > 0;
+	
 	bool IsBasic = (theFS->GetFSFeatures() & CFileSystem::FSFT_ZXSPECTRUM_FILES) > 0;
 	bool IsHCDisk = (strstr(theFS->Name, "HC BASIC") != nullptr);
 	bool IsPlus3 = (strstr(theFS->Name, "Spectrum +3") != nullptr);
 	char* tapSrcName = argv[0];
 	char* tapTempName = nullptr;
 
-	StorageLoaderType ldrType = LDR_TAPE;
+	if (!IsBasic)
+	{
+		cout << "Can only import tape to a Spectrum disk." << endl;
+		return false;
+	}
+
+
+	BASICUtil::StorageLoaderType ldrType = BASICUtil::LDR_TAPE;
 	if (IsHCDisk)
-		ldrType = LDR_HC_DISK;
+		ldrType = BASICUtil::LDR_HC_DISK;
 	else if (IsPlus3)
-		ldrType = LDR_SPECTRUM_P3_DISK;
+		ldrType = BASICUtil::LDR_SPECTRUM_P3_DISK;
+
+	string pattern = "*";
+	if (argc >= 2)
+		pattern = argv[1];
 
 	bool convertLoader = false;
 	if (argc >= 3 && stricmp(argv[2], "-convldr") == 0)
@@ -2792,11 +2174,10 @@ bool ImportTape(int argc, char* argv[])
 		tapTempName = "temp.tap";
 		CFileArchiveTape tapeSrc(tapSrcName);
 		CFileArchiveTape tapeDst(tapTempName);
-		if (tapeSrc.Open(tapSrcName, false) && tapeSrc.Init() &&
-			tapeDst.Open(tapTempName, true))
+		if (tapeSrc.Open(tapSrcName, false) && tapeSrc.Init() && tapeDst.Open(tapTempName, true))
 		{			
 			//Convert loader or set tape syntax, but with proper file names.
-			ConvertBASICLoaderForDevice(&tapeSrc, &tapeDst, ldrType);
+			BASICUtil::ConvertBASICLoaderForDevice(&tapeSrc, &tapeDst, ldrType);
 			tapeSrc.Close();
 			tapeDst.Close();
 
@@ -2804,60 +2185,11 @@ bool ImportTape(int argc, char* argv[])
 		}		
 	}
 
-	bool writeOK = true;
-	if (IsBasic)
-	{		
-		CFileArchiveTape tapeSrc(tapSrcName);
-		if (tapeSrc.Open(tapSrcName, false) && tapeSrc.Init())
-		{
-			char* pattern = "*";
-			if (argc >= 2)
-				pattern = argv[1];
+	bool res = TapeUtil::ImportTape((CFileArchive*)theFS, tapSrcName, pattern.c_str());
+	if (tapTempName != nullptr)
+		remove(tapTempName);
 
-			CFile* fSrc = tapeSrc.FindFirst(pattern);			
-			
-			while (fSrc != NULL && writeOK)
-			{			
-				CFileSystem::FileNameType fn;				
-				fSrc->GetFileName(fn);				
-				CFile* fDest = theFS->NewFile(fn);
-				
-				if (fDest != NULL)
-				{
-					*dynamic_cast<CFileSpectrum*>(fDest) = *dynamic_cast<CFileSpectrumTape*>(fSrc);
-				
-					dword len = fSrc->GetLength();
-					byte* buf = new byte[len];										
-					writeOK = fSrc->GetData(buf) && fDest->SetData(buf, len);
-					//Ignore error if one of the files could not be written because it may exist already.
-					theFS->WriteFile(fDest);
-					delete [] buf;										
-				}
-				else
-				{
-					writeOK = false;
-				}
-			
-				delete fDest;				
-				fSrc = tapeSrc.FindNext();
-			}
-
-						
-			tapeSrc.Close();
-
-			if (tapTempName != nullptr)
-				remove(tapTempName);
-		}
-		else
-			return false;
-	}
-	else
-	{
-		cout << "Can only import tape to a Spectrum disk." << endl;
-		return false;
-	}
-
-	return writeOK;
+	return res;
 }
 
 
@@ -2899,7 +2231,7 @@ bool PutFilesIF1COM(int argc, char* argv[])
 	//Convert exported tape to IF1 synthax.
 	CFileArchiveTape tapExp("exported.tap");
 	CFileArchiveTape tapIF1("if1.tap");
-	res = tapExp.Open("exported.tap") && tapExp.Init() && tapIF1.Open("if1.tap", true) && ConvertBASICLoaderForDevice(&tapExp, &tapIF1, LDR_IF1_COM);
+	res = tapExp.Open("exported.tap") && tapExp.Init() && tapIF1.Open("if1.tap", true) && BASICUtil::ConvertBASICLoaderForDevice(&tapExp, &tapIF1, BASICUtil::LDR_IF1_COM);
 	tapIF1.Close();		
 	tapExp.Close();
 	remove("exported.tap");
@@ -3096,10 +2428,10 @@ bool FormatDisk(int argc, char* argv[])
 	if (argc >= 3 && strcmp(argv[1], "-t") == 0)
 		selGeom = atoi(argv[2])-1;	
 
-	auto ext = GetExtension(path);
+	auto ext = FileUtil::GetExtension(path);
 	bool formatWithoutConfirmationRequested = (ext == "TAP" || ext == "TZX" ? (argc >= 2 && stricmp(argv[1], "-y") == 0) : (argc >= 4 && stricmp(argv[3], "-y") == 0));
 	struct stat statRes;	
-	if (!formatWithoutConfirmationRequested && stat(path, &statRes) == 0 && !Confirm("The format operation will erase existing data. Are you sure?"))
+	if (!formatWithoutConfirmationRequested && stat(path, &statRes) == 0 && !GUIUtil::Confirm("The format operation will erase existing data. Are you sure?"))
 	{
 		return false;
 	}
@@ -3232,169 +2564,6 @@ bool ChangeAttributes(int argc, char* argv[])
 	return res;
 }
 
-bool Bin2REM(string blobFileName, word addrForMove, string programName)
-{	
-	const long blobSize = fsize(blobFileName.c_str());
-	if (blobSize > 48 * 1024)
-	{
-		puts("Blob size is too big.");
-		return false;
-	}
-
-	FILE* fBlob = fopen(blobFileName.c_str(), "rb");
-	if (fBlob == NULL)
-	{
-		printf("Could not open blob file %s.", blobFileName.c_str());
-		return false;
-	}
-
-	byte basLdrREM[] = {
-		Basic::BASICKeywordsIDType::BK_RANDOMIZE,
-		Basic::BASICKeywordsIDType::BK_USR,
-		Basic::BASICKeywordsIDType::BK_VAL,
-		'"', '3', '1', '+',
-		Basic::BASICKeywordsIDType::BK_PEEK, '2', '3', '6', '3', '5', '+', '2', '5', '6', '*',
-		Basic::BASICKeywordsIDType::BK_PEEK, '2', '3', '6', '3', '6',
-		'"', ':', Basic::BASICKeywordsIDType::BK_REM
-	};
-	word basLdrSize = sizeof(basLdrREM);
-
-	byte asmLdr[] = {
-		0x21, 14, 0,										//ld hl, lenght of ASM loader, the blob follows it
-		0x09,												//add hl, bc	;BC holds the address called from RANDOMIZE USR.
-		0x11, (byte)(addrForMove % 256), (byte)(addrForMove / 256),			//ld de, start addr
-		0xD5,												//push de		;Jump to start of blob. 
-		0x01, (byte)(blobSize % 256), (byte)(blobSize / 256),	//ld bc, blob size
-		0xED, 0xB0,											//ldir
-		0xC9												//ret		
-	};
-	word asmLdrSize = (addrForMove > 0 ? sizeof(asmLdr) : 0);
-	
-	const word ldrSize = basLdrSize + asmLdrSize;
-	byte* blobBuf = new byte[ldrSize + blobSize];
-
-	memcpy(blobBuf, basLdrREM, basLdrSize);
-	//Copy LDIR loader in front of the blob.
-	if (addrForMove > 0)
-		memcpy(blobBuf + basLdrSize, asmLdr, asmLdrSize);
-
-	fread(&blobBuf[ldrSize], 1, blobSize, fBlob);
-	fclose(fBlob);
-
-	//Create BASIC line from buffer.	
-	const word progLineNo = 0;
-	Basic::BasicLine bl(blobBuf, ldrSize + (word)blobSize, progLineNo);
-
-	//Create header for Spectrum file.
-	CFile* f = theFS->NewFile(programName.c_str());
-	CFileSpectrum* fs = dynamic_cast<CFileSpectrum*>(f);
-	fs->SpectrumType = CFileSpectrum::SPECTRUM_PROGRAM;
-	fs->SpectrumStart = bl.lineNumber;
-	fs->SpectrumVarLength = 0;
-	fs->SpectrumArrayVarName = 0;
-	fs->SpectrumLength = bl.lineSize;
-
-	//Write BASIC line to buffer.
-	Basic::BasicDecoder bd;
-	byte* lastBuf = new byte[bl.lineSize];
-	bd.PutBasicLineToLineBuffer(bl, lastBuf);	
-	f->SetData(lastBuf, bl.lineSize);
-	delete[] lastBuf;
-	delete[] blobBuf;
-
-	bool res = theFS->WriteFile(f);
-	delete f;
-
-	return true;
-}
-
-
-bool Bin2Var(string blobFileName, word addrForMove, string programName)
-{
-	const long blobSize = fsize(blobFileName.c_str());
-	if (blobSize > 48 * 1024)
-	{
-		puts("Blob size is too big.");
-		return false;
-	}
-
-	FILE* fBlob = fopen(blobFileName.c_str(), "rb");
-	if (fBlob == NULL)
-	{
-		printf("Could not open blob file %s.", blobFileName.c_str());
-		return false;
-	}
-
-	byte asmLdr[] = {
-		0x21, 14, 0,										//ld hl, lenght of ASM loader, the blob follows it
-		0x09,												//add hl, bc	;BC holds the address called from RANDOMIZE USR.
-		0x11, (byte)(addrForMove % 256), (byte)(addrForMove / 256),			//ld de, start addr
-		0xD5,												//push de		;Jump to start of blob. 
-		0x01, (byte)(blobSize % 256), (byte)(blobSize / 256),	//ld bc, blob size
-		0xED, 0xB0,											//ldir
-		0xC9												//ret		
-	};
-	word asmLdrSize = (addrForMove > 0 ? sizeof(asmLdr) : 0);
-
-	byte varHdr[] = { ((Basic::BASVarType::BV_STRING << 5) | ('x' - 'a' + 1)), (byte)((blobSize + asmLdrSize) % 256), (byte)((blobSize + asmLdrSize) / 256) };
-	const word varHdrSize = sizeof(varHdr);
-
-	byte basLdrVar[] = {
-		Basic::BASICKeywordsIDType::BK_RANDOMIZE,
-		Basic::BASICKeywordsIDType::BK_USR,
-		Basic::BASICKeywordsIDType::BK_VAL, '"',
-		//Address of blob is variable area + 3 bytes for variable header
-		(varHdrSize + '0'), '+',
-		Basic::BASICKeywordsIDType::BK_PEEK, '2', '3', '6', '2', '7', '+', '2', '5', '6', '*',
-		Basic::BASICKeywordsIDType::BK_PEEK, '2', '3', '6', '2', '8', '"',
-		0x0D
-	};
-	word basLdrSize = sizeof(basLdrVar);
-
-	const word ldrSize = basLdrSize + asmLdrSize;
-	const word varLen = varHdrSize + asmLdrSize + (word)blobSize;
-	byte* blobBuf = new byte[ldrSize + varHdrSize + (word)blobSize];
-
-	//Copy basic loader.
-	memcpy(blobBuf, basLdrVar, basLdrSize);
-	//Copy variables header.
-	memcpy(blobBuf + basLdrSize, varHdr, varHdrSize);
-
-	if (addrForMove > 0)	
-		//Copy LDIR loader in front of the blob.
-		memcpy(blobBuf + basLdrSize + varHdrSize, asmLdr, asmLdrSize);	
-
-	fread(&blobBuf[ldrSize + varHdrSize], 1, blobSize, fBlob);
-	fclose(fBlob);
-
-	//Create BASIC line from buffer.	
-	const word progLineNo = 0;
-	Basic::BasicLine bl(blobBuf, basLdrSize, progLineNo);	
-
-	//Create header for Spectrum file.
-	CFile* f = theFS->NewFile(programName.c_str());
-	CFileSpectrum* fs = dynamic_cast<CFileSpectrum*>(f);
-	fs->SpectrumType = CFileSpectrum::SPECTRUM_PROGRAM;
-	fs->SpectrumStart = bl.lineNumber;
-	fs->SpectrumVarLength = varLen;
-	fs->SpectrumArrayVarName = 0;
-	fs->SpectrumLength = bl.lineSize + varLen;
-
-	//Write BASIC line to buffer.
-	Basic::BasicDecoder bd;
-	byte* lastBuf = new byte[bl.lineSize + varLen];
-	bd.PutBasicLineToLineBuffer(bl, lastBuf);	
-	memcpy(&lastBuf[bl.lineSize], &blobBuf[basLdrSize], varLen);
-	f->SetData(lastBuf, bl.lineSize + varLen);
-	delete[] lastBuf;
-	delete[] blobBuf;
-
-	bool res = theFS->WriteFile(f);
-	delete f;
-
-	return true;
-}
-
 
 //Convers a Z80 binary into a BASIC block with a REM line OR in a variable (not visible in program).
 //Before executing the Z80 binary, it moves it to the specified address, if the address is specified.
@@ -3428,156 +2597,18 @@ bool Bin2BAS(int argc, char* argv[])
 
 	if (blobToVar)
 	{
-		res = Bin2Var(blobName, addr, programName);
+		res = BASICUtil::Bin2Var(theFS, blobName, addr, programName);
 	}
 	else
 	{
-		res = Bin2REM(blobName, addr, programName);
+		res = BASICUtil::Bin2REM(theFS, blobName, addr, programName);
 	}											
 		
 	return res;	
 }
 
 
-//Automatic BASIC loader conversion for different storage devices (HC disk, IF1 serial, Spectrum disk, Opus, etc).
-//Must first check that the tape is convertible:
-//- it has the number of blocks with header (typed files) equal to the number of blocks present in the BASIC loader to be loaded
-//- multilevel games have more blocks loaded by machine code (not present in the BASIC loader), so those games cannot be converted
-//- if headerless blocks (untyped blocks) are present in the tape, it means machine code routine is loading blocks, so those games cannot be converted.
-//If the BASIC loader is addressing blocks using empty strings, we must find the actual block names following the BASIC loader and use those in the loader, as empty names are not allowed on disk, even if are allowed on tapes.
-//If the block names contain unprintable chars or are empty strings, we must convert names to printable chars and use those names in the BASIC loader, making sure names are unique, as duplicate names are not allowed on disk.	
-bool ConvertBASICLoaderForDevice(CFileArchive* src, CFileArchiveTape* dst, StorageLoaderType ldrType)
-{			
-	if ((src->GetFSFeatures() & CFileArchive::FSFT_ZXSPECTRUM_FILES) == 0 ||
-		(dst->GetFSFeatures() & CFileArchive::FSFT_ZXSPECTRUM_FILES) == 0)
-	{
-		puts("Can only convert loader for ZX Spectrum files.");
-		return false;
-	}
 
-	bool hasHeaderless = false;	
-	Basic::BasicDecoder bd;
-	CFileSpectrumTape* fileToCheck = (CFileSpectrumTape*)src->FindFirst("*");
-	map<string, vector<string>> loadedBlocks;	
-	byte loadedBlocksCnt = 0, nonProgramBlocksCount = 0;
-	string programName;
-
-	while (fileToCheck != nullptr)
-	{					
-		CFileArchive::FileNameType fileName;				
-		fileToCheck->GetFileName(fileName);				
-
-		if (fileToCheck->GetType() == CFileSpectrum::SPECTRUM_PROGRAM)
-		{
-			dword fileLen = fileToCheck->GetLength();
-			byte* fileData = new byte[fileLen];
-			fileToCheck->GetData(fileData);
-			loadedBlocks[fileName] = GetLoadedBlocksInProgram(fileData, fileToCheck->SpectrumLength, fileToCheck->SpectrumVarLength);
-			loadedBlocksCnt += loadedBlocks[fileName].size();
-			delete[] fileData;
-			programName = fileName;
-		}		
-		else if (fileToCheck->GetType() != CFileSpectrum::SPECTRUM_UNTYPED)
-		{
-			//Update the loaded name to match the converted block name for destination TAP.
-			if (nonProgramBlocksCount < loadedBlocks[programName].size())
-				loadedBlocks[programName][nonProgramBlocksCount] = fileName;
-			nonProgramBlocksCount++;
-		}
-		else
-		{
-			hasHeaderless = true;
-		}
-			
-		fileToCheck = (CFileSpectrumTape*)src->FindNext();				
-	}	
-
-	if (hasHeaderless)
-	{
-		puts("Warning: The source has headerless/untyped blocks.");		
-	}
-
-	if (loadedBlocksCnt < nonProgramBlocksCount)
-	{
-		printf("Warning: The BASIC loader(s) are referencing %d blocks, but %d non-program blocks are available on disk!\n", loadedBlocksCnt, nonProgramBlocksCount);
-	}
-	
-	Basic::BasicLine blSrc, blDst;	
-	CFile* srcFile = src->FindFirst("*");
-	while (srcFile != nullptr)
-	{		
-		CFileSpectrumTape* srcFileSpec = (CFileSpectrumTape*)srcFile;
-		CFileArchive::FileNameType fileName;
-		srcFile->GetFileName(fileName);
-		string programName;
-		byte loadedBlockIndex = 0;
-
-		if (srcFileSpec->GetType() == CFileSpectrum::SPECTRUM_PROGRAM)
-		{						
-			word bufPosIn = 0, bufPosOut = 0;
-			dword srcLen = srcFile->GetLength();
-			byte* bufSrc = new byte[srcLen];
-			byte* bufDst = new byte[srcLen + 100];
-
-			srcFile->GetData(bufSrc);
-			programName = fileName;
-			loadedBlockIndex = 0;
-			
-			byte nameIdx = 0;
-			do
-			{
-				blSrc = bd.GetBasicLineFromLineBuffer(bufSrc + bufPosIn, srcFileSpec->SpectrumLength - srcFileSpec->SpectrumVarLength - bufPosIn);
-				if (blSrc.lineSize == 0)
-					break;				
-								
-				//Some BASIC loaders have more LOAD commands than the actual blocks.
-				if (nameIdx < loadedBlocks[fileName].size())
-				{
-					bd.ConvertLoader(&blSrc, &blDst, STORAGE_LOADER_EXPR[ldrType], &loadedBlocks[fileName], &nameIdx);
-					bd.PutBasicLineToLineBuffer(blDst, bufDst + bufPosOut);
-
-					bufPosIn += blSrc.lineSize;
-					bufPosOut += blDst.lineSize;
-				}
-				else
-				{
-					memcpy(bufDst + bufPosOut, bufSrc + bufPosIn, blSrc.lineSize);
-					bufPosIn += blSrc.lineSize;
-					bufPosOut += blSrc.lineSize;
-				}				
-			} while (bufPosIn < srcFileSpec->SpectrumLength - srcFileSpec->SpectrumVarLength);
-
-			//Copy variables too.
-			if (srcFileSpec->SpectrumVarLength > 0)
-			{
-				memcpy(bufDst + bufPosOut, bufSrc + bufPosIn, srcFileSpec->SpectrumVarLength);
-				bufPosOut += srcFileSpec->SpectrumVarLength;
-			}
-						
-			CFile* file = new CFile(fileName, bufPosOut, bufDst);
-			CFileSpectrumTape* dstFile = new CFileSpectrumTape(*srcFileSpec, *file);
-			dstFile->SpectrumLength = bufPosOut;
-			dst->AddFile(dstFile);
-
-			delete file;	
-			delete dstFile;
-
-			if (bufSrc != nullptr)
-				delete [] bufSrc;
-			if (bufSrc != nullptr)
-				delete [] bufDst;
-
-		}		
-		else //Copy rest of blocks that are not program.
-		{			
-			dst->AddFile(srcFileSpec);		
-		}
-		
-		srcFile = src->FindNext();
-	}
-
-	return true;	
-}
 
 
 bool DiskView(int argc, char* argv[])
@@ -3602,85 +2633,9 @@ bool DiskView(int argc, char* argv[])
 		printf("T x H x S: %d x %d x %d, size: %d, ID: %d\n", trackIdx, headIdx, sectIdx, sectSize, sectors[sectIdx].sectID);
 		auto secBuf = vector<byte>(CDiskBase::SECT_SZ_4096);
 		res = theDisk->ReadSectors(secBuf.data(), trackIdx, headIdx, sectIdx + 1, 1);
-		TextViewer(GetHexPrint(secBuf.data(), sectSize));		
+		GUIUtil::TextViewer(FileUtil::GetHexPrint(secBuf.data(), sectSize));
 	}		
 
-	return res;
-}
-
-bool BasImport(int argc, char* argv[])
-{
-	string name = GetNameWithoutExtension(argv[0]);
-	if (argc >= 2)
-		name = argv[1];
-
-	word autorunLine = 0;
-	if (argc >= 3)
-		autorunLine = atoi(argv[2]);
-		
-
-	bool res = bas2tap(argv[0], name.c_str(), autorunLine) == 0;	
-	
-	//Add binary as variable.
-	byte* varBuf = nullptr;
-	word varBufLen = 0;
-	if (res && argc >= 4)
-	{
-		auto varFileName = argv[3];
-		auto varLen = fsize(varFileName);
-		const byte varHdr[] = { ((Basic::BASVarType::BV_STRING << 5) | ('x' - 'a' + 1)), (byte)(varLen % 256), (byte)(varLen / 256) };
-
-		auto varFile = fopen(varFileName, "rb");
-		varBufLen = sizeof(varHdr) + varLen;
-		varBuf = new byte[varBufLen];
-		memcpy(varBuf, varHdr, sizeof(varHdr));
-		fread(varBuf + sizeof(varHdr), 1, varLen, varFile);
-		fclose(varFile);		
-	}
-
-	char* tapToImport = "temp.tap";
-	if (res && varBuf != nullptr)
-	{
-		//Open temporary file created by BasImp.
-		CFileArchiveTape* tapeOld = new CFileArchiveTape(tapToImport);
-		tapeOld->Open(tapToImport);
-		tapeOld->Init();
-		
-		//Get program block blob and copy it into memory.
-		auto oldProg = (CFileSpectrumTape*)tapeOld->FindFirst("*");
-		word progLen = (word)oldProg->GetLength();
-		byte* newProgBuf = new byte[progLen + varBufLen];
-		oldProg->GetData(newProgBuf);
-		memcpy(newProgBuf + progLen, varBuf, varBufLen);
-		delete[] varBuf;
-
-		//Create new program block and copy old program + new variables.
-		CFileSpectrumTape* newProg = new CFileSpectrumTape(*oldProg);
-		newProg->SetData(newProgBuf, progLen + varBufLen);	
-		newProg->SpectrumVarLength = varBufLen;
-		newProg->SpectrumLength = progLen + varBufLen;
-		delete[] newProgBuf;		
-		//delete oldProg;
-		delete tapeOld;		
-
-		//Create new program tape.
-		CFileArchiveTape* tapeNew = new CFileArchiveTape("newProg.tap");
-		tapeNew->Open("newProg.tap", true);
-		tapeNew->AddFile(newProg);
-		tapeNew->Close();
-		delete newProg;
-		delete tapeNew;
-
-		tapToImport = "newProg.tap";
-		remove("temp.tap");
-	}
-
-	const char* argsImport[] = {tapToImport, name.c_str()};
-	if (res)
-	{
-		res = ImportTape(1, (char**)argsImport);		
-		remove(tapToImport);
-	}
 	return res;
 }
 
@@ -3692,7 +2647,7 @@ bool ScreenProcess(int argc, char* argv[])
 	string nameIn = argv[2];
 	string nameOut = argv[3];
 
-	if (fsize(nameIn.c_str()) != sizeof(ScreenType))
+	if (FileUtil::fsize(nameIn.c_str()) != sizeof(ScreenType))
 	{
 		cout << "File '" << nameIn << "' is not a valid SCREEN$ file." << endl;
 		return false;
@@ -3758,41 +2713,7 @@ bool BinCut(int argc, char* argv[])
 	char* offsetStr = argv[2];
 	char* lenStr = (argc >= 3 ? argv[3] : "0");
 
-	long offset = atoi(offsetStr);
-	long fsizeIn = fsize(fnameIn);
-	long lenBlock = atoi(lenStr);
-
-	if (lenBlock == 0)
-		lenBlock = fsizeIn - offset;
-
-	if (offset + lenBlock > fsizeIn)
-	{
-		cout << offset << " + " << lenBlock << " do not fit the file " << fnameIn << " lenght of " << fsizeIn << "." << endl;
-		return false;
-	}
-
-	FILE* fin = fopen(fnameIn, "rb");
-	FILE* fout = fopen(fnameOut, "wb");
-	if (fin == nullptr || fout == nullptr)
-	{
-		cout << "Couln't open input or output file." << endl;
-		return false;
-	}
-	
-	fseek(fin, offset, SEEK_SET);
-	long leftBytes = lenBlock;
-	while (leftBytes > 0)
-	{
-		fputc(fgetc(fin), fout);
-		leftBytes--;
-	}
-
-	fclose(fin);
-	fclose(fout);
-
-	cout << "Created file " << fnameOut << " with lenght " << lenBlock << "." << endl;
-
-	return true;
+	return FileUtil::BinCut(fnameIn, fnameOut, offsetStr, lenStr);
 }
 
 bool BinPatch(int argc, char* argv[])
@@ -3801,36 +2722,40 @@ bool BinPatch(int argc, char* argv[])
 	char* fnamePatch = argv[1];
 	char* offsetStr = argv[2];
 
-	long offset = atoi(offsetStr);
-	long fsizeIn = fsize(fnameIn);
-	long fsizePatch = fsize(fnamePatch);
-	
-	
-	FILE* fToPatch = fopen(fnameIn, "r+b");
-	FILE* fThePatch = fopen(fnamePatch, "rb");
-	if (fToPatch == nullptr || fThePatch == nullptr)
-	{
-		cout << "Couln't open input or output file." << endl;
-		return false;
-	}
-
-	fseek(fToPatch, offset, SEEK_SET);
-	long leftBytes = fsizePatch;
-	while (leftBytes > 0)
-	{
-		fputc(fgetc(fThePatch), fToPatch);
-		leftBytes--;
-	}
-
-	fclose(fToPatch);
-	fclose(fThePatch);
-
-	cout << "Applied patch file " << fnamePatch << " with lenght " << fsizePatch << " to file " << fnameIn << " at offset " << offset << "." << endl;
-
-	return true;
+	return FileUtil::BinPatch(fnameIn, fnamePatch, offsetStr);
 }
 
+bool BasImport(int argc, char* argv[])
+{
+	string name = FileUtil::GetNameWithoutExtension(argv[0]);
+	if (argc >= 2)
+		name = argv[1];
 
+	word autorunLine = 0;
+	if (argc >= 3)
+		autorunLine = atoi(argv[2]);
+
+	string varFileName = "";
+	if (argc >= 4)
+		varFileName = argv[3];
+
+	string tapToImport = BASICUtil::Bas2Tap(argv[0], name, autorunLine, varFileName);
+	const char* argsImport[] = { tapToImport.c_str(), name.c_str()};
+	
+	bool res = ImportTape(1, (char**)argsImport);
+	remove(tapToImport.c_str());	
+
+	return res;
+}
+
+bool CreateAutorun(int argc, char* argv[])
+{
+	bool IsDisk = (theFS->GetFSFeatures() & CFileSystem::FSFT_DISK) > 0;
+	if (IsDisk)
+		return BASICUtil::GenerateAutorun((CFileSystem*)theFS);
+	else
+		return false;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -3986,6 +2911,8 @@ static const Command theCommands[] =
 			{"offset", true, "0 based start offset in input file"},			
 		},
 		BinPatch },
+	{ {"autorun"}, "Creates autorun program for the current disk", {}, 
+		CreateAutorun },
 	{{"exit", "quit"}, "Exit program", 
 	{{}}},	
 };

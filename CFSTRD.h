@@ -31,6 +31,9 @@ public:
 	const static byte DISK_INFO_SECTOR = 9;
 	const static byte MAX_DIR_ENTRIES = 128;
 	const static byte TRDOS_ID = 0x10;
+	const static word PROGRAM_LINE_MARKER = 0xAA80;
+	const static byte END_OF_DIR_MARKER = 0;
+
 
 #pragma pack(1)
 	struct DirEntryType

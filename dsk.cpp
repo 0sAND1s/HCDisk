@@ -244,11 +244,13 @@ bool CDSK::SeekSector(byte sector)
 
 bool CDSK::ReadSectors(byte * buff, byte track, byte side, byte sector, byte sectCnt)
 {	
+	/*
 	if (sector > currTrack.sectorCount || (sectCnt - sector) > currTrack.sectorCount)
 	{
 		LastError = ERR_PARAM;
 		return false;
 	}
+	*/
 
 	if (!Seek(track))
 		return false;

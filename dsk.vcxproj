@@ -101,6 +101,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BASICUtil.cpp" />
     <ClCompile Include="COMIF1.cpp" />
     <ClCompile Include="CRC.cpp" />
     <ClCompile Include="DiskBase.cpp" />
@@ -136,6 +137,9 @@
     <ClCompile Include="FileConverters\dz80\noscript.c" />
     <ClCompile Include="FileConverters\dz80\tables.c" />
     <ClCompile Include="FileConverters\Screen.cpp" />
+    <ClCompile Include="FileUtil.cpp" />
+    <ClCompile Include="GUIUtil.cpp" />
+    <ClCompile Include="TapeUtil.cpp" />
     <ClCompile Include="Tape\tap.cpp" />
     <ClCompile Include="Tape\Tape2Wave.cpp" />
     <ClCompile Include="Tape\TapeBlock.cpp" />
@@ -145,6 +149,7 @@
     <ClCompile Include="td0_lzss.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BASICUtil.h" />
     <ClInclude Include="COMIF1.h" />
     <ClInclude Include="DiskWin32Native.h" />
     <ClInclude Include="CRC.h" />
@@ -180,6 +185,9 @@
     <ClInclude Include="FileConverters\dz80\dz80.h" />
     <ClInclude Include="FileConverters\dz80\types.h" />
     <ClInclude Include="FileConverters\Screen.h" />
+    <ClInclude Include="FileUtil.h" />
+    <ClInclude Include="GUIUtil.h" />
+    <ClInclude Include="TapeUtil.h" />
     <ClInclude Include="Tape\tap.h" />
     <ClInclude Include="Tape\Tape2Wave.h" />
     <ClInclude Include="Tape\TapeBlock.h" />

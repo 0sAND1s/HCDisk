@@ -5,9 +5,6 @@
 #include "CFileTRD.h"
 #include <algorithm>
 
-const word PROGRAM_LINE_MARKER = 0xAA80;
-const byte END_OF_DIR_MARKER = 0;
-
 const CDiskBase::DiskDescType CFSTRDOS::TRDDiskTypes[] = 
 {
 	{ 80, 2, 16, CDiskBase::SECT_SZ_256, 0xE5, 0x58, CDiskBase::DISK_DATARATE_DD_3_5 },
@@ -198,7 +195,7 @@ bool CFSTRDOS::Format()
 
 bool CFSTRDOS::Delete(char* names)
 {
-	byte delFilesCnt = 0, nonDelFilesCnt = 0;
+	byte delFilesCnt = 0, allFilesCnt = 0;
 	CFileTRD* file = (CFileTRD*)FindFirst(names);
 	while (file != nullptr)
 	{
@@ -208,24 +205,25 @@ bool CFSTRDOS::Delete(char* names)
 		file = (CFileTRD*)FindNext();		
 	}
 
-	bool bDirFinished = false;
-	DirEntryType* dirEnt = (DirEntryType*)&TRD_Directory[0];
+	bool bDirFinished = false;	
 	for (word dirIdx = 0; dirIdx < MAX_DIR_ENTRIES && !bDirFinished; dirIdx++)
 	{
+		DirEntryType* dirEnt = (DirEntryType*)&TRD_Directory[dirIdx];
 		bDirFinished = (dirEnt->FileName[0] == END_OF_DIR_MARKER);
+
 		if (!bDirFinished)
 		{
 			if (dirEnt->FileName[0] == DEL_FLAG)
 				delFilesCnt++;
-			else
-				nonDelFilesCnt++;
+			
+			allFilesCnt++;
 		}		
 	}
 
 	bool res = true; 
 	//res = Disk->ReadSectors((byte*)&diskDescTRD, 0, 0, DISK_INFO_SECTOR, 1);	
 	diskDescTRD.DelFilesCnt = delFilesCnt;
-	diskDescTRD.FileCnt = nonDelFilesCnt;
+	diskDescTRD.FileCnt = allFilesCnt;
 	res = Disk->WriteSectors(0, 0, DISK_INFO_SECTOR, 1, (byte*)&diskDescTRD);
 	if (!res)
 		return res;
@@ -328,7 +326,7 @@ bool CFSTRDOS::WriteFile(CFileTRD* file)
 	//Allocate the last partial sector, using a clean buffer.	
 	if (file->Length % Disk->DiskDefinition.SectSize != 0)
 	{		
-		byte unusedLen = fileSectorCount * Disk->DiskDefinition.SectSize - file->Length;
+		byte unusedLen = (word)(fileSectorCount * Disk->DiskDefinition.SectSize - file->Length);
 		file->Length = fileSectorCount * Disk->DiskDefinition.SectSize;		
 		byte* buf = new byte[file->Length];
 		memcpy(buf, file->buffer, file->Length - unusedLen);
