@@ -267,13 +267,13 @@ bool CDSK::ReadSectors(byte * buff, byte track, byte side, byte sector, byte sec
 	}
 	else
 	{
-		static word cnt = 0;
+		word cnt = 0;
 		cnt++;
 
 		word off = 0;
 		for (byte s = 0; s < sectCnt; s++)
 		{
-			word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[(sector - 1) + s].sectorSizeCode);
+			word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[sector - currSectorInfo[0].sectorID + s].sectorSizeCode);
 			if (fread(buff + off, sectSize, 1, dskFile) != 1)
 			{
 				LastError = ERR_READ;
@@ -289,11 +289,13 @@ bool CDSK::ReadSectors(byte * buff, byte track, byte side, byte sector, byte sec
 
 bool CDSK::WriteSectors(byte track, byte side, byte sector, byte sectCnt, byte * buff)
 {
+	/*
 	if (sector > currTrack.sectorCount || (sectCnt - sector) > currTrack.sectorCount)
 	{
 		LastError = ERR_PARAM;
 		return false;
 	}
+	*/
 
 	if (!Seek(track))
 		return false;
@@ -307,7 +309,7 @@ bool CDSK::WriteSectors(byte track, byte side, byte sector, byte sectCnt, byte *
 	word off = 0;
 	for (byte s = 0; s < sectCnt; s++)
 	{		
-		word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[(sector - 1) + s].sectorSizeCode);		
+		word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[sector - currSectorInfo[0].sectorID + s].sectorSizeCode);
 		if (fwrite(buff + off, sectSize, 1, dskFile) != 1)
 		{
 			LastError = ERR_WRITE;

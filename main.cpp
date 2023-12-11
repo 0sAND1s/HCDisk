@@ -34,7 +34,7 @@
 #include "CFileTRD.h"
 #include "CFSTRD.h"
 #include "CFSHCBasic.h"
-#include "CFSCPMPlus3.h"
+#include "CFSBASICPlus3.h"
 #include "CFSTRDSCL.h"
 #include "CFSCobraDEVIL.h"
 #include "CFSOpus.h"
@@ -212,7 +212,7 @@ const FileSystemDescription DISK_TYPES[] =
 		"Spectrum +3 BASIC 203K", FS_CPM_PLUS3_BASIC,
 		{42, 1, 10, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 6}, 		
 		{1024, 205, 64, 1}, 
-		{1, 2},
+		{1, 0},
 		true
 	},
 
@@ -251,29 +251,33 @@ const FileSystemDescription DISK_TYPES[] =
 	{
 		"TRDOS DS 3.5\"", FS_TRDOS,
 		{ 80, 2, 16, CDiskBase::SECT_SZ_256, 0x00, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
-		{256, (80 * 2 - 1) * 16, 128, 1}
-		//{}
+		{256, (80 * 2 - 1) * 16, 128, 1},
+		{},
+		true
 	},
 
 	{
 		"TRDOS DS 5.25\"", FS_TRDOS,
 		{ 40, 2, 16, CDiskBase::SECT_SZ_256, 0x00, 0x1B, CDiskBase::DISK_DATARATE_DD_5_25, 0},
-		{256, (40 * 2 - 1) * 16, 128, 1}
-		//{}
+		{256, (40 * 2 - 1) * 16, 128, 1},
+		{},
+		true
 	},
 
 	{
 		"TRDOS SS 3.5\"", FS_TRDOS,
 		{ 80, 1, 16, CDiskBase::SECT_SZ_256, 0x00, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0},
-		{256, (80 * 1 - 1) * 16, 128, 1}
-		//{}
+		{256, (80 * 1 - 1) * 16, 128, 1},
+		{},
+		true
 	},
 
 	{
 		"TRDOS SS 5.25\"", FS_TRDOS,
 		{ 40, 1, 16, CDiskBase::SECT_SZ_256, 0x00, 0x1B, CDiskBase::DISK_DATARATE_DD_5_25, 0},
-		{ 256, (40 * 1 - 1) * 16, 128, 1 }
-		//{}
+		{ 256, (40 * 1 - 1) * 16, 128, 1 },
+		{},
+		true
 	},
 
 	{
@@ -309,9 +313,9 @@ const FileSystemDescription DISK_TYPES[] =
 	{
 		//HardSkew = 1.
 		"CoBra Devil", FS_COBRA_DEVIL,
-		{80, 2, 18, CDiskBase::SECT_SZ_256, 0xE5, 20, CDiskBase::DISK_DATARATE_DD_3_5, 1}, 		
-		{9216, 77, 108}
-		//{}
+		{80, 2, 18, CDiskBase::SECT_SZ_256, 0xE5, 20, CDiskBase::DISK_DATARATE_DD_3_5, 1},
+		{9216, 77, 108},
+		{1, 0}
 	},	
 	
 	{
@@ -319,6 +323,14 @@ const FileSystemDescription DISK_TYPES[] =
 		{80, 1, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{1024, 355, 64, 1}, 
 		{1, 0},
+		true
+	},
+
+	{
+		"Cobra CP/M 860KB", FS_CPM_GENERIC,
+		{86, 2, 10, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0},
+		{2048, 420, 128, 4},
+		{1, 1},
 		true
 	},
 
@@ -1270,7 +1282,7 @@ bool Open(int argc, char* argv[])
 				else if (theDiskDesc.fsType == FS_CPM_HC_BASIC)		
 					theFS = new CFSHCBasic(theDisk, theDiskDesc.fsParams, *(CFSCPM::CPMParams*)&theDiskDesc.otherParams, theDiskDesc.Name);								
 				else if (theDiskDesc.fsType == FS_CPM_PLUS3_BASIC)
-					theFS = new CFSCPMPlus3(theDisk, theDiskDesc.fsParams, *(CFSCPM::CPMParams*)&theDiskDesc.otherParams, theDiskDesc.Name);
+					theFS = new CFSBASICPlus3(theDisk, theDiskDesc.fsParams, *(CFSCPM::CPMParams*)&theDiskDesc.otherParams, theDiskDesc.Name);
 				else if (theDiskDesc.fsType == FS_COBRA_DEVIL)
 					theFS = new CFSCobraDEVIL(theDisk, theDiskDesc.Name);			
 				else if (theDiskDesc.fsType == FS_TRDOS)
@@ -2211,7 +2223,7 @@ bool PutFilesIF1COM(int argc, char* argv[])
 	if (argc >= 2)
 		comName = argv[1];	
 
-	dword baud = 4800; //HC put transfer is reliable at max 4800 baud.
+	dword baud = 9600; //HC put transfer is reliable at max 4800 baud.
 	if (argc >= 3)
 		baud = atoi(argv[2]);
 
@@ -2320,96 +2332,109 @@ bool GetFileIF1COM(int argc, char* argv[])
 
 
 bool SaveBoot(int argc, char* argv[])
-{
-	bool res = true;
-
+{	
 	if (argc == 0)
-		res = false;
-	
+		return false;	
 	char* fName = argv[0];
 
-	if (res && theFS != NULL && theFS->FSFeatures & CFileSystem::FSFT_DISK)
-	{
-		CFileSystem* fs = (CFileSystem*)theFS;
-		byte bootTrkCnt = fs->FSParams.BootTrackCount;
-		res = bootTrkCnt > 0;
-
-		if (res)
-		{
-			word trkSz = fs->Disk->DiskDefinition.SPT * fs->Disk->DiskDefinition.SectSize;
-			byte* trkBuf = new byte[trkSz * bootTrkCnt];
-			for (byte trkIdx = 0; trkIdx < bootTrkCnt && res; trkIdx++)
-				res = fs->Disk->ReadTrack(trkBuf + trkIdx * trkSz, trkIdx/fs->Disk->DiskDefinition.SideCnt, trkIdx % fs->Disk->DiskDefinition.SideCnt);
-
-			if (res)
-			{
-				FILE* fout = fopen(fName, "wb");
-				fwrite(trkBuf, trkSz, bootTrkCnt, fout);
-				fclose(fout);
-			}
-
-			delete[] trkBuf;			
-		}
-		else
-		{
-			printf("There are no boot tracks on the current disk.\n");
-			res = false;
-		}
-	}
+	CFileSystem* fs = nullptr;
+	if (theFS != NULL && theFS->FSFeatures & CFileSystem::FSFT_DISK)
+		fs = (CFileSystem*)theFS;
 	else
-		res = false;
+	{
+		cout << "The current file system is not a disk." << endl;
+		return false;
+	}	
+		
+	byte bootTrkCnt = fs->FSParams.BootTrackCount;
+	if (bootTrkCnt == 0)
+	{
+		printf("There are no boot tracks on the current disk.\n");
+		return false;
+	}
+
+	FILE* fout = fopen(fName, "wb");		
+	if (fout == nullptr)
+	{
+		cout << "Couldn't open file " << fName << "." << endl;
+		return false;
+	}
+	
+	bool res = true;
+	for (byte trkIdx = 0; trkIdx < bootTrkCnt && res; trkIdx++)
+	{
+		byte trackId = trkIdx / fs->Disk->DiskDefinition.SideCnt;
+		byte headId = trkIdx % fs->Disk->DiskDefinition.SideCnt;
+
+		//Use actual track geometry for non-standard boot tracks (Cobra for example).
+		byte sectCnt;
+		CDiskBase::SectDescType sectors[CDiskBase::MAX_SECT_PER_TRACK];
+		res = res && fs->Disk->GetTrackInfo(trackId, headId, sectCnt, sectors);
+
+		word trkSz = sectCnt * CDiskBase::SectCode2SectSize(sectors[0].sectSizeCode);
+		byte* trkBuf = new byte[trkSz * bootTrkCnt];
+
+		res = fs->Disk->ReadSectors(trkBuf, trackId, headId, sectors[0].sectID, sectCnt);
+
+		if (res)									
+			fwrite(trkBuf, 1, trkSz, fout);									
+
+		delete[] trkBuf;				
+	}						
+
+	fclose(fout);			
 
 	return res;
 }
 
 bool LoadBoot(int argc, char* argv[])
-{
-	bool res = true;
+{	
+	CFileSystem* fs = nullptr;
 
-	if (argc == 0)
-		res = true;
+	if (theFS != NULL && theFS->FSFeatures & CFileSystem::FSFT_DISK)
+		fs = (CFileSystem*)theFS;
+	else
+	{
+		cout << "The current file system is not a disk." << endl;
+		return false;
+	}
+		
+	byte bootTrkCnt = fs->FSParams.BootTrackCount;	
+	if (bootTrkCnt == 0)
+	{
+		printf("There are no boot tracks on the current disk.\n");		
+	}
 
 	char* fName = argv[0];
-
-	if (res && theFS != NULL && theFS->FSFeatures & CFileSystem::FSFT_DISK)
+	FILE* fout = fopen(fName, "rb");	
+	if (fout == nullptr)
 	{
-		CFileSystem* fs = (CFileSystem*)theFS;
-		byte bootTrkCnt = fs->FSParams.BootTrackCount;
-		res = bootTrkCnt > 0;
-
-		word trkSz = fs->Disk->DiskDefinition.SPT * fs->Disk->DiskDefinition.SectSize;
-		byte* trkBuf = new byte[trkSz * bootTrkCnt];
-
-		FILE* fout = NULL;
-		if (res)
-		{
-			fout = fopen(fName, "rb");
-			res = (fout != NULL);			
-		}		
-		
-		if (res)
-		{
-			res = fread(trkBuf, trkSz, bootTrkCnt, fout) > 0;
-			fclose(fout);			
-		}
-		else
-			printf("Couldn't open file %s.", fName);
-
-		if (res)
-		{			
-			for (byte trkIdx = 0; trkIdx < bootTrkCnt && res; trkIdx++)
-				res = fs->Disk->WriteTrack(trkIdx/fs->Disk->DiskDefinition.SideCnt, trkIdx % fs->Disk->DiskDefinition.SideCnt, trkBuf + trkIdx * trkSz);			
-		}
-		else
-		{
-			printf("There are no boot tracks on the current disk.\n");
-			res = false;
-		}
-
-		delete[] trkBuf;			
+		cout << "Couldn't open file " << fName << "." << endl;
+		return false;
 	}
-	else
-		res = false;
+	
+	bool res = true;
+	for (byte trkIdx = 0; trkIdx < bootTrkCnt && res; trkIdx++)
+	{
+		byte trackId = trkIdx / fs->Disk->DiskDefinition.SideCnt;
+		byte headId = trkIdx % fs->Disk->DiskDefinition.SideCnt;
+
+		//Use actual track geometry for non-standard boot tracks (Cobra for example).
+		byte sectCnt;
+		CDiskBase::SectDescType sectors[CDiskBase::MAX_SECT_PER_TRACK];
+		res = res && fs->Disk->GetTrackInfo(trackId, headId, sectCnt, sectors);
+
+		word trkSz = sectCnt * CDiskBase::SectCode2SectSize(sectors[0].sectSizeCode);
+		byte* trkBuf = new byte[trkSz];
+			
+		res = res && fread(trkBuf, 1, trkSz, fout) > 0;					
+		res = res && fs->Disk->WriteSectors(trackId, headId, sectors[0].sectID, sectCnt, trkBuf);
+
+		delete[] trkBuf;
+	}
+		
+	fclose(fout);			
+	
 
 	return res;
 }
@@ -2489,7 +2514,7 @@ bool FormatDisk(int argc, char* argv[])
 		else if (diskDesc.fsType == FS_CPM_HC_BASIC)		
 			fs = new CFSHCBasic(disk, diskDesc.fsParams, *(CFSCPM::CPMParams*)&diskDesc.otherParams, diskDesc.Name);								
 		else if (diskDesc.fsType == FS_CPM_PLUS3_BASIC)
-			fs = new CFSCPMPlus3(disk, diskDesc.fsParams, *(CFSCPM::CPMParams*)&diskDesc.otherParams, diskDesc.Name);
+			fs = new CFSBASICPlus3(disk, diskDesc.fsParams, *(CFSCPM::CPMParams*)&diskDesc.otherParams, diskDesc.Name);
 		else if (diskDesc.fsType == FS_COBRA_DEVIL)
 			fs = new CFSCobraDEVIL(disk, diskDesc.Name);			
 		else if (diskDesc.fsType == FS_TRDOS)
@@ -2866,7 +2891,7 @@ static const Command theCommands[] =
 		{
 		{"file name/mask", true, "file mask to select files for sending"},
 		{"COMx", false, "COMx port to use, default COM1"},
-		{"baud rate", false, "baud rate for COM, default is 4800"}
+		{"baud rate", false, "baud rate for COM, default is 9600"}
 		},
 		PutFilesIF1COM},
 	{{"getif1"}, "Get a single file from IF1 trough the COM port",

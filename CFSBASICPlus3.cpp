@@ -1,8 +1,8 @@
-#include "CFSCPMPlus3.h"
+#include "CFSBASICPlus3.h"
 #include "CFilePlus3.h"
 #include <algorithm>
 
-bool CFSCPMPlus3::ReadDirectory()
+bool CFSBASICPlus3::ReadDirectory()
 {
 	if (CFSCPM::ReadDirectory())
 	{
@@ -21,7 +21,7 @@ bool CFSCPMPlus3::ReadDirectory()
 }
 
 
-CFile* CFSCPMPlus3::FindNext() 
+CFile* CFSBASICPlus3::FindNext() 
 { 			
 	CFileCPM* f = (CFileCPM*)CFSCPM::FindNext();
 	if (f != NULL)
@@ -36,7 +36,7 @@ CFile* CFSCPMPlus3::FindNext()
 	}
 }
 
-CFile* CFSCPMPlus3::NewFile(const char* name, long len, byte* data)
+CFile* CFSBASICPlus3::NewFile(const char* name, long len, byte* data)
 {
 	CFilePlus3* f = new CFilePlus3(this);
 	memset(&f->TheHeader, 0, sizeof(f->TheHeader));
@@ -47,7 +47,7 @@ CFile* CFSCPMPlus3::NewFile(const char* name, long len, byte* data)
 	return f; 
 }
 
-bool CFSCPMPlus3::ReadFile(CFile* file)
+bool CFSBASICPlus3::ReadFile(CFile* file)
 {
 	CFilePlus3* fP3 = dynamic_cast<CFilePlus3*>(file);
 	if (fP3->isOpened && CFSCPM::ReadFile(fP3))
@@ -63,7 +63,7 @@ bool CFSCPMPlus3::ReadFile(CFile* file)
 		return false;
 }
 
-bool CFSCPMPlus3::WriteFile(CFile* file)
+bool CFSBASICPlus3::WriteFile(CFile* file)
 {
 	CFilePlus3* f = (CFilePlus3*)file;
 	
@@ -113,7 +113,7 @@ bool CFSCPMPlus3::WriteFile(CFile* file)
 	return CFSCPM::WriteFile(file);
 }
 
-bool CFSCPMPlus3::OpenFile(CFile* file)
+bool CFSBASICPlus3::OpenFile(CFile* file)
 {	
 	CFilePlus3* f =(CFilePlus3*)file;
 	byte* buf = new byte[FSParams.BlockSize];	

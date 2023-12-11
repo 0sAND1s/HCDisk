@@ -59,7 +59,7 @@ CDiskBase::~CDiskBase()
 
 bool CDiskBase::CreateInterleaveTable()
 {
-	if (DiskDefinition.HWInterleave > DiskDefinition.SPT|| DiskDefinition.SPT > MAX_SECT_PER_TRACK)
+	if (DiskDefinition.HWInterleave > DiskDefinition.SPT || DiskDefinition.SPT > MAX_SECT_PER_TRACK)
 		return false;
 		
 	/*
@@ -146,7 +146,7 @@ bool CDiskBase::GetDiskInfo(byte & trackCount, byte & sideCount, char* comment)
 bool CDiskBase::DetectDiskGeometry(DiskDescType& dd)
 {	
 	SectDescType sd[MAX_SECT_PER_TRACK];
-	bool res = GetTrackInfo(0, 0, dd.SPT, sd);	
+	bool res = GetTrackInfo(2, 0, dd.SPT, sd);	
 
 	if (res)
 	{		

@@ -9,19 +9,19 @@
 #include "CFSCPM.h"
 #include "CFilePlus3.h"
 
-class CFSCPMPlus3: public CFSCPM
+class CFSBASICPlus3: public CFSCPM
 {
 	friend class CFileCPMPlus3;
 
 public:
-	CFSCPMPlus3(CDiskBase* disk, FSParamsType fsParams, CPMParams params, char* name): CFSCPM(disk, fsParams, params,  name)
+	CFSBASICPlus3(CDiskBase* disk, FSParamsType fsParams, CPMParams params, char* name): CFSCPM(disk, fsParams, params,  name)
 	{		
 		NAME_LENGHT = 8;
 		EXT_LENGTH = 3;
 		FSFeatures = (FileSystemFeature)(FSFeatures | FSFT_ZXSPECTRUM_FILES | FSFT_FILE_ATTRIBUTES | FSFT_FOLDERS | FSFT_AUTORUN);
 	}	
 
-	virtual ~CFSCPMPlus3() {};
+	virtual ~CFSBASICPlus3() {};
 
 	virtual bool ReadDirectory();
 	virtual CFile* FindNext();

@@ -9,7 +9,7 @@
 
 class CFilePlus3: public CFileCPM, public CFileSpectrum
 {
-	friend class CFSCPMPlus3;	
+	friend class CFSBASICPlus3;	
 	
 
 public:

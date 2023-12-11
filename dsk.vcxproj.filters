@@ -60,7 +60,7 @@
     <ClCompile Include="CFSHCBasic.cpp">
       <Filter>FileSystem</Filter>
     </ClCompile>
-    <ClCompile Include="CFSCPMPlus3.cpp">
+    <ClCompile Include="CFSBASICPlus3.cpp">
       <Filter>FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="CFSMGT.cpp">
@@ -194,7 +194,7 @@
     <ClInclude Include="CFSHCBasic.h">
       <Filter>FileSystem</Filter>
     </ClInclude>
-    <ClInclude Include="CFSCPMPlus3.h">
+    <ClInclude Include="CFSBASICPlus3.h">
       <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="CFSMGT.h">

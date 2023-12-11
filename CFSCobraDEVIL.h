@@ -1,7 +1,12 @@
 //////////////////////////////////////////////////////////////////////////
 //Purpose	: ICTI CoBra computer DEVIL file system driver
 //Author	: George Chirtoaca, 2014
-//Specs		: None, reverse engineered.
+//Specs		: Reverse engineered, later confirmed with https://www.cobrasov.com/CoBra%20Project/devil.html .
+//The block size is 9 KB. Max. block count is 77 = ((80 x 2 - 6) * 2 * 256) / 9K.
+//Each directory entry has 1 sector and can address 1 or more blocks. Max. dir. entries is 108 = 6 directory-reserved tracks x 18 SPT.
+//For headerless blocks from tape, the dir entry contains 2-byte size of each block. Identical dir entries are created for each headerless block, for each 9K file segment.
+//To determine which identical dir entry maps to which file, for the headerless blocks, the block size from the header can be used. If block size is 0, the dir entry refers to the a regular file or regular file extent.
+//If the block size from header is > 0, the dir entry refers to the first file (if dir entry size < first block length) or to a headerless file (each block size determines which dir entry).
 //////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -47,7 +52,8 @@ public:
 	CFile* FindNext();
 	virtual bool OpenFile(CFile*) { return true; };
 	virtual bool CloseFile(CFile*) { return true; };
-	bool ReadBlock(byte* buf, word blkIdx, byte sectCnt = 0);
+	virtual bool ReadBlock(byte* buf, word blkIdx, byte sectCnt = 0);
+	virtual bool ReadFile(CFile* file);
 	virtual FileAttributes GetAttributes(CFile* file);
 
 	//bool ReadFile(CFile*);	
