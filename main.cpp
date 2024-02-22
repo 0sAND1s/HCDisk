@@ -721,10 +721,9 @@ bool TypeFile(int argc, char* argv[])
 	{		
 		CFileSystem::FileNameType fn;
 		f->GetFileName(fn);		
-		CFileArchive::TrimEnd(fn);
-		dword len = f->GetLength();
-		const dword fsize = theFS->GetFileSize(f, true);
-		byte* buf1 = new byte[fsize];		
+		CFileArchive::TrimEnd(fn);		
+		const dword fsize = theFS->GetFileSize(f, false);
+		byte* buf1 = new byte[theFS->GetFileSize(f, true)];
 		
 		if (!asHex && !asDisasm && !asText && IsBasic)
 		{
@@ -764,7 +763,7 @@ bool TypeFile(int argc, char* argv[])
 		if (asHex)
 		{						
 			f->GetData(buf1);			
-			GUIUtil::TextViewer(FileUtil::GetHexPrint(buf1, len));
+			GUIUtil::TextViewer(FileUtil::GetHexPrint(buf1, fsize));
 		}						
 		else if (asDisasm)
 		{			
@@ -775,19 +774,19 @@ bool TypeFile(int argc, char* argv[])
 				CFileSpectrum* s = dynamic_cast<CFileSpectrum*>(f);
 				addr = s->SpectrumStart;
 			}
-			GUIUtil::TextViewer(BASICUtil::Disassemble(buf1, (word)len, addr, !asDisasmDec));
+			GUIUtil::TextViewer(BASICUtil::Disassemble(buf1, (word)fsize, addr, !asDisasmDec));
 		}
 		else if (asText)
 		{
 			byte wrap = IsBasic ? 64 : 80;
 
 			//Adjust buffer length for line wrap.
-			dword lenToSet = len + (len / wrap) * 2;
+			dword lenToSet = fsize + (fsize / wrap) * 2;
 			byte* buf2 = new byte[lenToSet];
 
 			dword txtLen = f->GetDataAsText(buf2, wrap);
 			if (txtLen > 0)
-				buf2[txtLen - 1] = '\0';
+				buf2[txtLen] = '\0';
 			GUIUtil::TextViewer((char*)buf2);
 			delete buf2;
 		}
@@ -2725,6 +2724,10 @@ bool ScreenProcess(int argc, char* argv[])
 		fclose(scrOut);
 		printf("Created '%s' with blanked rectange %ux%ux%ux%u\n", nameOut.c_str(), l1, c1, l2, c2);
 	}
+	else if (scrOper == "2gif")
+	{
+		ConvertSCR2GIF((byte*)&scrInBuf, nameOut.c_str());
+	}
 			
 
 	return true;
@@ -2915,10 +2918,10 @@ static const Command theCommands[] =
 		BasImport},
 	{ {"screen"}, "SCREEN$ block processing functions",
 		{
-			{"operation", true, "order, blank"},
-			{"argument", true, "order: column/cell; blank: line1xcol1xline2xcol2"},
-			{"input file", true, "SCREEN$ file on PC read"},
-			{"output file", true, "SCREEN$ file on PC write"}
+			{"operation", true, "order, blank, 2gif"},
+			{"argument", true, "order: column/cell; blank: line1xcol1xline2xcol2; 2gif: 2gif"},
+			{"input file", true, "SCREEN$ file on PC to read"},
+			{"output file", true, "SCREEN$/GIF file on PC to write"}
 		},
 		ScreenProcess},
 	{ {"bincut"}, "File section cut, starting at offset, with size length",

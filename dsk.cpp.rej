@@ -1,0 +1,43 @@
+diff a/dsk.cpp b/dsk.cpp	(rejected hunks)
+@@ -256,22 +256,29 @@
+ 	if (side > 0 && !SeekSide(side))		
+ 		return false;
+ 
++	//If sector ID not found (probably missing from image), return fake data, to allow continue on error and set a standard geometry disk.
+ 	if (!SeekSector(sector))
+-		return false;
+-	
+-	static word cnt = 0;
+-	cnt++;
++	{
++		memset(buff, this->DiskDefinition.Filler, CDiskBase::SectCode2SectSize(currTrack.sectorSizeCode));
++		if (progCallback != nullptr)
++			progCallback(track, DiskDefinition.TrackCnt - 1, true);
++	}
++	else
++	{
++		static word cnt = 0;
++		cnt++;
+ 
+-	word off = 0;
+-	for (byte s = 0; s < sectCnt; s++)
+-	{	
+-		word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[(sector - 1) + s].sectorSizeCode);		
+-		if (fread(buff + off, sectSize, 1, dskFile) != 1)
++		word off = 0;
++		for (byte s = 0; s < sectCnt; s++)
+ 		{
+-			LastError = ERR_READ;
+-			return false;
++			word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[(sector - 1) + s].sectorSizeCode);
++			if (fread(buff + off, sectSize, 1, dskFile) != 1)
++			{
++				LastError = ERR_READ;
++				return false;
++			}
++			off += sectSize;
+ 		}
+-		off += sectSize;		
+ 	}	
+ 
+ 	return true;

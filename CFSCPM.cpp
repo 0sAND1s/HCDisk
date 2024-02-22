@@ -420,6 +420,8 @@ bool CFSCPM::WriteFile(CFileCPM* file)
 			if (writeOK && fileAUs.size() > 0)
 			{
 				LastError = CFileSystem::ERR_NONE;
+				word totalFileRecCnt = ceil((double)file->Length / CPM_REC_SIZE);
+				const byte recsInDirEnt = CPM_EXT_ALLOC / CPM_REC_SIZE;
 
 				for (byte dirEntIdx = 0; dirEntIdx < reqDirEnt && LastError == ERR_NONE; dirEntIdx++)
 				{
@@ -430,12 +432,10 @@ bool CFSCPM::WriteFile(CFileCPM* file)
 					memset(&di, 0, sizeof(di));									
 					memset(&di, ' ', sizeof(di.FileName));									
 					CreateFSName(file, di.FileName);
-					di.UsrCode = file->User;
-					
-					if (dirEntIdx < reqDirEnt - 1)
-						di.RecCnt = 0x80;
-					else
-						di.RecCnt = (byte)ceil((double)(file->Length%CPM_EXT_ALLOC)/CPM_REC_SIZE);
+					di.UsrCode = file->User;					
+										
+					word fileRecCntLeftToWrite = totalFileRecCnt - dirEntIdx * recsInDirEnt;
+					di.RecCnt = fileRecCntLeftToWrite > recsInDirEnt ? recsInDirEnt : fileRecCntLeftToWrite;
 					
 					for (byte auIdx = dirEntIdx * CPM_AUInExt, auInExt = 0; auInExt < CPM_AUInExt && auIdx < reqAUCnt; auIdx++, auInExt++)
 					{
@@ -663,7 +663,7 @@ bool CFSCPM::OpenFile(CFile* file)
 	if (fit != CPM_FileList.end())
 	{		
 		f->isOpened = true;		
-		f->Length = GetFileSize(f);
+		f->Length = GetFileSize(f, false);
 	}
 	else	
 		f->isOpened = false;
