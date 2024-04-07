@@ -27,44 +27,45 @@ bool CFSMGT::Init()
 	for (byte trk = 0; trk < dirTracks && res; trk++)
 		res = Disk->ReadTrack(dirBuf + trk * trkSize, trk, 0);
 	
-	for (byte dirEntIdx = 0; dirEntIdx < DIR_ENTRY_COUNT; dirEntIdx++)
-	{
-		MGTDirEntry* dirEnt = (MGTDirEntry*)(dirBuf + dirEntIdx * sizeof(MGTDirEntry));				
-		if (dirEnt->TypeMGT > MGT_FT_ERASED)
+	if (res)
+		for (byte dirEntIdx = 0; dirEntIdx < DIR_ENTRY_COUNT; dirEntIdx++)
 		{
-			CFileMGT* f = CreateFileMGT(*dirEnt);
-			if (f != NULL)
-			{				
-				f->FileDirEntries.push_back(dirEntIdx);
-				word sectCnt = dirEnt->SectorCntLow + 0x100 * dirEnt->SectorCntHi;
-				word sectIdx = 0;
-				byte trackStart = (dirEnt->StartTrack - dirTracks) % 80;
-				byte sideStart = ((trackStart & 0x80) > 0 ? 1 : 0);				
-				word blockIdx = trackStart * Disk->DiskDefinition.SPT + sideStart * Disk->DiskDefinition.TrackCnt + 
-					dirEnt->StartSector - 1;
+			MGTDirEntry* dirEnt = (MGTDirEntry*)(dirBuf + dirEntIdx * sizeof(MGTDirEntry));				
+			if (dirEnt->TypeMGT > MGT_FT_ERASED && dirEnt->TypeMGT <= MGT_FT_CREATE)
+			{
+				CFileMGT* f = CreateFileMGT(*dirEnt);
+				if (f != NULL)
+				{				
+					f->FileDirEntries.push_back(dirEntIdx);
+					word sectCnt = dirEnt->SectorCntLow + 0x100 * dirEnt->SectorCntHi;
+					word sectIdx = 0;
+					byte trackStart = (dirEnt->StartTrack - dirTracks) % 80;
+					byte sideStart = ((trackStart & 0x80) > 0 ? 1 : 0);				
+					word blockIdx = trackStart * Disk->DiskDefinition.SPT + sideStart * Disk->DiskDefinition.TrackCnt + 
+						dirEnt->StartSector - 1;
 
-				//While block map is not finished, and the file sector count is not reached...
-				while (blockIdx < sizeof(dirEnt->AllocMap) * 8 && sectIdx < sectCnt)
-				{
-					//If the sector is marked as used for this file, assign it to the file.
-					if (dirEnt->AllocMap[blockIdx/8] & (1 << (blockIdx % 8)))
+					//While block map is not finished, and the file sector count is not reached...
+					while (blockIdx < sizeof(dirEnt->AllocMap) * 8 && sectIdx < sectCnt)
 					{
-						f->FileBlocks.push_back(blockIdx);
-						FS_BlockMap[blockIdx] = true;	
-						sectIdx++;
-					}
+						//If the sector is marked as used for this file, assign it to the file.
+						if (dirEnt->AllocMap[blockIdx/8] & (1 << (blockIdx % 8)))
+						{
+							f->FileBlocks.push_back(blockIdx);
+							FS_BlockMap[blockIdx] = true;	
+							sectIdx++;
+						}
 
-					blockIdx++;
-				}					
+						blockIdx++;
+					}					
 				
-				MGTFiles.push_back(*f);
+					MGTFiles.push_back(*f);
 
-				delete f;
+					delete f;
+				}		
+
+				FS_DirEntryMap[dirEntIdx] = true;
 			}		
-
-			FS_DirEntryMap[dirEntIdx] = true;
-		}		
-	}
+		}
 	
 	delete dirBuf;
 	return res;

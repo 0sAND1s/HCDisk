@@ -273,7 +273,7 @@ bool CDSK::ReadSectors(byte * buff, byte track, byte side, byte sector, byte sec
 		word off = 0;
 		for (byte s = 0; s < sectCnt; s++)
 		{
-			word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[sector - currSectorInfo[0].sectorID + s].sectorSizeCode);
+			word sectSize = CDiskBase::SectCode2SectSize(currSectorInfo[s].sectorSizeCode);
 			if (fread(buff + off, sectSize, 1, dskFile) != 1)
 			{
 				LastError = ERR_READ;
