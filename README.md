@@ -64,8 +64,8 @@ file catalog is displayed (read text documents from CPM disks, browse your old B
 - send TAP/TZX/DSK files to Spectrum via COM port
 
 PC		|		Transfer method		|		Spectrum
----------------------------------------------------------------------
-Audio out jack	|	PC plays TAP/TZX		|	Loading from ear in
+--------|---------------------------|--------------------------------
+Audio out jack |	PC plays TAP/TZX		|	Loading from ear in
 Floppy disk drive|	Read/Write disks		|	Read/write floppy disks
 USB floppy disk	|	Read/Write disks		|	Read/write CP/M floppy disks
 Disk images	|		PC reads/writes disks	|	Read/write floppy disks
@@ -89,29 +89,31 @@ fsinfo  - Display the known file systems
 
 Displays the known file systems, with details, from the program help (geometry, block size, block count, directory capacity, 
 boot track count):
-Idx|     Name                   |Geometry       |Bl.Sz. |Bl.Cnt |Dir    |Boot   |Writable
------------------------------------------------------------------------------------------
- 1. HC BASIC 5.25"              |40x2x16x256    |2048   |160    |128    |0      |yes
- 2. HC BASIC 3.5"               |80x2x16x256    |2048   |320    |128    |0      |yes
- 3. GENERIC CP/M 2.2 5.25"      |40x2x9x512     |2048   |175    |64     |2      |yes
- 4. GENERIC CP/M 2.2 3.5"       |80x2x9x512     |2048   |351    |128    |4      |yes
- 5. Spectrum +3 BASIC 180K      |40x1x9x512     |1024   |175    |64     |1      |yes
- 6. Spectrum +3 BASIC 203K      |42x1x10x512    |1024   |205    |64     |1      |yes
- 7. Spectrum +3 BASIC 720K      |80x2x9x512     |2048   |357    |256    |1      |yes
- 8. Spectrum +3 BASIC PCW       |40x2x9x512     |2048   |175    |64     |1      |yes
- 9. Spectrum +3 CP/M SSDD       |40x1x9x512     |1024   |175    |64     |1      |yes
-10. Spectrum +3 CP/M DSDD       |80x2x9x512     |2048   |357    |256    |1      |yes
-11. TRDOS DS 3.5"               |80x2x16x256    |256    |2544   |128    |1      |no
-12. TRDOS DS 5.25"              |40x2x16x256    |256    |1264   |128    |1      |no
-13. TRDOS SS 3.5"               |80x1x16x256    |256    |1264   |128    |1      |no
-14. TRDOS SS 5.25"              |40x1x16x256    |256    |624    |128    |1      |no
-15. Opus Discovery 40T SS       |40x1x18x256    |256    |720    |112    |0      |no
-16. Opus Discovery 40T DS       |40x2x18x256    |256    |1440   |112    |0      |no
-17. Opus Discovery 80T SS       |80x1x18x256    |256    |2880   |112    |0      |no
-18. Opus Discovery 80T DS       |80x2x18x256    |256    |5760   |112    |0      |no
-19. MGT +D                      |80x2x10x512    |512    |3125   |80     |0      |no
-20. CoBra Devil                 |80x2x18x256    |9216   |77     |108    |0      |no
-21. Electronica CIP-04          |80x1x9x512     |1024   |355    |64     |1      |yes
+
+Idx/Name           |Geometry   |Bl.Sz. |Bl.Cnt |Dir |Boot   |Writable
+-------------------|-----------|-------|-------|----|-------|---------
+ 1. HC BASIC 5.25" |40x2x16x256|2048   |160    |128 |0      |yes
+ 2. HC BASIC 3.5"  |80x2x16x256|2048   |320    |128 |0      |yes
+ 3. GENERIC CP/M 2.2 5.25"   |40x2x9x512  |2048   |175 |64  |2   |yes
+ 4. GENERIC CP/M 2.2 3.5" |80x2x9x512  |2048   |351 |128 |4   |yes
+ 5. Spectrum +3 BASIC 180K   |40x1x9x512  |1024   |175 |64  |1   |yes
+ 6. Spectrum +3 BASIC 203K   |42x1x10x512 |1024   |205 |64  |1   |yes
+ 7. Spectrum +3 BASIC 720K   |80x2x9x512  |2048   |357 |256 |1   |yes
+ 8. Spectrum +3 BASIC PCW |40x2x9x512  |2048   |175 |64  |1   |yes
+ 9. Spectrum +3 CP/M SSDD |40x1x9x512  |1024   |175 |64  |1   |yes
+10. Spectrum +3 CP/M DSDD |80x2x9x512  |2048   |357 |256 |1   |yes
+11. TRDOS DS 3.5"   |80x2x16x256 |256 |2544   |128 |1   |no
+12. TRDOS DS 5.25"  |40x2x16x256 |256 |1264   |128 |1   |no
+13. TRDOS SS 3.5"   |80x1x16x256 |256 |1264   |128 |1   |no
+14. TRDOS SS 5.25"  |40x1x16x256 |256 |624 |128 |1   |no
+15. Opus Discovery 40T SS |40x1x18x256 |256 |720 |112 |0   |no
+16. Opus Discovery 40T DS |40x2x18x256 |256 |1440   |112 |0   |no
+17. Opus Discovery 80T SS |80x1x18x256 |256 |2880   |112 |0   |no
+18. Opus Discovery 80T DS |80x2x18x256 |256 |5760   |112 |0   |no
+19. MGT +D    |80x2x10x512 |512 |3125   |80  |0   |no
+20. CoBra Devil  |80x2x18x256 |9216   |77  |108 |0   |no
+21. Electronica CIP-04 |80x1x9x512  |1024   |355 |64  |1   |yes
+
 Known containers:
 - A:/B: - PHYSICAL DISK (RW)
 - RAW - DISK IMAGE (RW)
@@ -130,23 +132,23 @@ stat  - Display the current file system parameters: (total/free blocks, total/fr
 	Example for HC BASIC:
 
 HC BASIC 3.5">stat
-Container               : EDSK - CPCEMU DISK IMAGE (RW)
-File system             : HC BASIC 3.5"
-Path                    : $ULTIMELE.DSK
-Disk geometry           : 80T x 2H x 16S x 256B/S
-Hard sector skew        : 0
-Raw Size                : 640 KB
-Block size              : 2.00 KB
-Blocks free/max         : 6/320
-Disk free/max KB        : 12/640 = 1.88% free
-Catalog free/max        : 76/128 = 59.38% free
-File system features    : Sinclair Spectrum, File attributes, File folders, Case sensitive names,
-File name structure     : 11.0 (name.extension)
+Container   : EDSK - CPCEMU DISK IMAGE (RW)
+File system : HC BASIC 3.5"
+Path  : $ULTIMELE.DSK
+Disk geometry  : 80T x 2H x 16S x 256B/S
+Hard sector skew  : 0
+Raw Size : 640 KB
+Block size  : 2.00 KB
+Blocks free/max   : 6/320
+Disk free/max KB  : 12/640 = 1.88% free
+Catalog free/max  : 76/128 = 59.38% free
+File system features : Sinclair Spectrum, File attributes, File folders, Case sensitive names,
+File name structure  : 11.0 (name.extension)
 
 
 
 open  - Open disk or disk image
-- <drive|image>: The disk/image to open
+- \<drive|image>: The disk/image to open
 - [-t] x: The number of file system type to use - optionaly, auto select the type from the list
 	The program tries to auto detect the file system based on disk geometry. If several matches are found,
 a list is displayed for the user to pick one. TRDos is the only file system that has a signature that can be check,
@@ -164,21 +166,21 @@ ls dir  - List directory
 file index, file folder (for CPM), file name and extension, file size on disk, file attributes (if available for the file system). 
 For BASIC file systems, there's also specific info displayed: file type, code start address/program start line, and lenght.
 
-IDX  |   Folder | Name      |      Size(KB)   |     Attr |   Type  |  Start  | BasLen | VarLen
-----------------------------------------------------------------------------------------------
-  1|     0|       run       |       2.00      |     ---  |   Program|     0|    1610  |     0
-  2|     0|       SOLDIER   |       2.00      |     ---  |   Program|    10|     335  |     0
-  3|     0|       solcode   |      40.00      |     ---  |   Bytes  |26359 |  39177 |
-  4|     0|       BATTY     |      2.00       |    ---   |  Program |   10 |   558  |     0
-  5|     0|       BATTY_mc  |     24.00       |    ---   |  Bytes   |26624 | 23156 |
+IDX  |   Folder | Name   |   Size(KB)   |  Attr |   Type  |  Start  | BasLen | VarLen
+---|------|-----------------|-----------------|----------|---------|---------|--------|-------
+  1|  0| run | 2.00   |  ---  |   Program|  0| 1610  |  0
+  2|  0| SOLDIER   | 2.00   |  ---  |   Program| 10|  335  |  0
+  3|  0| solcode   |   40.00   |  ---  |   Bytes  |26359 |  39177 |
+  4|  0| BATTY  |   2.00 | ---   |  Program |   10 |   558  |  0
+  5|  0| BATTY_mc  |  24.00 | ---   |  Bytes   |26624 | 23156 |
 
 
 get  - Copy file(s) to PC
-- <["]filespec["]>: * or *.com or readme.txt, "1 2", etc - names with spaces are supported, but must be enclosed in quotes
+- \<["]filespec["]>: * or *.com or readme.txt, "1 2", etc - names with spaces are supported, but must be enclosed in quotes
 - [-t]: Copy as text - only display printable chars, usefull for Tasword files
 
 type cat  - Display file
-- <file spec.>: * or *.com or readme.txt, etc
+- \<file spec.>: * or *.com or readme.txt, etc
 - [-h]: display as hex
 	BASIC programs are decoded into source code. Numeric values are displayed, but only if are different from the textual representations. 
 Also, embedded attributes are displayed (as text). The program variables values are displayed, if saved with the 
@@ -188,12 +190,12 @@ program, as it is the case when saving a program after being run, without first 
 	Any file can also be displayed as hexadecimal.
 
 copydisk  - Copy current disk to another disk or image
-- <destination>: destination disk/image - if writing to physical a disk, that disk must be properly formatted
+- \<destination>: destination disk/image - if writing to physical a disk, that disk must be properly formatted
 - f: format destination disk while copying
 
 copyfs - Copy only used blocks from current file system to another disk (same file system type, CP/M only)
-- <direction>: 'to'/'from'
-- <remote>: source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)
+- \<direction>: 'to'/'from'
+- \<remote>: source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)
 
 How to copy HC BASIC disks over serial cable (COM port):
 1. Notice in Windows device manager the name of the COM port (COM1, COM2, etc).
@@ -203,22 +205,22 @@ How to copy HC BASIC disks over serial cable (COM port):
 5. A message will show on PC and on HC showing how many blocks are left to copy. A full disk takes about 7 minutes to copy.
 
 put  - Copy PC file to file system
-- <source file>: the file to copy
+- \<source file>: the file to copy
 - [-n newname]: name for destination file
-- [-d <destination folder>]: CP/M file folder
+- [-d \<destination folder>]: CP/M file folder
 - [-s start]: Spectrum program start line/byte start address
 - [-t p|b|c|n file type]: Spectrum file type: program, bytes, char arr., no. arr
-- [-turbo <1364|2250|3000|6000>]: Turbo baud rate for TZX blocks
+- [-turbo \<1364|2250|3000|6000>]: Turbo baud rate for TZX blocks
 
 del rm  - Delete file(s)
-- <file spec.>: the file(s) to delete, ex: del *.com; A confirmation is displayed.
+- \<file spec.>: the file(s) to delete, ex: del *.com; A confirmation is displayed.
 
 ren  - Rename file
-- <file name>: the file to rename
-- <new name>: new file name
+- \<file name>: the file to rename
+- \<new name>: new file name
 
 !  - Execute DOS command after '!' -  will execut the shell command. Note the space after !.
-- <DOS command>: ! dir, ! mkdir, etc
+- \<DOS command>: ! dir, ! mkdir, etc
 
 tapplay  - Play the tape as sound asynchronously
 - [-w]: play to a .wav file instead of real-time
@@ -227,53 +229,53 @@ Copy protected programs, like Speedlock are supported, in TZX images.
 
 Example of async. tape playing:
 Playing the tape. Press ESC to quit, SPACE to pause. Block count is: 80.
-00:     Std. Block      Program: run            19      00
-01:     Std. Block      Data   :                1288    FF
+00:  Std. Block   Program: run   19   00
+01:  Std. Block   Data   : 1288 FF
 Progress: 77 %
 
 tapexp  - Exports the files to a tape image
-- <.tap name>: the TAP file name
+- \<.tap name>: the TAP file name
 - [file mask]: the file name mask - if specified, only these files will be exported, not all the files.
 - [-convldr]: convert BASIC loader synthax, file names
 The parameter -convldr will cause BASIC program conversion to match the tape LOAD synthax.
 
 tapimp  - Imports the TAP file to disk
-- <.tap name>: the TAP file name
+- \<.tap name>: the TAP file name
 - [file mask]: the file name mask - if specified, only these files will be exported, not all the files.
 - [-convldr]: convert BASIC loader synthax, file names
 The parameter -convldr will cause BASIC program conversion to match the destination file system LOAD syntax.
 
 saveboot  - Save boot tracks to file - usefull for CPM disks with booloader
-- <file name>: output file
+- \<file name>: output file
 
 loadboot  - Load boot tracks from file - usefull for CPM disks with booloader
-- <file name>: input file
+- \<file name>: input file
 
 formatdisk - Format a physical disk or a disk image for a certain file system
-- <disk/image> : the disk drive or image to format
+- \<disk/image> : the disk drive or image to format
 - [-t] : the file system format number to use, as found in fsinfo command
 
 bin2bas  - Put binary to BASIC block, in a REM statement or variable
-- <type>: type of conversion: 'rem' or 'var'
-- <file>: blob file to add
+- \<type>: type of conversion: 'rem' or 'var'
+- \<file>: blob file to add
 - [name of block]: name of BASIC block, default blob file name
 - [address of execution]: address to copy the block to before execution, default 0 - no moving blob to an address, > 0 means the blob will be LDIR-ed to the specified address before execution.
 
 convldr - Converts a BASIC loader to work with another storage device
-- <.tap name>: destination TAP file name
-- <loader type>: type of loader: TAPE, MICRODRIVE, OPUS, HCDISK, IF1COM, PLUS3, MGT
+- \<.tap name>: destination TAP file name
+- \<loader type>: type of loader: TAPE, MICRODRIVE, OPUS, HCDISK, IF1COM, PLUS3, MGT
 Will convert the BASIC program to LOAD from a different device. The ones supported are mentioned.
 Is usefull for tape to disk conversion, where it also handles file naming (distinct, unique, non-empty names for disk files).
 
 putif1  - Send a file or collection to IF1 trough the COM port
-- <file name/mask>: file mask to select files for sending
+- \<file name/mask>: file mask to select files for sending
 - [COM port index]: COMx port to use, default 1
 - [baud rate]: baud rate for COM, default is 4800
 If one of the blocks is a Program block, the loaded blocks for that block are also sent and the BASIC loader is updated to match IF1 synthax. 
 So it automatically does TAP to IF1 uploading.
 
 getif1  - Get a single file from IF1 trough the COM port
-- <file name>: file name for the received file
+- \<file name>: file name for the received file
 - [COM port index]: COMx port to use, default 1
 - [baud rate]: baud rate for COM, default is 9600
 
@@ -283,28 +285,28 @@ diskview  - View disk sectors on screen, displayed as hex and ASCII.
 - [sector]: sector index (not ID)
 
 basimp  - Import a BASIC program from a text file
-- <BASIC file>: BASIC program file to compile
+- \<BASIC file>: BASIC program file to compile
 - [file name]: Program file name (default: file name)
 - [autorun line]: Autorun line number (default: 0)
 
 screen  - SCREEN$ block processing functions
-- <operation>: order, blank
-- <argument>: order: column/cell; blank: line1xcol1xline2xcol2
-- <input file>: SCREEN$ file on PC read
-- <output file>: SCREEN$ file on PC write
+- \<operation\>: order, blank
+- \<argument\>: order: column/cell; blank: line1xcol1xline2xcol2
+- \<input file\>: SCREEN$ file on PC read
+- \<output file\>: SCREEN$ file on PC write
 Example: screen order column - will order SCREEN$ by columns, to improve compression
 Example: screen blank 0x0x1x1 - will set to 0 the upper left character cell in the SCREEN$, for both pixels and attributes.
 
 bincut  - File section cut, starting at offset, with size length
-- <input file>: input file name
-- <output file>: output file name
-- <offset>: 0 based start offset
+- \<input file>: input file name
+- \<output file>: output file name
+- \<offset>: 0 based start offset
 - [lenght]: length of block, default: file len - offset
 
 binpatch  - Patches a file, with content of another file, at set offset
-- <input file>: input file name
-- <patch file>: patch content file
-- <offset>: 0 based start offset in input file
+- \<input file>: input file name
+- \<patch file>: patch content file
+- \<offset>: 0 based start offset in input file
 
 
 exit quit  - Exit program
@@ -324,7 +326,7 @@ http://edn.embarcadero.com/article/20633 .
 - SCREEN$ to GIF code is written by M. van der Heide; I had my own implementation, with the added functionality of saving to 
 other formats besides GIF, but it used the GDI+ library, which is harder to use with the Borland compiler.
 - The disassembler is dz80, Copyright 1996-2002 Mark Incley
-- The CQM, TD0 image drivers are based on LIBDSK 1.2.1, Copyright (C) 2001-2,2005  John Elliott <jce@seasip.demon.co.uk>
+- The CQM, TD0 image drivers are based on LIBDSK 1.2.1, Copyright (C) 2001-2,2005  John Elliott \<jce@seasip.demon.co.uk>
 - BAS2TAP implementation is written by M. van der Heide, used for the basimp commmand. Code is adapted to accept HC IF1 synthax.
 	
 	The program is designed with Object Oriented Design in mind. The disk object is decoupled from the file system object,
@@ -357,7 +359,7 @@ The resulting WAV file can be digitized using MakeTZX from Ramsoft or using audi
 
 
 Class Diagram
-https://raw.githubusercontent.com/0sAND1s/HCDisk/main/HCDisk_ClassDiagram.png
+![ScreenShot](https://raw.githubusercontent.com/0sAND1s/HCDisk/master/HCDisk_ClassDiagram.png)
 
 Example class usage:
 1. Accessing ZXSpectrum+3 floppy disks on PC floppy drive. CDiskBase is instantiated with CDiskFloppy class. CFileSystem is ZXSpectrum+3 BASIC. CFile class is instantiated with CFileSpectrum.
