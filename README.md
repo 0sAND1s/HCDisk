@@ -90,9 +90,9 @@ fsinfo  - Display the known file systems
 Displays the known file systems, with details, from the program help (geometry, block size, block count, directory capacity, 
 boot track count):
 
-Idx/Name           |Geometry   |Bl.Sz. |Bl.Cnt |Dir |Boot   |Writable
--------------------|-----------|-------|-------|----|-------|---------
- 1. HC BASIC 5.25" |40x2x16x256|2048   |160    |128 |0      |yes
+Idx/Name           |Geometry   |Bl.Sz. |Bl.Cnt |DirEnt |BootTrk|Writable
+-------------------|-----------|-------|-------|----|-------|--------
+ 1\. HC BASIC 5.25" |40x2x16x256|2048   |160    |128 |0      |yes
  2. HC BASIC 3.5"  |80x2x16x256|2048   |320    |128 |0      |yes
  3. GENERIC CP/M 2.2 5.25"   |40x2x9x512  |2048   |175 |64  |2   |yes
  4. GENERIC CP/M 2.2 3.5" |80x2x9x512  |2048   |351 |128 |4   |yes
