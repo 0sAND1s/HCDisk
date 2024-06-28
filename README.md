@@ -90,29 +90,29 @@ fsinfo  - Display the known file systems
 Displays the known file systems, with details, from the program help (geometry, block size, block count, directory capacity, 
 boot track count):
 
-Idx/Name           |Geometry   |Bl.Sz. |Bl.Cnt |DirEnt |BootTrk|Writable
--------------------|-----------|-------|-------|----|-------|--------
+Idx/Name           |Geometry   |Bl.Sz. |Bl.Cnt |Dir |Boot   |Writable
+-------------------|-----------|-------|-------|----|-------|---------
  1\. HC BASIC 5.25" |40x2x16x256|2048   |160    |128 |0      |yes
- 2. HC BASIC 3.5"  |80x2x16x256|2048   |320    |128 |0      |yes
- 3. GENERIC CP/M 2.2 5.25"   |40x2x9x512  |2048   |175 |64  |2   |yes
- 4. GENERIC CP/M 2.2 3.5" |80x2x9x512  |2048   |351 |128 |4   |yes
- 5. Spectrum +3 BASIC 180K   |40x1x9x512  |1024   |175 |64  |1   |yes
- 6. Spectrum +3 BASIC 203K   |42x1x10x512 |1024   |205 |64  |1   |yes
- 7. Spectrum +3 BASIC 720K   |80x2x9x512  |2048   |357 |256 |1   |yes
- 8. Spectrum +3 BASIC PCW |40x2x9x512  |2048   |175 |64  |1   |yes
- 9. Spectrum +3 CP/M SSDD |40x1x9x512  |1024   |175 |64  |1   |yes
-10. Spectrum +3 CP/M DSDD |80x2x9x512  |2048   |357 |256 |1   |yes
-11. TRDOS DS 3.5"   |80x2x16x256 |256 |2544   |128 |1   |no
-12. TRDOS DS 5.25"  |40x2x16x256 |256 |1264   |128 |1   |no
-13. TRDOS SS 3.5"   |80x1x16x256 |256 |1264   |128 |1   |no
-14. TRDOS SS 5.25"  |40x1x16x256 |256 |624 |128 |1   |no
-15. Opus Discovery 40T SS |40x1x18x256 |256 |720 |112 |0   |no
-16. Opus Discovery 40T DS |40x2x18x256 |256 |1440   |112 |0   |no
-17. Opus Discovery 80T SS |80x1x18x256 |256 |2880   |112 |0   |no
-18. Opus Discovery 80T DS |80x2x18x256 |256 |5760   |112 |0   |no
-19. MGT +D    |80x2x10x512 |512 |3125   |80  |0   |no
-20. CoBra Devil  |80x2x18x256 |9216   |77  |108 |0   |no
-21. Electronica CIP-04 |80x1x9x512  |1024   |355 |64  |1   |yes
+ 2\. HC BASIC 3.5"  |80x2x16x256|2048   |320    |128 |0      |yes
+ 3\. GENERIC CP/M 2.2 5.25"   |40x2x9x512  |2048   |175 |64  |2   |yes
+ 4\. GENERIC CP/M 2.2 3.5" |80x2x9x512  |2048   |351 |128 |4   |yes
+ 5\. Spectrum +3 BASIC 180K   |40x1x9x512  |1024   |175 |64  |1   |yes
+ 6\. Spectrum +3 BASIC 203K   |42x1x10x512 |1024   |205 |64  |1   |yes
+ 7\. Spectrum +3 BASIC 720K   |80x2x9x512  |2048   |357 |256 |1   |yes
+ 8\. Spectrum +3 BASIC PCW |40x2x9x512  |2048   |175 |64  |1   |yes
+ 9\. Spectrum +3 CP/M SSDD |40x1x9x512  |1024   |175 |64  |1   |yes
+10\. Spectrum +3 CP/M DSDD |80x2x9x512  |2048   |357 |256 |1   |yes
+11\. TRDOS DS 3.5"   |80x2x16x256 |256 |2544   |128 |1   |no
+12\. TRDOS DS 5.25"  |40x2x16x256 |256 |1264   |128 |1   |no
+13\. TRDOS SS 3.5"   |80x1x16x256 |256 |1264   |128 |1   |no
+14\. TRDOS SS 5.25"  |40x1x16x256 |256 |624 |128 |1   |no
+15\. Opus Discovery 40T SS |40x1x18x256 |256 |720 |112 |0   |no
+16\. Opus Discovery 40T DS |40x2x18x256 |256 |1440   |112 |0   |no
+17\. Opus Discovery 80T SS |80x1x18x256 |256 |2880   |112 |0   |no
+18\. Opus Discovery 80T DS |80x2x18x256 |256 |5760   |112 |0   |no
+19\. MGT +D    |80x2x10x512 |512 |3125   |80  |0   |no
+20\. CoBra Devil  |80x2x18x256 |9216   |77  |108 |0   |no
+21\. Electronica CIP-04 |80x1x9x512  |1024   |355 |64  |1   |yes
 
 Known containers:
 - A:/B: - PHYSICAL DISK (RW)
