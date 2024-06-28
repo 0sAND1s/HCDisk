@@ -63,14 +63,14 @@ file catalog is displayed (read text documents from CPM disks, browse your old B
 - send TAP/TZX files to Spectrum via audio
 - send TAP/TZX/DSK files to Spectrum via COM port
 
-PC					Transfer method				Spectrum
+PC		|		Transfer method		|		Spectrum
 ---------------------------------------------------------------------
-Audio out jack		PC plays TAP/TZX			Loading from ear in
-Floppy disk	drive	Read/Write disks			Read/write floppy disks
-USB floppy disk		Read/Write disks			Read/write CP/M floppy disks
-Disk images			PC reads/writes disks		Read/write floppy disks
-Disk images			PC reads/writes images		GoTek emulator reads/writes disk images
-COM port			PC Upload/download files	Read/write files using IF1 COM port
+Audio out jack	|	PC plays TAP/TZX		|	Loading from ear in
+Floppy disk drive|	Read/Write disks		|	Read/write floppy disks
+USB floppy disk	|	Read/Write disks		|	Read/write CP/M floppy disks
+Disk images	|		PC reads/writes disks	|	Read/write floppy disks
+Disk images	|		PC reads/writes images	|	GoTek emulator reads/writes disk images
+COM port	|		PC Upload/download files|	Read/write files using IF1 COM port
 
 
 4. Where does the name come from?
@@ -89,7 +89,7 @@ fsinfo  - Display the known file systems
 
 Displays the known file systems, with details, from the program help (geometry, block size, block count, directory capacity, 
 boot track count):
-Idx     Name                    |Geometry       |Bl.Sz. |Bl.Cnt |Dir    |Boot   |Writable
+Idx|     Name                   |Geometry       |Bl.Sz. |Bl.Cnt |Dir    |Boot   |Writable
 -----------------------------------------------------------------------------------------
  1. HC BASIC 5.25"              |40x2x16x256    |2048   |160    |128    |0      |yes
  2. HC BASIC 3.5"               |80x2x16x256    |2048   |320    |128    |0      |yes
@@ -164,13 +164,13 @@ ls dir  - List directory
 file index, file folder (for CPM), file name and extension, file size on disk, file attributes (if available for the file system). 
 For BASIC file systems, there's also specific info displayed: file type, code start address/program start line, and lenght.
 
-IDX     Folder  Name            Size(KB)        Attr    Type    Start   BasLen  VarLen
------------------------------------------------------------------------------------
-  1     0       run              2.00           ---     Program     0    1610       0
-  2     0       SOLDIER          2.00           ---     Program    10     335       0
-  3     0       solcode         40.00           ---     Bytes   26359   39177
-  4     0       BATTY            2.00           ---     Program    10     558       0
-  5     0       BATTY_mc        24.00           ---     Bytes   26624   23156
+IDX  |   Folder | Name      |      Size(KB)   |     Attr |   Type  |  Start  | BasLen | VarLen
+----------------------------------------------------------------------------------------------
+  1|     0|       run       |       2.00      |     ---  |   Program|     0|    1610  |     0
+  2|     0|       SOLDIER   |       2.00      |     ---  |   Program|    10|     335  |     0
+  3|     0|       solcode   |      40.00      |     ---  |   Bytes  |26359 |  39177 |
+  4|     0|       BATTY     |      2.00       |    ---   |  Program |   10 |   558  |     0
+  5|     0|       BATTY_mc  |     24.00       |    ---   |  Bytes   |26624 | 23156 |
 
 
 get  - Copy file(s) to PC
@@ -354,3 +354,12 @@ the original author and include the changes you added to the code, when you rele
 - For data transfer via audio, from the PC to the Spectrum, the usual 3.5 audio jack output works fine, using a jack to DIN5 cable. For recording (not yet implemented in HCDisk), 
 an audio splitter can be used to capture Spectrum output using the microphone input of PC via the same audio jack, for computers with mic input on the headphones jack, using Audacity software for example.
 The resulting WAV file can be digitized using MakeTZX from Ramsoft or using audio2tape.exe from the fuse-utils package.
+
+
+Class Diagram
+https://raw.githubusercontent.com/0sAND1s/HCDisk/main/HCDisk_ClassDiagram.png
+
+Example class usage:
+1. Accessing ZXSpectrum+3 floppy disks on PC floppy drive. CDiskBase is instantiated with CDiskFloppy class. CFileSystem is ZXSpectrum+3 BASIC. CFile class is instantiated with CFileSpectrum.
+2. Accessing CP/M disks in DSK disk image files. CDiskBase is instantiated with CDiskImage. CFileSystem is CPM.
+3. Transferring tape image blocks to a HC BASIC file system. CFileSystem is HCBasic. CFileArchiveTape is CTapImage. Tape blocks are read as CFileSpectrumTape and written to the file system as CFileSpectrum using class CFileArchiveTape.
