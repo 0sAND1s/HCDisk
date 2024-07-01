@@ -10,12 +10,11 @@ George Chirtoaca, 2014 - 2022, george.chirtoaca@gmail.com
 7. What features are planned?
 
 
-
-1. What is it?
+## 1. What is it?
 
 	HCDisk is a tool able to transfer files to and from several file systems and interfaces specific to the Sinclair Spectrum computer and clones. 
 
-2. What can it do?
+## 2. What can it do?
 
 	It can understand these file systems:
 - Generic CPM - Spectrum +3 and various clones (HC, CoBra)
@@ -50,7 +49,7 @@ The geometries supported by Windows are using sector size of 512 bytes and also 
 - includes a disassembler for CODE files
 - includes a hex viewer
 	
-3. What are the usage scenarios?
+## 3. What are the usage scenarios?
 
 - browse and view files from physical disks, disk images or tape images; an extended
 file catalog is displayed (read text documents from CPM disks, browse your old BASIC programs, etc)
@@ -73,14 +72,12 @@ Disk images	|		PC reads/writes images	|	GoTek emulator reads/writes disk images
 COM port	|		PC Upload/download files|	Read/write files using IF1 COM port
 
 
-4. Where does the name come from?
+## 4. Where does the name come from?
 
 	HC is the name of a Sinclair Spectrum compatible computer series manufactured in Romania by the I.C.E. Felix factory. I had one as my first computer.
-	The first version of HCDisk only understood the file system specific to HC, but I kept the name, even if now it can 
-process file systems for several other clones and add-ons. Not by coincidence, HC is also an acronym for Home Computer.
-So this tool applies to home computers.
+	The first version of HCDisk only understood the file system specific to HC, but I kept the name, even if now it can process file systems for several other clones and add-ons. Not by coincidence, HC is also an acronym for Home Computer. So this tool applies to home computers.
 
-5. What commands are available?
+## 5. What commands are available?
 
 help ?  - Command list, this message
 - [command]: Show help only for the specified command.
@@ -131,19 +128,19 @@ Known containers:
 stat  - Display the current file system parameters: (total/free blocks, total/free space, disk geometry, disk type, etc)
 	Example for HC BASIC:
 
-HC BASIC 3.5">stat
-Container   : EDSK - CPCEMU DISK IMAGE (RW)
-File system : HC BASIC 3.5"
-Path  : $ULTIMELE.DSK
-Disk geometry  : 80T x 2H x 16S x 256B/S
-Hard sector skew  : 0
-Raw Size : 640 KB
-Block size  : 2.00 KB
-Blocks free/max   : 6/320
-Disk free/max KB  : 12/640 = 1.88% free
-Catalog free/max  : 76/128 = 59.38% free
-File system features : Sinclair Spectrum, File attributes, File folders, Case sensitive names,
-File name structure  : 11.0 (name.extension)
+	HC BASIC 3.5">stat
+	Container   : EDSK - CPCEMU DISK IMAGE (RW)
+	File system : HC BASIC 3.5"
+	Path  : $ULTIMELE.DSK
+	Disk geometry  : 80T x 2H x 16S x 256B/S
+	Hard sector skew  : 0
+	Raw Size : 640 KB
+	Block size  : 2.00 KB
+	Blocks free/max   : 6/320
+	Disk free/max KB  : 12/640 = 1.88% free
+	Catalog free/max  : 76/128 = 59.38% free
+	File system features : Sinclair Spectrum, File attributes, File folders, Case sensitive names,
+	File name structure  : 11.0 (name.extension)
 
 
 
@@ -162,17 +159,81 @@ ls dir  - List directory
 - [-ne]: Don't show extended info, faster - doesn't access the file header, and it's faster for physical disks
 - [-del]: Include deleted files in listing. 
 
-	Example of Spectrum +3 disk catalog. Other file systems for Spectrum look similar. Information displayed is:
+	Example of HC BASIC disk catalog. Other file systems for Spectrum look similar. Information displayed is:
 file index, file folder (for CPM), file name and extension, file size on disk, file attributes (if available for the file system). 
 For BASIC file systems, there's also specific info displayed: file type, code start address/program start line, and lenght.
 
-IDX  |   Folder | Name   |   Size(KB)   |  Attr |   Type  |  Start  | BasLen | VarLen
----|------|-----------------|-----------------|----------|---------|---------|--------|-------
-  1|  0| run | 2.00   |  ---  |   Program|  0| 1610  |  0
-  2|  0| SOLDIER   | 2.00   |  ---  |   Program| 10|  335  |  0
-  3|  0| solcode   |   40.00   |  ---  |   Bytes  |26359 |  39177 |
-  4|  0| BATTY  |   2.00 | ---   |  Program |   10 |   558  |  0
-  5|  0| BATTY_mc  |  24.00 | ---   |  Bytes   |26624 | 23156 |
+		HCDisk 2.0 by George Chirtoaca, compiled on Apr 24 2024 09:31:11.
+		Container       : EDSK - CPCEMU DISK IMAGE (RW).
+		File system     : HC BASIC 3.5".
+		HC BASIC 3.5">dir
+		
+		IDX     Folder  Name            Size(KB)        Attr    Type    Start   BasLen  VarLen
+		--------------------------------------------------------------------------------------
+		 01     0       Saboteur2        2.00           ---     Program    10     176       0
+		 02     0       sab2scr          8.00           ---     Bytes   40000    6912
+		 03     0       sab2code        40.00           ---     Bytes   25100   40436
+		 04     0       sab1scr          8.00           ---     Bytes   40000    6912
+		 05     0       Saboteur1        2.00           ---     Program    10     157       0
+		 06     0       Serpenti         2.00           ---     Program    10      94       0
+		 07     0       sab1code        40.00           ---     Bytes   25200   40336
+		 08     0       serpcode        26.00           ---     Bytes   32768   25000
+		 09     0       Turtles          2.00           ---     Program    10     188       0
+		 10     0       turt_scr         8.00           ---     Bytes   40000    6912
+		 11     0       turt_c1         40.00           ---     Bytes   25000   40535
+		 12     0       turt_c2          8.00           ---     Bytes   40000    6912
+		 13     0       TurboEspr.       2.00           ---     Program    10     203       0
+		 14     0       te1              8.00           ---     Bytes   40000    7168
+		 15     0       te2             38.00           ---     Bytes   26731   38351
+		 16     0       Video Pool       2.00           ---     Program    10     116       0
+		 17     0       vp_code         26.00           ---     Bytes   32768   25000
+		 18     0       run              2.00           ---     Program     1     775      47
+		 19     0       zx_test          2.00           ---     Program    10      68       0
+		 20     0       zxtestcode       6.00           ---     Bytes   40000    4800
+		 21     0       Harrier          2.00           ---     Program     1     254       0
+		 22     0       har_scr          8.00           ---     Bytes   30000    6912
+		 23     0       har_code         8.00           ---     Bytes   40000    6385
+		 24     0       manic1.p         2.00           ---     Program    10     166       0
+		 25     0       manic1_1.c       2.00           ---     Bytes   32768     256
+		 26     0       manic1_2.c      34.00           ---     Bytes   32768   32767
+		 27     0       manic2.p         2.00           ---     Program    10      76       0
+		 28     0       manic2.c        34.00           ---     Bytes   32000   33536
+		 29     0       manic3.p         2.00           ---     Program    10     237       0
+		 30     0       manic3.$         4.00           ---     Bytes   30000    4022
+		 31     0       manic3.c        20.00           ---     Bytes   32768   18943
+		 32     0       manic4.p         2.00           ---     Program    10     191       0
+		 33     0       manic4.c        18.00           ---     Bytes   32768   16628
+		 34     0       intro.p          2.00           ---     Program  8000     695      31
+		 35     0       catalog.1        2.00           ---     Chr.Arr     F     236
+		 36     0       intro1.$         8.00           ---     Bytes   40000    6912
+		 37     0       intro2.$         8.00           ---     Bytes   50000    6912
+		 38     0       intro.c          2.00           ---     Bytes   65000     536
+		 39     0       mons4.c          8.00           ---     Bytes   32768    6528
+		 40     0       gens4.c         12.00           ---     Bytes   32768   10880
+		 41     0       service.p        2.00           ---     Program     1    1880      84
+		 42     0       gens4.p          2.00           ---     Program    10      71       0
+		 43     0       mons4.p          2.00           ---     Program     1      71       0
+		 44     0       chuckie.p        2.00           ---     Program    10     161       0
+		 45     0       chuckie.c       20.00           ---     Bytes   33300   18900
+		 46     0       loderun.p        2.00           ---     Program    10     101       5
+		 47     0       loderun.$        8.00           ---     Bytes   32768    6912
+		 48     0       loderun.c       42.00           ---     Bytes   24576   40959
+		 49     0       bignose.p        2.00           ---     Program     1     107       0
+		 50     0       bignose.$        8.00           ---     Bytes   32768    6912
+		 51     0       bignose.c       40.00           ---     Bytes   25344   40192
+		 52     0       dip.p            2.00           ---     Program    10     721       0
+		 53     0       dip.c            4.00           ---     Bytes   24832    2816
+		 54     0       ed.p             2.00           ---     Program     1    1094      25
+		 55     0       du.p             2.00           ---     Program    10     179       0
+		 56     0       du.c             6.00           ---     Bytes   49152    4706
+		 57     0       t2d.p            2.00           ---     Program    10     202       0
+		 58     0       t2d.c            2.00           ---     Bytes   16384    1568
+		 59     0       voice.p          2.00           ---     Program  8000     928       0
+		 60     0       voice.c          2.00           ---     Bytes   60000     801
+		 61     0       menu.old         4.00           ---     Program          2753
+		 62     0       catalog.2        2.00           ---     Chr.Arr     N     446
+		 63     0       menu.p           4.00           ---     Program     1    2457     848
+		Space free/filled/total : 020/620/640 KB
 
 
 get  - Copy file(s) to PC
@@ -317,7 +378,7 @@ exit quit  - Exit program
 to be preselected, as the first in the list (1), display the basic program named "run", and then exit. 
 Because the output is redirected into the file run.bas, the result is the BASIC program into a text file.
 	
-6. What about the source code?
+## 6. What about the source code?
 
 	The program is written in C++, and it's using the Standard Template Library (STL). I used Visual Studio 2008 for development,
 but I made sure a free compiler can also be used, and I tested with Borland C++ 5.5 free compiler, that can be downloaded from here:
@@ -340,7 +401,7 @@ disks, like the tape images, SCL images, or in the future, file archive (ZIP, et
 	The license is GPLv3, which in my understanding, means that you can use it in your own programs, as long as you specify 
 the original author and include the changes you added to the code, when you release your code.
 
-7. What other features are planned?
+## 7. What other features are planned?
 - Add support for the FAT file system, for DOS disk images.
 - Add file system configuration in external config. file, to be able to add varations of a file system without recompiling
 - Add write support for the current read-only file systems, if usefull.
@@ -348,7 +409,7 @@ the original author and include the changes you added to the code, when you rele
 - COM port transfer speed improvement using 19200 baud for HC computers, from 4800/9600 baud currently supported.
 - Create a GUI using MFC or QT.
 
-8. What are the system requirements?
+## 8. What are the system requirements?
 - For best compatibility for floppy disk access, an older PC is recomended, with a floppy controller on the motherboard. These were produced up until about 2003-2004. 
 - The operating system is at minimum Windows XP, but any later Windows version will work.
 - USB floppy drives can be used for CP/M disks. Other file systems and disk geometries don't work due to hardware limitations of USB floppy drives and due to Windows floppy driver limitations.
@@ -358,7 +419,7 @@ an audio splitter can be used to capture Spectrum output using the microphone in
 The resulting WAV file can be digitized using MakeTZX from Ramsoft or using audio2tape.exe from the fuse-utils package.
 
 
-Class Diagram
+## Class Diagram
 ![ScreenShot](https://raw.githubusercontent.com/0sAND1s/HCDisk/master/HCDisk_ClassDiagram.png)
 
 Example class usage:
