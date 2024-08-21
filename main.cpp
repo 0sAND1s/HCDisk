@@ -1763,8 +1763,12 @@ bool PutFile(int argc, char* argv[])
 		argIdx++;
 	}	
 
-	CFile* fileNew = theFS->NewFile(nameDest.c_str());			
-	theFS->SetFileFolder(fileNew, folder);										
+	CFile* fileNew = theFS->NewFile(nameDest.c_str());		
+	if (fileNew == nullptr)
+		res = false;
+	else
+		theFS->SetFileFolder(fileNew, folder);
+
 	dword fsz = FileUtil::fsize(name);
 	FILE* fpc = fopen(name, "rb");	
 	int turboSpeedBaud = 0;

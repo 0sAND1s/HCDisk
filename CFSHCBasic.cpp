@@ -48,7 +48,9 @@ CFile* CFSHCBasic::NewFile(const char* name, long len, byte* data)
 	f->User = 0;
 	memset(&f->IF1Header, 0, sizeof(f->IF1Header));
 	//f->SetFileName(name);
-	CreateFileName(name, f);
+	if (!CreateFileName(name, f))
+		return nullptr;
+
 	if (data != NULL && len > 0)
 		f->SetData(data, len);
 	return f;
