@@ -115,6 +115,45 @@ bool FileUtil::BinPatch(char* fnameIn, char* fnamePatch, char* offsetStr)
 	return true;
 }
 
+bool FileUtil::BitMirror(char* fnameIn, char* fnameOut)
+{	
+	long fsizeIn = FileUtil::fsize(fnameIn);	
+
+	FILE* fIn = fopen(fnameIn, "rb");
+	FILE* fOut = fopen(fnameOut, "wb");
+	if (fIn == nullptr || fOut == nullptr)
+	{
+		cout << "Couln't open input or output file." << endl;
+		return false;
+	}
+	
+	while (fsizeIn > 0)
+	{
+		byte b = fgetc(fIn);
+		byte res = 0;
+		byte pos = 0;
+
+		while (pos < 8)
+		{ 
+			if (b & (1 << pos))
+				res = res | (1 << 7 - pos);
+
+			pos++;
+		}
+
+		fputc(res, fOut);
+
+		fsizeIn--;
+	}
+
+	fclose(fIn);
+	fclose(fOut);
+
+	cout << "Applied bit mirror from file " << fnameIn << "to file " << fnameOut << "." << endl;
+
+	return true;
+}
+
 
 string FileUtil::GetHexPrint(byte* buff, dword len)
 {

@@ -2757,6 +2757,14 @@ bool BinPatch(int argc, char* argv[])
 	return FileUtil::BinPatch(fnameIn, fnamePatch, offsetStr);
 }
 
+bool BitMirror(int argc, char* argv[])
+{
+	char* fnameIn = argv[0];
+	char* fnameOut = argv[1];		
+
+	return FileUtil::BitMirror(fnameIn, fnameOut);
+}
+
 bool BasImport(int argc, char* argv[])
 {
 	string name = FileUtil::GetNameWithoutExtension(argv[0]);
@@ -2943,6 +2951,12 @@ static const Command theCommands[] =
 			{"offset", true, "0 based start offset in input file"},			
 		},
 		BinPatch },
+	{ {"bitmirror"}, "Reverses bits in each byte: 1000 -> 0001",
+		{
+			{"input file", true, "input file name"},
+			{"output file", true, "output file name"},			
+		},
+		BitMirror },
 	{ {"autorun"}, "Creates autorun program for the current disk", {}, 
 		CreateAutorun },
 	{{"exit", "quit"}, "Exit program", 
