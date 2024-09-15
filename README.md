@@ -249,21 +249,25 @@ For BASIC file systems, there's also specific info displayed: file type, code st
 get  - Copy file(s) to PC
 - \<["]filespec["]>: * or *.com or readme.txt, "1 2", etc - names with spaces are supported, but must be enclosed in quotes
 - [-t]: Copy as text - only display printable chars, usefull for Tasword files
+- [-n newName]: Set the PC file name, default: original name
 
 Examples:
-- get run - will copy from the current disk to PC the file named 'run'.
-- get "Dizzy ?" - will copy from the current disk to PC all files named like "Dizzy 1", "Dizzy 2", "Dizzy 3", etc.
+- get run		- will copy from the current disk to PC the file named 'run'.
+- get "Dizzy ?"		- will copy from the current disk to PC all files named like "Dizzy 1", "Dizzy 2", "Dizzy 3", etc.
+- get "A B C" -n "ABC"	- will copy from the current disk to PC the file named "A B C" but will set the PC file name to "ABC".
 
 -----------------------------------------------------------------------------------------------------------------------
 type cat  - Display file
 - \<file spec.>: * or *.com or readme.txt, etc
 - [-h]: display as hex
+- [-t]: display as text
+- [-d]: display as Z80 assembler
 
 Examples:
-- type run	- will list program 'run' as BASIC code
-- type 1.asm	- will list text file as text
-- type 1.bin -t	- will list binary file as hex
-- type 1.bin -d	- will list binary file as Z80 assembler
+- type run		- will list program 'run' as BASIC code
+- type 1.asm -t		- will list text file as text
+- type 1.bin -h		- will list binary file as hex
+- type 1.bin -d		- will list binary file as Z80 assembler
 
 	BASIC programs are decoded into source code. Numeric values are displayed, but only if are different from the textual representations. 
 Also, embedded attributes are displayed (as text). The program variables values are displayed, if saved with the 
@@ -278,10 +282,10 @@ copydisk  - Copy current disk to another disk or image
 - [-f]: format destination disk while copying
 
 Examples:
-- copydisk A: image.dsk - will copy disk in drive A: to image file; 
-		destination image file must exist and must be formatted with the same format as source OR
-		-f argument will create and format the destination disk or image file.
-- copydisk image.dsk B: - will copy the image file to physical disk in drive B:
+- copydisk A: image.dsk		- will copy disk in drive A: to image file; destination image file must exist and must be formatted with the same format as source OR
+				-f argument will create and format the destination disk or image file.
+- copydisk image.dsk B:		- will copy the image file to physical disk in drive B:
+- format hc.dsk -t 2 : open A: : copydisk hc.dsk	- will copy from HC disk in drive A: to disk image hc.dsk.
 
 -----------------------------------------------------------------------------------------------------------------------
 copyfs - Copy only used blocks from current file system to another disk (same file system type, CP/M only)
@@ -366,7 +370,7 @@ loadboot  - Load boot tracks from file - usefull for CPM disks with booloader
 - \<file name>: input file
 
 -----------------------------------------------------------------------------------------------------------------------
-formatdisk - Format a physical disk or a disk image for a certain file system
+format - Format a physical disk or a disk image for a certain file system
 - \<disk/image> : the disk drive or image to format
 - [-t] : the file system format number to use, as found in fsinfo command
 
