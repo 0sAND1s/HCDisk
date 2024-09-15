@@ -78,6 +78,11 @@ COM port	|		PC Upload/download files|	Read/write files using IF1 COM port
 	The first version of HCDisk only understood the file system specific to HC, but I kept the name, even if now it can process file systems for several other clones and add-ons. Not by coincidence, HC is also an acronym for Home Computer. So this tool applies to home computers.
 
 ## 5. What commands are available?
+Note command argument convention notation:
+	<argument> - means mandatory argument
+	[argument] - means optional argument
+	arguments start with minus sign
+	value follows the argument
 
 help ?  - Command list, this message
 - [command]: Show help only for the specified command.
@@ -239,10 +244,19 @@ For BASIC file systems, there's also specific info displayed: file type, code st
 get  - Copy file(s) to PC
 - \<["]filespec["]>: * or *.com or readme.txt, "1 2", etc - names with spaces are supported, but must be enclosed in quotes
 - [-t]: Copy as text - only display printable chars, usefull for Tasword files
+Examples:
+	get run - will copy from the current disk to PC the file named 'run'.
+	get "Dizzy ?" - will copy from the current disk to PC all files named like "Dizzy 1", "Dizzy 2", "Dizzy 3", etc.
 
 type cat  - Display file
 - \<file spec.>: * or *.com or readme.txt, etc
 - [-h]: display as hex
+Examples:
+	type run	- will list program 'run' as BASIC code
+	type 1.asm	- will list text file as text
+	type 1.bin -t	- will list binary file as hex
+	type 1.bin -d	- will list binary file as Z80 assembler
+
 	BASIC programs are decoded into source code. Numeric values are displayed, but only if are different from the textual representations. 
 Also, embedded attributes are displayed (as text). The program variables values are displayed, if saved with the 
 program, as it is the case when saving a program after being run, without first CLEARing the memory.
@@ -252,11 +266,19 @@ program, as it is the case when saving a program after being run, without first 
 
 copydisk  - Copy current disk to another disk or image
 - \<destination>: destination disk/image - if writing to physical a disk, that disk must be properly formatted
-- f: format destination disk while copying
+- [-f]: format destination disk while copying
+Examples:
+	copydisk A: image.dsk - will copy disk in drive A: to image file; 
+		destinaition image file must exist and must be formatted with the same format as source OR
+		-f argument will create and format the destination disk or image file.
+	copydisk image.dsk B: - will copy the image file to physical disk in drive B:
 
 copyfs - Copy only used blocks from current file system to another disk (same file system type, CP/M only)
 - \<direction>: 'to'/'from'
 - \<remote>: source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)
+Examples:
+	copyfs from COM1 - will write curret disk with file system blocks read from COM1
+	copyfs to COM2 - will copy file system blocks from current disk to COM2 port
 
 How to copy HC BASIC disks over serial cable (COM port):
 1. Notice in Windows device manager the name of the COM port (COM1, COM2, etc).
@@ -272,6 +294,11 @@ put  - Copy PC file to file system
 - [-s start]: Spectrum program start line/byte start address
 - [-t p|b|c|n file type]: Spectrum file type: program, bytes, char arr., no. arr
 - [-turbo \<1364|2250|3000|6000>]: Turbo baud rate for TZX blocks
+Examples:
+1. put dizzy.scr -n "Dizzy1SCR" -t b -s 16384
+will copy a file from PC to the current Spectrum disk; the PC file name is dizzy.scr, the new file name on destination will be Dizzy1SCR, the type will be Bytes (b), the start address will be 16384.
+2. put "pc file" -n "HC file" -t p -s 10
+will copy a file from PC to the current Spectrum disk; the PC file name is "pc file" (includes space, so quotes must be used), the Spectrum name will be "HC file" (also containing space), the type will pe Program (p), the start line of program will be 10.
 
 del rm  - Delete file(s)
 - \<file spec.>: the file(s) to delete, ex: del *.com; A confirmation is displayed.
@@ -358,17 +385,20 @@ screen  - SCREEN$ block processing functions
 Example: screen order column - will order SCREEN$ by columns, to improve compression
 Example: screen blank 0x0x1x1 - will set to 0 the upper left character cell in the SCREEN$, for both pixels and attributes.
 
-bincut  - File section cut, starting at offset, with size length
+bincut  - PC file section cut, starting at offset, with size length
 - \<input file>: input file name
 - \<output file>: output file name
 - \<offset>: 0 based start offset
 - [lenght]: length of block, default: file len - offset
 
-binpatch  - Patches a file, with content of another file, at set offset
+binpatch  - Patches a PC file, with content of another file, at set offset
 - \<input file>: input file name
 - \<patch file>: patch content file
 - \<offset>: 0 based start offset in input file
 
+bitmirror - Reverses bits in each byte of PC file; Example: bits 0001 become 1000
+- \<input file>: input file name
+- \<output file>: output file name
 
 exit quit  - Exit program
 
