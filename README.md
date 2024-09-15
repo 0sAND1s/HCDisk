@@ -244,6 +244,7 @@ For BASIC file systems, there's also specific info displayed: file type, code st
 get  - Copy file(s) to PC
 - \<["]filespec["]>: * or *.com or readme.txt, "1 2", etc - names with spaces are supported, but must be enclosed in quotes
 - [-t]: Copy as text - only display printable chars, usefull for Tasword files
+
 Examples:
 	get run - will copy from the current disk to PC the file named 'run'.
 	get "Dizzy ?" - will copy from the current disk to PC all files named like "Dizzy 1", "Dizzy 2", "Dizzy 3", etc.
@@ -251,6 +252,7 @@ Examples:
 type cat  - Display file
 - \<file spec.>: * or *.com or readme.txt, etc
 - [-h]: display as hex
+
 Examples:
 	type run	- will list program 'run' as BASIC code
 	type 1.asm	- will list text file as text
@@ -267,6 +269,7 @@ program, as it is the case when saving a program after being run, without first 
 copydisk  - Copy current disk to another disk or image
 - \<destination>: destination disk/image - if writing to physical a disk, that disk must be properly formatted
 - [-f]: format destination disk while copying
+
 Examples:
 	copydisk A: image.dsk - will copy disk in drive A: to image file; 
 		destinaition image file must exist and must be formatted with the same format as source OR
@@ -276,6 +279,7 @@ Examples:
 copyfs - Copy only used blocks from current file system to another disk (same file system type, CP/M only)
 - \<direction>: 'to'/'from'
 - \<remote>: source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)
+
 Examples:
 	copyfs from COM1 - will write curret disk with file system blocks read from COM1
 	copyfs to COM2 - will copy file system blocks from current disk to COM2 port
@@ -294,6 +298,7 @@ put  - Copy PC file to file system
 - [-s start]: Spectrum program start line/byte start address
 - [-t p|b|c|n file type]: Spectrum file type: program, bytes, char arr., no. arr
 - [-turbo \<1364|2250|3000|6000>]: Turbo baud rate for TZX blocks
+
 Examples:
 1. put dizzy.scr -n "Dizzy1SCR" -t b -s 16384
 will copy a file from PC to the current Spectrum disk; the PC file name is dizzy.scr, the new file name on destination will be Dizzy1SCR, the type will be Bytes (b), the start address will be 16384.
@@ -327,6 +332,10 @@ tapexp  - Exports the files to a tape image
 - [-convldr]: convert BASIC loader synthax, file names
 The parameter -convldr will cause BASIC program conversion to match the tape LOAD synthax.
 
+Examples:
+	tapexp dizzy.tap dizzy*			- will export all blocks starting with "dizzy" into tape file named "dizzy.tap".
+	tapexp dizzy1.tap dizzy1* -convldr	- will export all blocks starting with "dizzy1" into tape file named "dizzy1.tap", converting the BASIC loader to destination file system synthax (tape, disk, etc)
+
 tapimp  - Imports the TAP file to disk
 - \<.tap name>: the TAP file name
 - [file mask]: the file name mask - if specified, only these files will be exported, not all the files.
@@ -349,11 +358,18 @@ bin2bas  - Put binary to BASIC block, in a REM statement or variable
 - [name of block]: name of BASIC block, default blob file name
 - [address of execution]: address to copy the block to before execution, default 0 - no moving blob to an address, > 0 means the blob will be LDIR-ed to the specified address before execution.
 
+Examples:
+	bin2bas rem 1.bin run		- will create a BASIC program block, named "run" containing file "1.bin" in a REM statement
+	bin2bas var loader run 32768	- will create a BASIC program block named "run" containing file named "loader", which will be moved to address 32768 and will be executed.
+
 convldr - Converts a BASIC loader to work with another storage device
 - \<.tap name>: destination TAP file name
 - \<loader type>: type of loader: TAPE, MICRODRIVE, OPUS, HCDISK, IF1COM, PLUS3, MGT
 Will convert the BASIC program to LOAD from a different device. The ones supported are mentioned.
 Is usefull for tape to disk conversion, where it also handles file naming (distinct, unique, non-empty names for disk files).
+
+Examples:
+	convldr dizzy1.tap HCDISK	- converts current tape file to dizzy1.tap, updating the BASIC program synthax for HC with disk.
 
 putif1  - Send a file or collection to IF1 trough the COM port
 - \<file name/mask>: file mask to select files for sending
@@ -361,6 +377,9 @@ putif1  - Send a file or collection to IF1 trough the COM port
 - [baud rate]: baud rate for COM, default is 4800
 If one of the blocks is a Program block, the loaded blocks for that block are also sent and the BASIC loader is updated to match IF1 synthax. 
 So it automatically does TAP to IF1 uploading.
+
+Examples:
+	putif1 Dizzy1 COM1 9600		- uploads file/block named Dizzy1 to COM1 port using baud rate 9600; if Dizzy1 is BASIC program, loaded blocks will also be uploaded
 
 getif1  - Get a single file from IF1 trough the COM port
 - \<file name>: file name for the received file
@@ -377,11 +396,15 @@ basimp  - Import a BASIC program from a text file
 - [file name]: Program file name (default: file name)
 - [autorun line]: Autorun line number (default: 0)
 
+Example:
+	basimp 1.bas run 10	- will create a Spectrum file named "run" on current disk/tape, from text file 1.bas, setting auto-run for line 10
+
 screen  - SCREEN$ block processing functions
 - \<operation\>: order, blank
 - \<argument\>: order: column/cell; blank: line1xcol1xline2xcol2
 - \<input file\>: SCREEN$ file on PC read
 - \<output file\>: SCREEN$ file on PC write
+
 Example: screen order column - will order SCREEN$ by columns, to improve compression
 Example: screen blank 0x0x1x1 - will set to 0 the upper left character cell in the SCREEN$, for both pixels and attributes.
 
