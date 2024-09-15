@@ -84,9 +84,11 @@ Note command argument convention notation:
 	arguments start with minus sign
 	value follows the argument
 
+-----------------------------------------------------------------------------------------------------------------------
 help ?  - Command list, this message
 - [command]: Show help only for the specified command.
 
+-----------------------------------------------------------------------------------------------------------------------
 fsinfo  - Display the known file systems
 
 Displays the known file systems, with details, from the program help (geometry, block size, block count, directory capacity, 
@@ -130,6 +132,7 @@ Known containers:
 - TZX - TAPE IMAGE (RW)
 - TD0 - Sydex Teledisk DISK IMAGE
 
+-----------------------------------------------------------------------------------------------------------------------
 stat  - Display the current file system parameters: (total/free blocks, total/free space, disk geometry, disk type, etc)
 	Example for HC BASIC:
 
@@ -148,7 +151,7 @@ stat  - Display the current file system parameters: (total/free blocks, total/fr
 	File name structure  : 11.0 (name.extension)
 
 
-
+-----------------------------------------------------------------------------------------------------------------------
 open  - Open disk or disk image
 - \<drive|image>: The disk/image to open
 - [-t] x: The number of file system type to use - optionaly, auto select the type from the list
@@ -156,8 +159,10 @@ open  - Open disk or disk image
 a list is displayed for the user to pick one. TRDos is the only file system that has a signature that can be check,
 otherwise there's no easy way to detect if the selection is valid, and errors can occur, like strange, unreadable file names.
 
+-----------------------------------------------------------------------------------------------------------------------
 close  - Close disk or disk image
 
+-----------------------------------------------------------------------------------------------------------------------
 ls dir  - List directory
 - [<folder><\>file spec.]: filespec: *.com or 1\*, etc - folder for CPM can be specified with back slash
 - [-sn|-ss|-st]: Sort by name|size|type
@@ -240,7 +245,7 @@ For BASIC file systems, there's also specific info displayed: file type, code st
 		 63     0       menu.p           4.00           ---     Program     1    2457     848
 		Space free/filled/total : 020/620/640 KB
 
-
+-----------------------------------------------------------------------------------------------------------------------
 get  - Copy file(s) to PC
 - \<["]filespec["]>: * or *.com or readme.txt, "1 2", etc - names with spaces are supported, but must be enclosed in quotes
 - [-t]: Copy as text - only display printable chars, usefull for Tasword files
@@ -249,6 +254,7 @@ Examples:
 - get run - will copy from the current disk to PC the file named 'run'.
 - get "Dizzy ?" - will copy from the current disk to PC all files named like "Dizzy 1", "Dizzy 2", "Dizzy 3", etc.
 
+-----------------------------------------------------------------------------------------------------------------------
 type cat  - Display file
 - \<file spec.>: * or *.com or readme.txt, etc
 - [-h]: display as hex
@@ -266,6 +272,7 @@ program, as it is the case when saving a program after being run, without first 
 	Code files are disassembled.
 	Any file can also be displayed as hexadecimal.
 
+-----------------------------------------------------------------------------------------------------------------------
 copydisk  - Copy current disk to another disk or image
 - \<destination>: destination disk/image - if writing to physical a disk, that disk must be properly formatted
 - [-f]: format destination disk while copying
@@ -276,6 +283,7 @@ Examples:
 		-f argument will create and format the destination disk or image file.
 - copydisk image.dsk B: - will copy the image file to physical disk in drive B:
 
+-----------------------------------------------------------------------------------------------------------------------
 copyfs - Copy only used blocks from current file system to another disk (same file system type, CP/M only)
 - \<direction>: 'to'/'from'
 - \<remote>: source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)
@@ -291,6 +299,7 @@ How to copy HC BASIC disks over serial cable (COM port):
 4. Run the latest HCCmd version and use menu '9-Disk', then option '3. Copy A:->COM' to copy from HC to PC or option '4. Copy COM->A:' to copy from PC to HC.
 5. A message will show on PC and on HC showing how many blocks are left to copy. A full disk takes about 7 minutes to copy.
 
+-----------------------------------------------------------------------------------------------------------------------
 put  - Copy PC file to file system
 - \<source file>: the file to copy
 - [-n newname]: name for destination file
@@ -305,16 +314,20 @@ will copy a file from PC to the current Spectrum disk; the PC file name is dizzy
 - put "pc file" -n "HC file" -t p -s 10
 will copy a file from PC to the current Spectrum disk; the PC file name is "pc file" (includes space, so quotes must be used), the Spectrum name will be "HC file" (also containing space), the type will pe Program (p), the start line of program will be 10.
 
+-----------------------------------------------------------------------------------------------------------------------
 del rm  - Delete file(s)
 - \<file spec.>: the file(s) to delete, ex: del *.com; A confirmation is displayed.
 
+-----------------------------------------------------------------------------------------------------------------------
 ren  - Rename file
 - \<file name>: the file to rename
 - \<new name>: new file name
 
+-----------------------------------------------------------------------------------------------------------------------
 !  - Execute DOS command after '!' -  will execut the shell command. Note the space after !.
 - \<DOS command>: ! dir, ! mkdir, etc
 
+-----------------------------------------------------------------------------------------------------------------------
 tapplay  - Play the tape as sound asynchronously
 - [-w]: play to a .wav file instead of real-time
 	You can connect the PC audio output to a Spectrum tape input, and load the tape image.
@@ -326,6 +339,7 @@ Playing the tape. Press ESC to quit, SPACE to pause. Block count is: 80.
 01:  Std. Block   Data   : 1288 FF
 Progress: 77 %
 
+-----------------------------------------------------------------------------------------------------------------------
 tapexp  - Exports the files to a tape image
 - \<.tap name>: the TAP file name
 - [file mask]: the file name mask - if specified, only these files will be exported, not all the files.
@@ -336,22 +350,27 @@ Examples:
 - tapexp dizzy.tap dizzy*			- will export all blocks starting with "dizzy" into tape file named "dizzy.tap".
 - tapexp dizzy1.tap dizzy1* -convldr	- will export all blocks starting with "dizzy1" into tape file named "dizzy1.tap", converting the BASIC loader to destination file system synthax (tape, disk, etc)
 
+-----------------------------------------------------------------------------------------------------------------------
 tapimp  - Imports the TAP file to disk
 - \<.tap name>: the TAP file name
 - [file mask]: the file name mask - if specified, only these files will be exported, not all the files.
 - [-convldr]: convert BASIC loader synthax, file names
 The parameter -convldr will cause BASIC program conversion to match the destination file system LOAD syntax.
 
+-----------------------------------------------------------------------------------------------------------------------
 saveboot  - Save boot tracks to file - usefull for CPM disks with booloader
 - \<file name>: output file
 
+-----------------------------------------------------------------------------------------------------------------------
 loadboot  - Load boot tracks from file - usefull for CPM disks with booloader
 - \<file name>: input file
 
+-----------------------------------------------------------------------------------------------------------------------
 formatdisk - Format a physical disk or a disk image for a certain file system
 - \<disk/image> : the disk drive or image to format
 - [-t] : the file system format number to use, as found in fsinfo command
 
+-----------------------------------------------------------------------------------------------------------------------
 bin2bas  - Put binary to BASIC block, in a REM statement or variable
 - \<type>: type of conversion: 'rem' or 'var'
 - \<file>: blob file to add
@@ -362,6 +381,7 @@ Examples:
 - bin2bas rem 1.bin run		- will create a BASIC program block, named "run" containing file "1.bin" in a REM statement
 - bin2bas var loader run 32768	- will create a BASIC program block named "run" containing file named "loader", which will be moved to address 32768 and will be executed.
 
+-----------------------------------------------------------------------------------------------------------------------
 convldr - Converts a BASIC loader to work with another storage device
 - \<.tap name>: destination TAP file name
 - \<loader type>: type of loader: TAPE, MICRODRIVE, OPUS, HCDISK, IF1COM, PLUS3, MGT
@@ -371,6 +391,7 @@ Is usefull for tape to disk conversion, where it also handles file naming (disti
 Examples:
 - convldr dizzy1.tap HCDISK	- converts current tape file to dizzy1.tap, updating the BASIC program synthax for HC with disk.
 
+-----------------------------------------------------------------------------------------------------------------------
 putif1  - Send a file or collection to IF1 trough the COM port
 - \<file name/mask>: file mask to select files for sending
 - [COM port index]: COMx port to use, default 1
@@ -381,16 +402,19 @@ So it automatically does TAP to IF1 uploading.
 Examples:
 - putif1 Dizzy1 COM1 9600		- uploads file/block named Dizzy1 to COM1 port using baud rate 9600; if Dizzy1 is BASIC program, loaded blocks will also be uploaded
 
+-----------------------------------------------------------------------------------------------------------------------
 getif1  - Get a single file from IF1 trough the COM port
 - \<file name>: file name for the received file
 - [COM port index]: COMx port to use, default 1
 - [baud rate]: baud rate for COM, default is 9600
 
+-----------------------------------------------------------------------------------------------------------------------
 diskview  - View disk sectors on screen, displayed as hex and ASCII.
 - [track]: track index
 - [head]: head index
 - [sector]: sector index (not ID)
 
+-----------------------------------------------------------------------------------------------------------------------
 basimp  - Import a BASIC program from a text file
 - \<BASIC file>: BASIC program file to compile
 - [file name]: Program file name (default: file name)
@@ -399,6 +423,7 @@ basimp  - Import a BASIC program from a text file
 Example:
 - basimp 1.bas run 10	- will create a Spectrum file named "run" on current disk/tape, from text file 1.bas, setting auto-run for line 10
 
+-----------------------------------------------------------------------------------------------------------------------
 screen  - SCREEN$ block processing functions
 - \<operation\>: order, blank
 - \<argument\>: order: column/cell; blank: line1xcol1xline2xcol2
@@ -409,23 +434,28 @@ Examples:
 - screen order column - will order SCREEN$ by columns, to improve compression
 - screen blank 0x0x1x1 - will set to 0 the upper left character cell in the SCREEN$, for both pixels and attributes.
 
+-----------------------------------------------------------------------------------------------------------------------
 bincut  - PC file section cut, starting at offset, with size length
 - \<input file>: input file name
 - \<output file>: output file name
 - \<offset>: 0 based start offset
 - [lenght]: length of block, default: file len - offset
 
+-----------------------------------------------------------------------------------------------------------------------
 binpatch  - Patches a PC file, with content of another file, at set offset
 - \<input file>: input file name
 - \<patch file>: patch content file
 - \<offset>: 0 based start offset in input file
 
+-----------------------------------------------------------------------------------------------------------------------
 bitmirror - Reverses bits in each byte of PC file; Example: bits 0001 become 1000
 - \<input file>: input file name
 - \<output file>: output file name
 
+-----------------------------------------------------------------------------------------------------------------------
 exit quit  - Exit program
 
+-----------------------------------------------------------------------------------------------------------------------
 	Commands can be concatenated using the ":" character. Example: "open -t 1 : ls : close" .
 	The same commands can be entered interactively, or on the program command line, making it easier to use it in batch programs:
 "hcdisk2.exe open plus3.dsk -t 1 : cat run : exit >> run.bas" - will open the disk plus3.dsk, specifying the type of file system
