@@ -282,9 +282,9 @@ copydisk  - Copy current disk to another disk or image
 - [-f]: format destination disk while copying
 
 Examples:
-- copydisk A: image.dsk		- will copy disk in drive A: to image file; destination image file must exist and must be formatted with the same format as source OR
-				-f argument will create and format the destination disk or image file.
-- copydisk image.dsk B:		- will copy the image file to physical disk in drive B:
+- open A: : copydisk image.dsk -f	- will copy current disk (A:) to image file; destination image file must exist and must be formatted with the same format as source OR
+					- f argument will create and format the destination disk or image file.
+- copydisk B:				- will copy the image file to physical disk in drive B:
 - format hc.dsk -t 2 : open A: : copydisk hc.dsk	- will copy from HC disk in drive A: to disk image hc.dsk.
 
 -----------------------------------------------------------------------------------------------------------------------
