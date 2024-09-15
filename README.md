@@ -246,18 +246,18 @@ get  - Copy file(s) to PC
 - [-t]: Copy as text - only display printable chars, usefull for Tasword files
 
 Examples:
-	get run - will copy from the current disk to PC the file named 'run'.
-	get "Dizzy ?" - will copy from the current disk to PC all files named like "Dizzy 1", "Dizzy 2", "Dizzy 3", etc.
+- get run - will copy from the current disk to PC the file named 'run'.
+- get "Dizzy ?" - will copy from the current disk to PC all files named like "Dizzy 1", "Dizzy 2", "Dizzy 3", etc.
 
 type cat  - Display file
 - \<file spec.>: * or *.com or readme.txt, etc
 - [-h]: display as hex
 
 Examples:
-	type run	- will list program 'run' as BASIC code
-	type 1.asm	- will list text file as text
-	type 1.bin -t	- will list binary file as hex
-	type 1.bin -d	- will list binary file as Z80 assembler
+- type run	- will list program 'run' as BASIC code
+- type 1.asm	- will list text file as text
+- type 1.bin -t	- will list binary file as hex
+- type 1.bin -d	- will list binary file as Z80 assembler
 
 	BASIC programs are decoded into source code. Numeric values are displayed, but only if are different from the textual representations. 
 Also, embedded attributes are displayed (as text). The program variables values are displayed, if saved with the 
@@ -271,18 +271,18 @@ copydisk  - Copy current disk to another disk or image
 - [-f]: format destination disk while copying
 
 Examples:
-	copydisk A: image.dsk - will copy disk in drive A: to image file; 
-		destinaition image file must exist and must be formatted with the same format as source OR
+- copydisk A: image.dsk - will copy disk in drive A: to image file; 
+		destination image file must exist and must be formatted with the same format as source OR
 		-f argument will create and format the destination disk or image file.
-	copydisk image.dsk B: - will copy the image file to physical disk in drive B:
+- copydisk image.dsk B: - will copy the image file to physical disk in drive B:
 
 copyfs - Copy only used blocks from current file system to another disk (same file system type, CP/M only)
 - \<direction>: 'to'/'from'
 - \<remote>: source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)
 
 Examples:
-	copyfs from COM1 - will write curret disk with file system blocks read from COM1
-	copyfs to COM2 - will copy file system blocks from current disk to COM2 port
+- copyfs from COM1 - will write curret disk with file system blocks read from COM1
+- copyfs to COM2 - will copy file system blocks from current disk to COM2 port
 
 How to copy HC BASIC disks over serial cable (COM port):
 1. Notice in Windows device manager the name of the COM port (COM1, COM2, etc).
@@ -300,9 +300,9 @@ put  - Copy PC file to file system
 - [-turbo \<1364|2250|3000|6000>]: Turbo baud rate for TZX blocks
 
 Examples:
-1. put dizzy.scr -n "Dizzy1SCR" -t b -s 16384
+- put dizzy.scr -n "Dizzy1SCR" -t b -s 16384
 will copy a file from PC to the current Spectrum disk; the PC file name is dizzy.scr, the new file name on destination will be Dizzy1SCR, the type will be Bytes (b), the start address will be 16384.
-2. put "pc file" -n "HC file" -t p -s 10
+- put "pc file" -n "HC file" -t p -s 10
 will copy a file from PC to the current Spectrum disk; the PC file name is "pc file" (includes space, so quotes must be used), the Spectrum name will be "HC file" (also containing space), the type will pe Program (p), the start line of program will be 10.
 
 del rm  - Delete file(s)
@@ -333,8 +333,8 @@ tapexp  - Exports the files to a tape image
 The parameter -convldr will cause BASIC program conversion to match the tape LOAD synthax.
 
 Examples:
-	tapexp dizzy.tap dizzy*			- will export all blocks starting with "dizzy" into tape file named "dizzy.tap".
-	tapexp dizzy1.tap dizzy1* -convldr	- will export all blocks starting with "dizzy1" into tape file named "dizzy1.tap", converting the BASIC loader to destination file system synthax (tape, disk, etc)
+- tapexp dizzy.tap dizzy*			- will export all blocks starting with "dizzy" into tape file named "dizzy.tap".
+- tapexp dizzy1.tap dizzy1* -convldr	- will export all blocks starting with "dizzy1" into tape file named "dizzy1.tap", converting the BASIC loader to destination file system synthax (tape, disk, etc)
 
 tapimp  - Imports the TAP file to disk
 - \<.tap name>: the TAP file name
@@ -359,8 +359,8 @@ bin2bas  - Put binary to BASIC block, in a REM statement or variable
 - [address of execution]: address to copy the block to before execution, default 0 - no moving blob to an address, > 0 means the blob will be LDIR-ed to the specified address before execution.
 
 Examples:
-	bin2bas rem 1.bin run		- will create a BASIC program block, named "run" containing file "1.bin" in a REM statement
-	bin2bas var loader run 32768	- will create a BASIC program block named "run" containing file named "loader", which will be moved to address 32768 and will be executed.
+- bin2bas rem 1.bin run		- will create a BASIC program block, named "run" containing file "1.bin" in a REM statement
+- bin2bas var loader run 32768	- will create a BASIC program block named "run" containing file named "loader", which will be moved to address 32768 and will be executed.
 
 convldr - Converts a BASIC loader to work with another storage device
 - \<.tap name>: destination TAP file name
@@ -369,7 +369,7 @@ Will convert the BASIC program to LOAD from a different device. The ones support
 Is usefull for tape to disk conversion, where it also handles file naming (distinct, unique, non-empty names for disk files).
 
 Examples:
-	convldr dizzy1.tap HCDISK	- converts current tape file to dizzy1.tap, updating the BASIC program synthax for HC with disk.
+- convldr dizzy1.tap HCDISK	- converts current tape file to dizzy1.tap, updating the BASIC program synthax for HC with disk.
 
 putif1  - Send a file or collection to IF1 trough the COM port
 - \<file name/mask>: file mask to select files for sending
@@ -379,7 +379,7 @@ If one of the blocks is a Program block, the loaded blocks for that block are al
 So it automatically does TAP to IF1 uploading.
 
 Examples:
-	putif1 Dizzy1 COM1 9600		- uploads file/block named Dizzy1 to COM1 port using baud rate 9600; if Dizzy1 is BASIC program, loaded blocks will also be uploaded
+- putif1 Dizzy1 COM1 9600		- uploads file/block named Dizzy1 to COM1 port using baud rate 9600; if Dizzy1 is BASIC program, loaded blocks will also be uploaded
 
 getif1  - Get a single file from IF1 trough the COM port
 - \<file name>: file name for the received file
@@ -397,7 +397,7 @@ basimp  - Import a BASIC program from a text file
 - [autorun line]: Autorun line number (default: 0)
 
 Example:
-	basimp 1.bas run 10	- will create a Spectrum file named "run" on current disk/tape, from text file 1.bas, setting auto-run for line 10
+- basimp 1.bas run 10	- will create a Spectrum file named "run" on current disk/tape, from text file 1.bas, setting auto-run for line 10
 
 screen  - SCREEN$ block processing functions
 - \<operation\>: order, blank
@@ -405,8 +405,9 @@ screen  - SCREEN$ block processing functions
 - \<input file\>: SCREEN$ file on PC read
 - \<output file\>: SCREEN$ file on PC write
 
-Example: screen order column - will order SCREEN$ by columns, to improve compression
-Example: screen blank 0x0x1x1 - will set to 0 the upper left character cell in the SCREEN$, for both pixels and attributes.
+Examples: 
+- screen order column - will order SCREEN$ by columns, to improve compression
+- screen blank 0x0x1x1 - will set to 0 the upper left character cell in the SCREEN$, for both pixels and attributes.
 
 bincut  - PC file section cut, starting at offset, with size length
 - \<input file>: input file name
