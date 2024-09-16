@@ -1934,7 +1934,9 @@ bool RenameFile(int argc, char* argv[])
 struct Command
 {
 	char* cmd[3];
-	char* desc;
+	char* desc;	
+	char* synthax;
+	char* examples[3];
 
 	struct CommandParam 
 	{
@@ -2801,51 +2803,59 @@ bool CreateAutorun(int argc, char* argv[])
 
 static const Command theCommands[] = 
 {
-	{{"help", "?"}, "Command list, this message",
+	{{"help", "?"}, "Print all commands or specific command.", "help [command]", { "help", "help dir"},
 		{
 			{{"command"}, false, "Show help only for the specified command."}
 		},
 		PrintHelp},
-	{{"fsinfo"}, "Display the known file systems", {{}},
+	{{"fsinfo"}, "Display the known file systems", "fsinfo", {},
+		{{}},		
 		ShowKnownFS},
-	{{"stat"}, "Display the current file system parameters", {{}}, Stat},
-	{{"open"}, "Open disk or disk image",
+	{{"stat"}, "Display the current file system parameters", "stat", {}, {{}},
+		Stat},
+	{{"open"}, "Open disk or disk image", "open <drive|image> [-t x]", {"open A:", "open image.dsk", "open hc.img -t 2"},
 		{
 			{"drive|image", true, "The disk/image to open"},
-			{"-t", false, "The number of file system type to use"}},
+			{"-t", false, "The number of file system type to use, from fsinfo command"}},
 		Open},
-	{{"close"}, "Close disk or disk image",
+	{{"close"}, "Close disk or disk image", "close", {},
 		{{}},
 		Close},
-	{{"ls", "dir"}, "List directory",
+	{{"ls", "dir"}, "List directory", "dir [folder\\filespec] [-sX] [-ne] [-del]", {"dir", "dir 1\\*.COM", "dir * -del"},
 		{{"<folder><\\>file spec.", false, "filespec: *.com or 1\\*, etc"},
 		{"-sn|-ss|-st", false, "Sort by name|size|type"},
-		{"-ne", false, "Don't show extended info, faster"},
-		{"-del", false, "List deleted files"}},
+		{"-ne", false, "Don't read extended info, faster listing"},
+		{"-del", false, "List deleted files too"}},
 		Cat},
-	{{"get"}, "Copy file(s) to PC",
+	{{"get"}, "Copy file(s) to PC", "get <filespec> [-t] [-n PCName]", {"get Dizzy1", "get \"1 2 3.COM\"", "get ping.bin -n pong.bin"},
 		{{"[\"]filespec[\"]", true, "* or *.com or readme.txt, \"1 2\", etc"},
 		{"-t", false, "Copy as text"},
-		{"-n newName", false, "Set the PC file name, default: original name"}
+		{"-n PCName", false, "Set the PC file name, default: original name"}
 		},
 		GetFile},
-	{{"type", "cat"}, "Display file",
+	{{"type", "cat"}, "Display file on screen", "type <filespec> [-h|-t|-d -dec]", {"type readme.txt", "cat game.bin -d", "cat game.bin -h"},
 		{{"file spec.", true, "* or *.com or readme.txt, etc"},
 		{"-h|-t|-d", false, "display as hex|text|asm"},
 		{"-dec", false, "disassemble in decimal instead of hex"}
 		},
 		TypeFile},
-	{{"copydisk"}, "Copy current disk to another disk or image, sector by sector",
+	{{"copydisk"}, "Copy current disk to another disk or image, sector by sector", "copydisk <destination> [-f] [-y]", {"copydisk image.dsk", "copydisk A:"},
 		{{"destination", true, "destination disk/image"},
 		 {"-f", false, "format destination while copying"},
 		 {"-y", false, "format without confirmation"}
-		}, CopyDisk},
-	{{"copyfs"}, "Copy only used blocks from current file system to another disk (same FS type, CP/M only)",
+		},
+		CopyDisk},
+	{{"copyfs"}, "Copy only used blocks from current file system to another disk (same FS type, CP/M only)", 
+		"copyfs <direction> <remote>", 
+		{"copyfs to COM1", "copyfs from COM2"},
 		{
 			{"direction", true, "'to'/'from'"},
 			{"remote", true, "source/destination disk image (i.e. 1.dsk) or COM port (i.e. COM1)"}
-		}, CopyFS},
-	{{"put"}, "Copy PC file to file system",
+		},
+		CopyFS},
+	{{"put"}, "Copy PC file to file system", 
+		"copy <source file name> [-n newName] [-d CP/M folder] [-s start] [-t type] [-turbo baud]", 
+		{"copy dizzy.scr -t b -s 16384", "copy 1.COM -d 1", "copy game.bin -t b -turbo 6000"},
 		{
 			{"source file", true, "the file to copy"},
 			{"-n newname", false, "name for destination file"},
@@ -2855,41 +2865,49 @@ static const Command theCommands[] =
 			{"-turbo <1364|2250|3000|6000>", false, "Turbo baud rate for TZX blocks"}
 		},
 		PutFile},
-	{{"del", "rm"}, "Delete file(s)",
+	{{"del", "rm"}, "Delete file(s)", "del <filespec> [-y]", {"del *.COM", "del *.BAK -y"},
 		{{"file spec.", true, "the file(s) to delete"},
-		{"-y", false, "delete without confirmation"}}, DeleteFiles},
-	{{"ren"}, "Rename file",
-		{{"file name", true, "the file to rename"}, {"new name", true, "new file name"}},
+		{"-y", false, "delete without confirmation"}},
+		DeleteFiles},
+	{{"ren"}, "Rename file", "ren <old name> <new name>", {"ren OLDNAME.COM NEWNAME.COM"},
+		{{"file name", true, "the file to rename"}, 
+		{"new name", true, "new file name"}},
 		RenameFile},
-	{{"!"}, "Execute DOS command after '!'",
-		{"DOS command", true, "! dir, ! mkdir, etc"},
+	{{"!"}, "Execute system command after '!'", "! <command>", {"! dir", "! type readme.txt"},
+		{"system command", true, "! dir, ! mkdir, etc"},
 		ExecSysCmd},
-	{{"tapplay"}, "Play the tape into a wav file",
+	{{"tapplay"}, "Play the tape into a wav file","tapplay [-w]",{"tapplay", "tapplay -w"},
 		{{"-w", false, "play to a .wav file instead of realtime"}},
 		PlayTape},
-	{{"tapexp"}, "Exports the files to a tape image",
+	{{"tapexp"}, "Exports the files to a tape image","tapexp <new TAP> [filemask] [-convldr]",{"tapexp NEW.TAP", "tapexp Dizzy* Dizzy.tap", "tapexp Dizzy* Dizzy.tap -convldr"},
 		{{".tap name", true, "the TAP file name"},
 		{"file mask", false, "the file name mask"},
 		{"-convldr", false, "convert BASIC loader synthax, file names"}
 		},
 		Export2Tape},
-	{{"tapimp"}, "Imports the TAP file to disk",
+	{{"tapimp"}, "Imports the TAP file to disk","tapimp <source TAP> <filemask> [-convldr]",{"tapimp DIZZY1.TAP", "tapimp DIZZY1.TAP *.SCR", "tapimp DIZZY2.TAP * -convldr"},
 		{{".tap name", true, "the TAP file name"},
 		{"file mask", false, "the file name mask"},
 		{"-convldr", false, "convert BASIC loader synthax, file names"}
 		},
 		ImportTape},
-	{{"saveboot"}, "Save boot tracks to file", {"file name", true, "output file"}, SaveBoot},
-	{{"loadboot"}, "Load boot tracks from file", {"file name", true, "input file"}, LoadBoot},
-	{{"format"}, "Format disk",
+	{{"saveboot"}, "Save boot tracks to file", "saveboot <boot file>",{"saveboot CPM.BOOT"},
+		{"file name", true, "output file"},
+		SaveBoot},
+	{{"loadboot"}, "Load boot tracks from file", "loadboot <boot file>",{"loadboot CPM.BOOT"},
+		{"file name", true, "input file"},
+		LoadBoot},
+	{{"format"}, "Format disk or disk/tape image","format <disk|image> [-t]",{"format A:", "format hc.dsk", "format hc.dsk -t 2"},
 		{{"disk/image", true, "disk/image"},
 		{"-t", false, "Format number to pre-select (from fsinfo command)"}},
 		FormatDisk},
-	{{"attrib", "chattr"}, "Change file(s) attributes",
+	{{"attrib", "chattr"}, "Change file(s) attributes","attrib <file spec> <+|-ars>",{"attrib *.COM +r", "attrib run +s"},
 		{{"file spec.", true, "file(s) to update"},
 		{"+/-ars", true, "set/remove attribute(s) (a)rhive, (r)eadonly, (s)ystem"}},
 		ChangeAttributes},
-	{{"bin2bas"}, "Put binary to BASIC block, in a REM statement or variable",
+	{{"bin2bas"}, "Embedds a binary block into a BASIC block, in a REM statement or in variables section",
+		"bin2bas <rem|var> <filename> [newName] [address]",
+		{"bin2bas rem program.bin run 32768", "bin2bas var program.bin"},
 		{
 			{"type", true, "type of conversion: rem or var"},
 			{"file", true, "blob to add"},
@@ -2898,30 +2916,36 @@ static const Command theCommands[] =
 		},
 		Bin2BAS},
 	{{"convldr"}, "Converts a BASIC loader to work with another storage device",
+		"convldr <new TAP> <loader type>",{"convldr dizzyHC.tap HCDISK"},
 		{{".tap name", true, "destination TAP file name"},
 		{"loader type", true, "type of loader: TAPE, MICRODRIVE, OPUS, HCDISK, IF1COM, PLUS3, MGT"}
 		},
 		ConvertBASICLoader},
-	{{"putif1"}, "Send a file or collection to IF1 trough the COM port",
-		{
-		{"file name/mask", true, "file mask to select files for sending"},
+	{{"putif1"}, "Send a PC file or file collection to ZX Spectrum IF1 COM port",
+		"putif1 <file mask> [COMx] [baud rate]",
+		{"putif1 Dizzy* COM1 9600", "putif1 game.bas"},
+		{{"file name/mask", true, "file mask to select files for sending"},
 		{"COMx", false, "COMx port to use, default COM1"},
-		{"baud rate", false, "baud rate for COM, default is 9600"}
-		},
+		{"baud rate", false, "baud rate for COM, default is 9600"}},
 		PutFilesIF1COM},
-	{{"getif1"}, "Get a single file from IF1 trough the COM port",
+	{{"getif1"}, "Get a single file from ZX Spectrum IF1 COM port to PC",
+		"getif1 <filename> [COMx] [baud]",
+		{"getif1 DIZZY.SCR COM1 9600", "getif1 program"},
 		{{"file name", true, "file name for the received file"},
 		{"COMx", false, "COMx port to use, default COM1"},
 		{"baud rate", false, "baud rate for COM, default is 9600"}
 		},
 		GetFileIF1COM},
 	{{"diskview"}, "View disk sectors",
+		"diskview [track no] [head no] [sector idx]",
+		{"diskview", "diskview 0 0 0", "diskview 1 2 3"},
 		{{"track", false, "track index"},
 		{"head", false, "head index"},
-		{"sector", false, "sector index (not ID)"}
-		},
+		{"sector", false, "sector index (not ID)"}},
 		DiskView},
 	{{"basimp"}, "Import a BASIC program from a text file",
+		"basimp <BASIC file> [new name] [autorun line] [variables file]",
+		{"basimp program.bas run", "basimp program.bas run 10"},
 		{{"BASIC file", true, "BASIC program file to compile"},
 		{"file name", false, "Program file name (default: file name)"},
 		{"autorun line", false, "Autorun line number (default: 0)"},
@@ -2929,6 +2953,8 @@ static const Command theCommands[] =
 		},
 		BasImport},
 	{ {"screen"}, "SCREEN$ block processing functions",
+		"screen <operation> <argument> <PC source file> <PC dest file>",
+		{"screen dizzy1.scr order column", "screen dizzy2.scr blank 1x1x22x31", "screen 2gif 2gif dizzy3.scr dizzy3.gif"},
 		{
 			{"operation", true, "order, blank, 2gif"},
 			{"argument", true, "order: column/cell; blank: line1xcol1xline2xcol2; 2gif: 2gif"},
@@ -2936,31 +2962,41 @@ static const Command theCommands[] =
 			{"output file", true, "SCREEN$/GIF file on PC to write"}
 		},
 		ScreenProcess},
-	{ {"bincut"}, "File section cut, starting at offset, with size length",
+	{ {"bincut"}, "PC file section cut, starting at offset, with size length",
+		"bincut <input> <output> <offset> [length]",
+		{"bincut 1.bin 1.scr 0 6912", "bincut 1.bin 2.bin 32768"},
 		{
 			{"input file", true, "input file name"},
 			{"output file", true, "output file name"},
-			{"offset", true, "0 based start offset"},		
+			{"offset", true, "0 based start offset"},
 			{"lenght", false, "length of block, default: file len - offset"}
 		},
 		BinCut },
-	{ {"binpatch"}, "Patches a file, with content of another file, at set offset",
+	{ {"binpatch"}, "Patches a PC file, with content of another file, at set offset",
+		"binpatch <input> <output> <offset>",
+		{"binpatch original.bin patch.bin 6912"},
 		{
 			{"input file", true, "input file name"},
 			{"patch file", true, "patch content file"},
-			{"offset", true, "0 based start offset in input file"},			
+			{"offset", true, "0 based start offset in input file"},
 		},
 		BinPatch },
-	{ {"bitmirror"}, "Reverses bits in each byte: 1000 -> 0001",
+	{ {"bitmirror"}, "Reverses bits in each byte: 1000 -> 0001 for a PC file",
+		"bitmirror <input> <output>",
+		{"bitmirror original.bin mirrored.bin"},
 		{
 			{"input file", true, "input file name"},
-			{"output file", true, "output file name"},			
+			{"output file", true, "output file name"},
 		},
 		BitMirror },
-	{ {"autorun"}, "Creates autorun program for the current disk", {}, 
+	{ {"autorun"}, "Creates autorun program for the current disk, with BASIC synthax specific to current file system",
+		"autorun", {},
+		{},
 		CreateAutorun },
-	{{"exit", "quit"}, "Exit program", 
-	{{}}},	
+	{ {"exit", "quit"}, "Exit program", 
+		"exit",{},
+		{},
+		{} }
 };
 
 
@@ -2971,17 +3007,34 @@ void PrintHelpCmd(Command theCommand)
 		if (theAlias != nullptr)
 			printf("%s ", theAlias);
 	}
-	printf(" - %s\n", theCommand.desc);
+	printf("\t: %s; ", theCommand.desc);
 
+	if (strlen(theCommand.synthax) > 0)
+		printf("Synthax: %s\n", theCommand.synthax);
+	else
+		printf("\n");
+
+	int pIdx = 0;
 	for (auto theParam : theCommand.Params)
 	{
-		if (theParam.param != NULL)
-		{
-			if (theParam.mandatory)
-				printf("- <%s>: %s\n", theParam.param, theParam.desc);
-			else
-				printf("- [%s]: %s\n", theParam.param, theParam.desc);
+		if (theParam.param != nullptr)
+		{			
+			printf("\t- param. %i: %s: %s %s\n", pIdx+1, theParam.param, theParam.desc, (theParam.mandatory ? "(mandatory)" : ""));
+			pIdx ++;
 		}
+	}	
+
+	if (theCommand.examples[0] != nullptr)
+	{
+		printf("\t- ");
+		int i = 0;
+		for (auto example : theCommand.examples)
+		{
+			if (example != nullptr)
+				printf("Example %i: \"%s\"; ", i + 1, theCommand.examples[i]);
+			i++;
+		}
+		printf("\n");
 	}
 }
 
