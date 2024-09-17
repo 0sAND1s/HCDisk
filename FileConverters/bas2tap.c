@@ -2435,9 +2435,9 @@ bool HandleClass11 (int BasicLineNo, int StatementNo, int Keyword, byte **Index)
                {
                  if (!ScanChannel (BasicLineNo, StatementNo, Keyword, Index, &WhichChannel))
                    return (FALSE);
-                 if (WhichChannel != 'm')
+                 if (WhichChannel != 'm' && WhichChannel != 'd')
                  {
-                   fprintf (ErrStream, "ERROR in line %d, statement %d - You can only ERASE from the ! or \"m\" channel\n",
+                   fprintf (ErrStream, "ERROR in line %d, statement %d - You can only ERASE from the ! or \"m\" or \"d\" channel\n",
                             BasicLineNo, StatementNo);
                    return (FALSE);
                  }

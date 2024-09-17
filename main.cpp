@@ -201,9 +201,17 @@ const FileSystemDescription DISK_TYPES[] =
 	},
 
 	{
-		"Spectrum +3 BASIC 180K", FS_CPM_PLUS3_BASIC,
+		"Spectrum +3 BAS 180K +boot", FS_CPM_PLUS3_BASIC,
 		{40, 1, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0}, 		
 		{1024, 175, 64, 1}, 
+		{1, 0},
+		true
+	},
+
+	{
+		"Spectrum +3 BAS 180K -boot", FS_CPM_PLUS3_BASIC,
+		{40, 1, 9, CDiskBase::SECT_SZ_512, 0xE5, 0x1B, CDiskBase::DISK_DATARATE_DD_3_5, 0},
+		{1024, 175, 64, 0},
 		{1, 0},
 		true
 	},
