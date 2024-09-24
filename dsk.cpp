@@ -218,27 +218,20 @@ bool CDSK::SeekSide(byte side)
 }
 
 
-//This is required because some images don't have a valid currTrack.sectorSize and also, the track may have mixed sized sectors.
+//This is required to accomodate hardware interleave (find the sector by ID).
+//We don't accomodate mixed sized sectors.
 bool CDSK::SeekSector(byte sector)
 {
-	//byte sectId = 1;		
+	byte sectIdx = 0;		
 	bool res = true;
 
 	//Find sector by ID.
-	//while (sectIdx < currTrack.sectorCount && currSectorInfo[sectIdx].sectorID != sector)
-	//	sectIdx++;
-	//Don't find by ID, since some disks have odd sector IDs. Find by index.	
+	while (sectIdx < currTrack.sectorCount && currSectorInfo[sectIdx].sectorID != sector)
+		sectIdx++;	
 
-	//Find sector in file.
-	/*
-	while (sectId < sector && res)
-	{
-		res = fseek(dskFile, CDiskBase::SectCode2SectSize((currSectorInfo[sectId].sectorSizeCode)), SEEK_CUR) == 0;
-		sectId++;
-	}
-	*/
-	//Assume constant sector size on the same track
-	res = fseek(dskFile, CDiskBase::SectCode2SectSize((currSectorInfo[0].sectorSizeCode)) * (sector - 1), SEEK_CUR) == 0;
+	//Find sector in file.			
+	res = fseek(dskFile, CDiskBase::SectCode2SectSize((currSectorInfo[0].sectorSizeCode)) * sectIdx, SEEK_CUR) == 0;	
+	
 	
 	if (!res)
 		LastError = ERR_SEEK;
