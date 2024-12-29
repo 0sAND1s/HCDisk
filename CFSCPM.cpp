@@ -420,7 +420,7 @@ bool CFSCPM::WriteFile(CFileCPM* file)
 			if (writeOK && fileAUs.size() > 0)
 			{
 				LastError = CFileSystem::ERR_NONE;
-				word totalFileRecCnt = ceil((double)file->Length / CPM_REC_SIZE);
+				dword totalFileRecCnt = (dword)ceil((double)file->Length / CPM_REC_SIZE);
 				const byte recsInDirEnt = CPM_EXT_ALLOC / CPM_REC_SIZE;
 
 				for (byte dirEntIdx = 0; dirEntIdx < reqDirEnt && LastError == ERR_NONE; dirEntIdx++)
@@ -434,8 +434,8 @@ bool CFSCPM::WriteFile(CFileCPM* file)
 					CreateFSName(file, di.FileName);
 					di.UsrCode = file->User;					
 										
-					word fileRecCntLeftToWrite = totalFileRecCnt - dirEntIdx * recsInDirEnt;
-					di.RecCnt = fileRecCntLeftToWrite > recsInDirEnt ? recsInDirEnt : fileRecCntLeftToWrite;
+					dword fileRecCntLeftToWrite = totalFileRecCnt - dirEntIdx * recsInDirEnt;
+					di.RecCnt = (byte)(fileRecCntLeftToWrite > recsInDirEnt ? recsInDirEnt : fileRecCntLeftToWrite);
 					
 					for (byte auIdx = dirEntIdx * CPM_AUInExt, auInExt = 0; auInExt < CPM_AUInExt && auIdx < reqAUCnt; auIdx++, auInExt++)
 					{

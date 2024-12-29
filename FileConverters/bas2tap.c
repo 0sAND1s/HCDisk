@@ -3389,7 +3389,7 @@ int bas2tap(char* basFilePath, const char* name, short unsigned autorunLine)
     nameArg[0] = '\0';
     strcat(nameArg, "-s");
     strcat(nameArg, name);
-    char* autorunArg[7];
+    char autorunArg[7] = {""};
     sprintf(autorunArg, "-a%d", autorunLine);
 
     char* args[] = { "", "-q", autorunArg, nameArg, basFilePath, "temp.tap" };

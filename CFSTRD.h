@@ -13,6 +13,8 @@
 #include "CFileSystem.h"
 #include <vector>
 
+class CFileTRD;
+
 class CFSTRDOS: public CFileSystem
 {
 	friend class CFileTRD;

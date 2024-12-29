@@ -22,6 +22,12 @@
     <Filter Include="FileSystem">
       <UniqueIdentifier>{febb152e-32fb-4fee-b0ea-184704fef92c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Snapshot">
+      <UniqueIdentifier>{0fbea63b-1799-42bf-a503-6f17f13ab51c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Compression">
+      <UniqueIdentifier>{35e33537-9c87-4ab7-b34d-a4e2f1819073}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DiskBase.cpp">
@@ -96,7 +102,7 @@
     <ClCompile Include="FileConverters\BasicDecoder.cpp">
       <Filter>FileConverters</Filter>
     </ClCompile>
-    <ClCompile Include="FileConverters\scr2gif.c">
+    <ClCompile Include="FileConverters\scr2gif.cpp">
       <Filter>FileConverters</Filter>
     </ClCompile>
     <ClCompile Include="FileConverters\dz80\dissz80.c">
@@ -156,6 +162,9 @@
     </ClCompile>
     <ClCompile Include="GUIUtil.cpp" />
     <ClCompile Include="TapeUtil.cpp" />
+    <ClCompile Include="Snapshot\CSnapshotSNA.cpp">
+      <Filter>Snapshot</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DiskBase.h">
@@ -290,6 +299,15 @@
     </ClInclude>
     <ClInclude Include="GUIUtil.h" />
     <ClInclude Include="TapeUtil.h" />
+    <ClInclude Include="Snapshot\CSnapshotSNA.h">
+      <Filter>Snapshot</Filter>
+    </ClInclude>
+    <ClInclude Include="Compression.h">
+      <Filter>Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\scr2gif.h">
+      <Filter>FileConverters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt" />

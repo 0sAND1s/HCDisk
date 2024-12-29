@@ -291,7 +291,7 @@ static int _ResetOutBitFile (void)
   {
     if (_WriteByte (NumBytes) != GIF_OK)
       return (-1);
-    if (_Write (_Buffer, NumBytes) != GIF_OK)
+    if (_Write ((void*)_Buffer, NumBytes) != GIF_OK)
       return (-1);
     _Buffer[_Index = 0] = 0;
     _BitsLeft = 8;
@@ -317,7 +317,7 @@ static int _WriteBits (short Bits, short NumBits)
     {
       if (_WriteByte (NumBytes) != GIF_OK)
         return (-1);
-      if (_Write (_Buffer, NumBytes) != GIF_OK)
+      if (_Write ((void*)_Buffer, NumBytes) != GIF_OK)
         return (-1);
       _Buffer[_Index = 0] = 0;
       _BitsLeft = 8;
@@ -677,10 +677,10 @@ static byte _GIFCreate (char *FileName, short Width, short Height, short NumColo
     return (GIF_ERRCREATE);
   if (GIF89a)
   {	
-    if ((_Write ("GIF89a", 6)) != GIF_OK)                                                                  /* Write GIF signature */
+    if ((_Write ((void*)"GIF89a", 6)) != GIF_OK)                                                                  /* Write GIF signature */
       return (GIF_ERRWRITE);
   }
-  else if ((_Write ("GIF87a", 6)) != GIF_OK)
+  else if ((_Write ((void*)"GIF87a", 6)) != GIF_OK)
     return (GIF_ERRWRITE);
   SD.LocalScreenWidth = Width;                                                            /* Initiate and write screen descriptor */
   SD.LocalScreenHeight = Height;

@@ -90,7 +90,7 @@ bool CDiskWin32Native::ReadSectors(byte* buf, byte track, byte head, byte sect, 
             res = ReadFile(hVol,
                 buf,
                 sectNO * DiskDefinition.SectSize,
-                &dw, NULL);
+                &dw, NULL) == TRUE;
         } while (!res && retryCnt-- > 0);
     }    
 
@@ -105,9 +105,9 @@ bool CDiskWin32Native::WriteSectors(byte track, byte side, byte sector, byte sec
 
     res = Seek(track);
     if (res && side > 0)
-        res = SetFilePointer(hVol, DiskDefinition.SectSize * DiskDefinition.SPT, NULL, FILE_CURRENT);
+        res = SetFilePointer(hVol, DiskDefinition.SectSize * DiskDefinition.SPT, NULL, FILE_CURRENT) != 0;
     if (res && sector > 1)
-        res = SetFilePointer(hVol, DiskDefinition.SectSize * (sector - 1), NULL, FILE_CURRENT);
+        res = SetFilePointer(hVol, DiskDefinition.SectSize * (sector - 1), NULL, FILE_CURRENT) != 0;
 
     res = res && WriteFile(hVol,
         buf,
@@ -130,7 +130,7 @@ bool CDiskWin32Native::GetTrackInfo(byte track, byte side, byte& sectorCnt, Sect
         (LPVOID)&geom,
         (DWORD)sizeof(DISK_GEOMETRY),
         &dw, NULL
-    );
+    ) == TRUE;
 
     sectorCnt = (byte)geom.SectorsPerTrack;
     
@@ -158,7 +158,7 @@ bool CDiskWin32Native::GetDiskInfo(byte& trkCnt, byte& sideCnt, char* comment)
         (LPVOID)&geom,
         (DWORD)sizeof(_DISK_GEOMETRY),
         &dw, NULL
-    );
+    ) == TRUE;
 
     trkCnt = (byte)geom.Cylinders.LowPart;
     sideCnt = (byte)geom.TracksPerCylinder;   
@@ -303,7 +303,7 @@ bool CDiskWin32Native::IsUSBVolume(char* drive)
             &spq, sizeof(spq),               // input buffer
             &byBuffer, sizeof(byBuffer),     // output buffer
             &cbBytesReturned,                // # bytes returned
-            (LPOVERLAPPED)NULL);            // synchronous I/O
+            (LPOVERLAPPED)NULL) == TRUE;            // synchronous I/O
 
         if (res)
         {
@@ -338,7 +338,7 @@ bool CDiskWin32Native::IsFloppyDrive(char* drive)
     {                                     
         DWORD Device;
         ULONG devCharact;
-        res = GetDriveTypeAndCharacteristics(hVol, &Device, &devCharact);
+        res = GetDriveTypeAndCharacteristics(hVol, &Device, &devCharact) == TRUE;
         isFloppy = res && (Device == FILE_DEVICE_DISK) && ((devCharact & FILE_FLOPPY_DISKETTE) == FILE_FLOPPY_DISKETTE);                    
 
         CloseHandle(hVol);

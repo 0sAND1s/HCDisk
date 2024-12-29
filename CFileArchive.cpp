@@ -130,7 +130,7 @@ bool CFileArchive::IsCharValidForFilename(char c)
 
 bool CFileArchive::CreateFileName(const char* fNameIn, CFile* file)
 {
-	if (fNameIn != NULL && file != NULL && strlen(fNameIn) > 0 && strlen(fNameIn) <= (NAME_LENGHT + EXT_LENGTH + 1))
+	if (fNameIn != NULL && file != NULL && strlen(fNameIn) > 0 && strlen(fNameIn) <= (unsigned)(NAME_LENGHT + EXT_LENGTH + 1))
 	{					
 		memset(file->FileName, 0, sizeof(FileNameType));		
 		memset(file->Name, 0, sizeof(file->Name));		
@@ -228,15 +228,15 @@ bool CFileArchive::CreateFSName(CFile* file, char* fNameOut)
 	{				
 		if (EXT_LENGTH > 0 && strlen(file->Extension) > 0)
 		{
-			byte nLen = strlen(file->Name);
+			dword nLen = strlen(file->Name);
 			memcpy(fNameOut, file->Name, nLen < NAME_LENGHT ? nLen : NAME_LENGHT);
 			file->Extension[EXT_LENGTH] = '\0';
-			byte eLen = strlen(file->Extension);
+			dword eLen = strlen(file->Extension);
 			memcpy(&fNameOut[NAME_LENGHT], file->Extension, eLen < EXT_LENGTH ? eLen : EXT_LENGTH);
 		}
 		else
 		{
-			byte nLen = strlen(file->FileName);
+			dword nLen = strlen(file->FileName);
 			//memcpy(fNameOut, file->Name, nLen > NAME_LENGHT ? NAME_LENGHT : nLen);
 			memcpy(fNameOut, file->FileName, nLen);
 		}

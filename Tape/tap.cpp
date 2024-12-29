@@ -153,7 +153,7 @@ bool CTapFile::GetBlock(word blkIdx, CTapeBlock* tb)
 
 bool CTapFile::IndexTape()
 {	
-	long fileOffset = 0;
+	dword fileOffset = 0;
 	word blkLen = 0;
 	bool Res = true;
 	
@@ -161,7 +161,7 @@ bool CTapFile::IndexTape()
 	
 	fflush(tapFile);
 	fseek(tapFile, 0, SEEK_END);
-	long fSize = ftell(tapFile);
+	dword fSize = ftell(tapFile);
 	fseek(tapFile, 0, SEEK_SET);
 	
 	if (fSize > 0)

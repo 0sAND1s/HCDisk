@@ -67,14 +67,14 @@ bool CFSCobraDEVIL::Init()
 					}						
 					else //map headerless blocks too.
 					{							
-						byte hdrLessIdx = f->FileDirEntries.size();
+						dword hdrLessIdx = f->FileDirEntries.size();
 
 						//For each headerless file.
 						while (dirIdx < FSParams.BlockCount && dirEnt->Flag == FLAG_EXTENT)
 						{
-							word hdrlessLen = dirEnt->hdrlBlockLen[hdrLessIdx];
-							word fileBlockCount = ceil((float)hdrlessLen / FSParams.BlockSize);
-							word fileBlockIdx = 0;
+							dword hdrlessLen = dirEnt->hdrlBlockLen[hdrLessIdx];
+							dword fileBlockCount = (dword)ceil((float)hdrlessLen / FSParams.BlockSize);
+							dword fileBlockIdx = 0;
 							
 							CFileDevil* fh = new CFileDevil();
 							fh->Length = hdrlessLen;
@@ -88,7 +88,7 @@ bool CFSCobraDEVIL::Init()
 							CreateFileName(fn, fh);							
 							
 							fh->SpectrumType = CFileSpectrum::SPECTRUM_UNTYPED;
-							fh->SpectrumLength = hdrlessLen;
+							fh->SpectrumLength = (word)hdrlessLen;
 
 							//For each block from the headerless file.
 							while (fileBlockIdx < fileBlockCount && dirEnt->Flag == FLAG_EXTENT)

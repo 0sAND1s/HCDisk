@@ -22,14 +22,14 @@ dword CDiskWin32LowLevel::GetDriverVersion ()
 
 bool CDiskWin32LowLevel::CmdRead (HANDLE h_, BYTE cyl_, BYTE head_, BYTE start_, BYTE count_, BYTE size_, PVOID pv_)
 {
-	FD_READ_WRITE_PARAMS rwp = { FD_OPTION_MFM, head_, cyl_,head_, start_,size_,start_+count_, 0x0a,0xff };
+	FD_READ_WRITE_PARAMS rwp = { FD_OPTION_MFM, head_, cyl_,head_, start_,size_,(BYTE)(start_+count_), 0x0a,0xff };
 	return !!DeviceIoControl(h_, IOCTL_FDCMD_READ_DATA, &rwp, sizeof(rwp), pv_, count_*(128<<rwp.size), &dwRet, NULL);
 }
 
 
 bool CDiskWin32LowLevel::CmdWrite (HANDLE h_, BYTE cyl_, BYTE head_, BYTE start_, BYTE count_, BYTE size_, PVOID pv_)
 {
-	FD_READ_WRITE_PARAMS rwp = { FD_OPTION_MFM, head_, cyl_,head_, start_,size_,start_+count_, 0x0a,0xff };
+	FD_READ_WRITE_PARAMS rwp = { FD_OPTION_MFM, head_, cyl_,head_, start_,size_,(BYTE)(start_+count_), 0x0a,0xff };
 	return !!DeviceIoControl(h_, IOCTL_FDCMD_WRITE_DATA, &rwp, sizeof(rwp), pv_, count_*(128<<rwp.size), &dwRet, NULL);
 }
 

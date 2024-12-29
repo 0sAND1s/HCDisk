@@ -97,7 +97,7 @@ bool CTZXFile::Open(char* fileName, TapeOpenMode mode)
 			//Also add HCDisk signature.
 			TZXBlkMessage msg;
 			memcpy(msg.Msg, TZXCreateMsg, strlen(TZXCreateMsg));
-			msg.Len = strlen(TZXCreateMsg);
+			msg.Len = (byte)strlen(TZXCreateMsg);
 			OK = fputc(BLK_ID_TXT_DESCR, tapFile) != EOF && fwrite(&msg, 1, sizeof(msg.Len) + msg.Len, tapFile) == sizeof(msg.Len) + msg.Len;
 		}
 		else
@@ -550,7 +550,7 @@ bool CTZXFile::AddTapeBlock(void* data, word dataLen, byte flag, CTapeBlock::Tap
 	if (customTimings == nullptr)
 	{
 		TZXBlkStd blkStd;
-		blkStd.Len = TB.Length;
+		blkStd.Len = (word)TB.Length;
 		blkStd.Pause = CTapeBlock::ROM_TIMINGS_HEAD.Pause;
 
 		res = fputc((int)BLK_ID_STD, tapFile) != EOF;
@@ -572,7 +572,7 @@ bool CTZXFile::AddTapeBlock(void* data, word dataLen, byte flag, CTapeBlock::Tap
 		blkTurbo.Pause = customTimings->Pause;
 		
 		blkTurbo.LastBitsCnt = 8;		
-		blkTurbo.Len1 = TB.Length;
+		blkTurbo.Len1 = (word)TB.Length;
 
 		res = fputc((int)BLK_ID_TURBO, tapFile) != EOF;
 		res = res &&

@@ -44,7 +44,7 @@ long FileUtil::fsize(const char* fname)
 	return fs;
 }
 
-bool FileUtil::BinCut(char* fnameIn, char* fnameOut, char* offsetStr, char* lenStr)
+bool FileUtil::BinCut(const char* fnameIn, const char* fnameOut, const char* offsetStr, const char* lenStr)
 {	
 	long offset = atoi(offsetStr);
 	long fsizeIn = FileUtil::fsize(fnameIn);
@@ -136,7 +136,7 @@ bool FileUtil::BitMirror(char* fnameIn, char* fnameOut)
 		while (pos < 8)
 		{ 
 			if (b & (1 << pos))
-				res = res | (1 << 7 - pos);
+				res = res | ((1 << 7) - pos);
 
 			pos++;
 		}

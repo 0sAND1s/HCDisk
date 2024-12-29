@@ -12,6 +12,8 @@
 #include "CFileSpectrum.h"
 #include <vector>
 
+class CFileMGT;
+
 class CFSMGT: public CFileSystem
 {
 	friend class CFileMGT;

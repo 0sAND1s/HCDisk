@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-//HCDisk2, (C) George Chirtoaca 2014 - 2022
+//HCDisk2, (C) George Chirtoaca 2014 - 2024
 //////////////////////////////////////////////////////////////////////////
 
 #include <memory.h>
@@ -39,12 +39,13 @@
 #include "CFSCobraDEVIL.h"
 #include "CFSOpus.h"
 #include "CFSMGT.h"
-#include "FileConverters/scr2gif.c"
+#include "FileConverters/scr2gif.h"
 #include "FileConverters/Screen.h"
 #include "CFileArchive.h"
 #include "CFileArchiveTape.h"
 #include "Tape\Tape2Wave.h"
 #include "COMIF1.h"
+#include "Snapshot/CSnapshotSNA.h"
 
 #include "BASICUtil.h"
 #include "FileUtil.h"
@@ -1465,7 +1466,7 @@ bool CopyDisk(int argc, char* argv[])
 
 bool CopyDiskFromCOM(char* remoteName, CFSCPM* fsSrc)
 {
-	bool res = (bool)SetCOMForIF1(remoteName, 19200);
+	bool res = SetCOMForIF1(remoteName, 19200) == TRUE;
 	if (!res)
 	{
 		cout << "Could not open port " << remoteName << endl;
@@ -1524,7 +1525,7 @@ bool CopyDiskFromCOM(char* remoteName, CFSCPM* fsSrc)
 
 bool CopyDiskToCOM(CFSCPM* fsSrc, char* remoteName)
 {	
-	bool res = (bool)SetCOMForIF1(remoteName, 19200);
+	bool res = SetCOMForIF1(remoteName, 19200) == TRUE;
 	if (!res)
 	{
 		cout << "Could not open port " << remoteName << endl;
@@ -2750,10 +2751,10 @@ bool ScreenProcess(int argc, char* argv[])
 
 bool BinCut(int argc, char* argv[])
 {
-	char* fnameIn = argv[0];
-	char* fnameOut = argv[1];
-	char* offsetStr = argv[2];
-	char* lenStr = (argc >= 3 ? argv[3] : "0");
+	const char* fnameIn = argv[0];
+	const char* fnameOut = argv[1];
+	const char* offsetStr = argv[2];
+	const char* lenStr = (argc >= 3 ? argv[3] : "0");
 
 	return FileUtil::BinCut(fnameIn, fnameOut, offsetStr, lenStr);
 }
@@ -2805,6 +2806,21 @@ bool CreateAutorun(int argc, char* argv[])
 		return BASICUtil::GenerateAutorun((CFileSystem*)theFS);
 	else
 		return false;
+}
+
+bool Snap2BAS(int argc, char* argv[])
+{
+	string nameSNA = argv[0];
+	string nameTAP = argv[1];
+
+	CSnapshotSNA sna;
+	if (!sna.Read(nameSNA.c_str()))
+	{
+		cout << "Couln't open '" << nameSNA << "' as 48K SNA snapshot." << endl;
+		return false;
+	}
+
+	return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3001,6 +3017,14 @@ static const Command theCommands[] =
 		"autorun", {},
 		{},
 		CreateAutorun },
+	{ {"snap2bas"}, "Converts a snapshot emulator file to a compressed BASIC Program in a TAP file",
+		"snap2bas <input.sna> <output.tap>", 
+		{"snap2bas dizzy1.sna dizzy1.tap"},
+		{
+			{"input.sna", true, "input SNA file"},
+			{"output.tap", true, "output TAP file"},
+		},
+		Snap2BAS },
 	{ {"exit", "quit"}, "Exit program", 
 		"exit",{},
 		{},

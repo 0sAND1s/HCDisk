@@ -326,7 +326,7 @@ bool CFSTRDOS::WriteFile(CFileTRD* file)
 	//Allocate the last partial sector, using a clean buffer.	
 	if (file->Length % Disk->DiskDefinition.SectSize != 0)
 	{		
-		byte unusedLen = (word)(fileSectorCount * Disk->DiskDefinition.SectSize - file->Length);
+		word unusedLen = (word)(fileSectorCount * Disk->DiskDefinition.SectSize - file->Length);
 		file->Length = fileSectorCount * Disk->DiskDefinition.SectSize;		
 		byte* buf = new byte[file->Length];
 		memcpy(buf, file->buffer, file->Length - unusedLen);

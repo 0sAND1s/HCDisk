@@ -116,7 +116,7 @@ bool SendFileToIF1(CFileSpectrumTape* fs, const char* comName, dword baudWanted)
 	bool res = fs->GetData(&data[sizeof(fileIF1.IF1Header)]);
 	dword idx = 0;
 	
-	while (idx < len && res && !_kbhit())
+	while (idx < len && res && !kbhit())
 	{
 		res = SendByteToIF1(m_hCom, data[idx]);
 		idx++;
@@ -126,7 +126,7 @@ bool SendFileToIF1(CFileSpectrumTape* fs, const char* comName, dword baudWanted)
 
 	if (!res)
 		puts("Transfer error.");
-	else if (_kbhit())
+	else if (kbhit())
 	{
 		res = false;
 		puts("Transfer canceled.");
@@ -181,14 +181,14 @@ bool GetFileFromIF1(CFileSpectrumTape* fst, const char* comName, dword baudWante
 	memcpy(buf, &fileIF1.IF1Header, sizeof(fileIF1.IF1Header));
 	idx = 0;	
 
-	while (idx < len && res && !_kbhit())
+	while (idx < len && res && !kbhit())
 	{
 		res = ReadByteFromIF1(m_hCom, &buf[idx++]);
 		if (idx % 10 == 0)
 			printf("\rReceived %u/%u bytes (%0.2f%%), %d seconds left.", idx, len, (float)idx / len * 100, ((len - idx) * 10 / baudWanted));
 	}	
 
-	if (res && !_kbhit())
+	if (res && !kbhit())
 	{
 		fst->SetData(buf, sizeof(fileIF1.IF1Header) + len);
 		puts("Transfer finished.");

@@ -158,7 +158,7 @@ bool CFile::GetFileName(char* name, char* ext)
 	else
 	{
 		*ext = '\0';
-		return strcpy(name, Name);
+		return strcpy(name, Name) != nullptr;
 	}
 }
 

@@ -5,6 +5,8 @@
 #include "CFile.h"
 #include <vector>
 
+class CFSCPM;
+
 //disk file structure
 class CFileCPM: public CFile
 {

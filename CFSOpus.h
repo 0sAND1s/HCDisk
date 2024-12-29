@@ -12,6 +12,8 @@
 #include "CFileSpectrum.h"
 #include <vector>
 
+class CFileOpus;
+
 class CFSOpus: public CFileSystem
 {
 	friend class CFileOpus;
