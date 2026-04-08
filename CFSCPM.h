@@ -104,11 +104,11 @@ public:
 	virtual bool SetFileFolder(CFile* file, char* folderName);	
 	virtual bool ReadBlock(byte* buf, word auIdx, byte maxSecCnt = 0);		
 	virtual bool WriteBlock(byte* buf, word auIdx, byte maxSecCnt = 0);	
+	byte CPM_InterleaveTbl[CDiskBase::MAX_SECT_PER_TRACK];
 
 protected:							
 	word CPM_FindIdx;				//Points to the next extension to check in FindFirst/FindNext cycle.
-	byte CPM_ReservedAllocUnits;	//The number of reserved allocation units, for directory.
-	byte CPM_InterleaveTbl[CDiskBase::MAX_SECT_PER_TRACK];
+	byte CPM_ReservedAllocUnits;	//The number of reserved allocation units, for directory.	
 	char CPM_FindPattern[CFileCPM::MAX_FILE_NAME_LEN + 2];		
 	//Allocation units per extension
 	byte CPM_AUInExt;				

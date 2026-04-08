@@ -28,6 +28,9 @@
     <Filter Include="Compression">
       <UniqueIdentifier>{35e33537-9c87-4ab7-b34d-a4e2f1819073}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FileConverters\sna2tap">
+      <UniqueIdentifier>{1f5b4d60-ae26-4443-910a-4afe70bc0923}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DiskBase.cpp">
@@ -161,9 +164,26 @@
       <Filter>FileConverters</Filter>
     </ClCompile>
     <ClCompile Include="GUIUtil.cpp" />
-    <ClCompile Include="TapeUtil.cpp" />
     <ClCompile Include="Snapshot\CSnapshotSNA.cpp">
       <Filter>Snapshot</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\Compression.cpp">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\compress.c">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\memory.c">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\optimize.c">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="sna2tap.cpp">
+      <Filter>FileConverters\sna2tap</Filter>
+    </ClCompile>
+    <ClCompile Include="TapeUtil.cpp">
+      <Filter>Tape</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -298,18 +318,49 @@
       <Filter>FileConverters</Filter>
     </ClInclude>
     <ClInclude Include="GUIUtil.h" />
-    <ClInclude Include="TapeUtil.h" />
     <ClInclude Include="Snapshot\CSnapshotSNA.h">
       <Filter>Snapshot</Filter>
-    </ClInclude>
-    <ClInclude Include="Compression.h">
-      <Filter>Compression</Filter>
     </ClInclude>
     <ClInclude Include="FileConverters\scr2gif.h">
       <Filter>FileConverters</Filter>
     </ClInclude>
+    <ClInclude Include="Compression\Compression.h">
+      <Filter>Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="Compression\zx0.h">
+      <Filter>Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="sna2tap.h">
+      <Filter>FileConverters\sna2tap</Filter>
+    </ClInclude>
+    <ClInclude Include="TapeUtil.h">
+      <Filter>Tape</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\sna2tapldr.h">
+      <Filter>FileConverters\sna2tap</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FileConverters\dzx0_standard_back.asm">
+      <Filter>FileConverters\sna2tap</Filter>
+    </None>
+    <None Include="FileConverters\scr_draw.asm">
+      <Filter>FileConverters\sna2tap</Filter>
+    </None>
+    <None Include="FileConverters\sna2tapldr.asm">
+      <Filter>FileConverters\sna2tap</Filter>
+    </None>
+    <None Include="FileConverters\sna2tapldr.bin">
+      <Filter>FileConverters\sna2tap</Filter>
+    </None>
+    <None Include="FileConverters\dzx0_standard.asm">
+      <Filter>FileConverters\sna2tap</Filter>
+    </None>
+    <None Include="FileConverters\sna2tapldr.lst">
+      <Filter>FileConverters\sna2tap</Filter>
+    </None>
   </ItemGroup>
 </Project>

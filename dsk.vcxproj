@@ -22,12 +22,12 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v141_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v141_xp</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -78,6 +78,11 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>$(ProjectDir)\sjasmplus fileconverters/sna2tapldr.asm --raw=fileconverters/sna2tapldr.bin --lst=fileconverters/sna2tapldr.lst
+$(ProjectDir)\bin2h.exe sna2tapldr &lt; fileconverters\sna2tapldr.bin &gt; fileconverters\sna2tapldr.h</Command>
+      <Message>Assemble snap2tap loader</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -103,6 +108,10 @@
   <ItemGroup>
     <ClCompile Include="BASICUtil.cpp" />
     <ClCompile Include="COMIF1.cpp" />
+    <ClCompile Include="Compression\compress.c" />
+    <ClCompile Include="Compression\Compression.cpp" />
+    <ClCompile Include="Compression\memory.c" />
+    <ClCompile Include="Compression\optimize.c" />
     <ClCompile Include="CRC.cpp" />
     <ClCompile Include="DiskBase.cpp" />
     <ClCompile Include="DiskImgCQM.cpp" />
@@ -139,6 +148,7 @@
     <ClCompile Include="FileConverters\Screen.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="GUIUtil.cpp" />
+    <ClCompile Include="sna2tap.cpp" />
     <ClCompile Include="Snapshot\CSnapshotSNA.cpp" />
     <ClCompile Include="TapeUtil.cpp" />
     <ClCompile Include="Tape\tap.cpp" />
@@ -152,7 +162,8 @@
   <ItemGroup>
     <ClInclude Include="BASICUtil.h" />
     <ClInclude Include="COMIF1.h" />
-    <ClInclude Include="Compression.h" />
+    <ClInclude Include="Compression\Compression.h" />
+    <ClInclude Include="Compression\zx0.h" />
     <ClInclude Include="DiskWin32Native.h" />
     <ClInclude Include="CRC.h" />
     <ClInclude Include="DiskBase.h" />
@@ -188,8 +199,10 @@
     <ClInclude Include="FileConverters\dz80\types.h" />
     <ClInclude Include="FileConverters\scr2gif.h" />
     <ClInclude Include="FileConverters\Screen.h" />
+    <ClInclude Include="FileConverters\sna2tapldr.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="GUIUtil.h" />
+    <ClInclude Include="sna2tap.h" />
     <ClInclude Include="Snapshot\CSnapshotSNA.h" />
     <ClInclude Include="TapeUtil.h" />
     <ClInclude Include="Tape\tap.h" />
@@ -202,6 +215,14 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FileConverters\dzx0_standard.asm" />
+    <None Include="FileConverters\dzx0_standard_back.asm" />
+    <None Include="FileConverters\scr_draw.asm" />
+    <None Include="FileConverters\sna2tapldr.asm" />
+    <None Include="FileConverters\sna2tapldr.bin" />
+    <None Include="FileConverters\sna2tapldr.lst" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

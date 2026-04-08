@@ -13,6 +13,7 @@ public:
 	static bool BinCut(const char* fnameIn, const char* fnameOut, const char* offsetStr, const char* lenStr);
 	static bool BinPatch(char* fnameIn, char* fnamePatch, char* offsetStr);	
 	static bool BitMirror(char* fnameIn, char* fnameOut);
+	static bool BitXor(char* fnameIn, char* fnameOut, char* mode);
 	static string GetHexPrint(byte* buff, dword len);
 };
 

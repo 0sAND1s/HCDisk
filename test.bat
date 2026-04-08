@@ -79,3 +79,8 @@ REM Cobra CP/M 860KB, 86 tracks, 10 sectors/track, 512 bytes/sector
 cls
 release\hcdisk2 open "testfiles\Cobra860KB.dsk" -t 23 : dir : stat : exit
 pause
+
+REM Snap to tap
+cls
+release\hcdisk2 snap2tap testfiles\dizzy.sna dizzy.tap : open dizzy.tap : dir : exit && del dizzy.tap
+pause

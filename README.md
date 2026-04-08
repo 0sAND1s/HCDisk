@@ -457,6 +457,26 @@ bitmirror - Reverses bits in each byte of PC file; Example: bits 0001 become 100
 - \<output file>: output file name
 
 -----------------------------------------------------------------------------------------------------------------------
+bitxor  : XOR bytes in file; Synthax: bitxor <input> <output> [byte constant]
+        - param. 1: input file: input file name (mandatory)
+        - param. 2: output file: output file name (mandatory)
+        - param. 3: mode: byte to XOR with, or empty for 0-based index XOR
+        - Example 1: "bitxor original.bin xored.bin 255";
+	
+-----------------------------------------------------------------------------------------------------------------------
+autorun         : Creates autorun program for the current disk, with BASIC synthax specific to current file system; Synthax: autorun
+The generated autorun program has the name and loading synthax specific to each platform: Spectrum +3, TRDOS, HC.
+
+-----------------------------------------------------------------------------------------------------------------------
+snap2tap        : Converts a snapshot emulator file to a compressed BASIC Program in a TAP file; Synthax: snap2tap <input.sna> <output.tap>
+        - param. 1: input.sna: input SNA file (mandatory)
+        - param. 2: output.tap: output TAP file (mandatory)
+        - Example 1: "snap2tap dizzy1.sna dizzy1.tap";
+Compared to other similar tools, the advantages are that 
+	- the generated TAP file is the smallest, due to the ZX0 compression now integrated in HCDisk
+	- there's a single block, no custom loader involved, so the resulting TAP file can be stored as is to any disk format or loaded from tape
+	- the screen image is completely restored, even if it's temporarly used to store running code.
+-----------------------------------------------------------------------------------------------------------------------
 exit quit  - Exit program
 
 -----------------------------------------------------------------------------------------------------------------------

@@ -154,6 +154,55 @@ bool FileUtil::BitMirror(char* fnameIn, char* fnameOut)
 	return true;
 }
 
+bool FileUtil::BitXor(char* fnameIn, char* fnameOut, char* mode)
+{
+	long fsizeIn = FileUtil::fsize(fnameIn);
+
+	FILE* fIn = fopen(fnameIn, "rb");
+	FILE* fOut = fopen(fnameOut, "wb");
+	if (fIn == nullptr || fOut == nullptr)
+	{
+		cout << "Couln't open input or output file." << endl;
+		return false;
+	}
+
+	bool modeConst = false;
+	byte constByte = 0, indexByte = 0;
+	if (strlen(mode) > 0)
+	{
+		modeConst = true;
+		constByte = (byte)atoi(mode);
+	}
+
+	while (fsizeIn > 0)
+	{
+		byte b = fgetc(fIn);
+		byte res = 0;		
+
+		if (modeConst)
+		{
+			res = b ^ constByte;
+		}
+		else
+		{
+			res = b ^ indexByte;
+			indexByte++;
+		}
+
+		fputc(res, fOut);
+
+		fsizeIn--;
+	}
+
+	fclose(fIn);
+	fclose(fOut);
+
+	cout << "Applied XOR from file " << fnameIn << "to file " << fnameOut << "." << endl;
+
+	return true;
+}
+
+
 
 string FileUtil::GetHexPrint(byte* buff, dword len)
 {

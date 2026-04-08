@@ -46,11 +46,13 @@
 #include "Tape\Tape2Wave.h"
 #include "COMIF1.h"
 #include "Snapshot/CSnapshotSNA.h"
+#include "sna2tap.h"
 
 #include "BASICUtil.h"
 #include "FileUtil.h"
 #include "GUIUtil.h"
 #include "TapeUtil.h"
+#include "Compression/Compression.h"
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -2365,13 +2367,21 @@ bool SaveBoot(int argc, char* argv[])
 	{
 		printf("There are no boot tracks on the current disk.\n");
 		return false;
-	}
+	}	
 
 	FILE* fout = fopen(fName, "wb");		
 	if (fout == nullptr)
 	{
 		cout << "Couldn't open file " << fName << "." << endl;
 		return false;
+	}
+
+	bool isCPM = theDiskDesc.fsType == FS_CPM_GENERIC;	
+	byte InterleaveTbl[CDiskBase::MAX_SECT_PER_TRACK] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18 };
+	if (isCPM)
+	{
+		auto fsCPM = dynamic_cast<CFSCPM*>(fs);
+		memcpy(InterleaveTbl, fsCPM->CPM_InterleaveTbl, sizeof(InterleaveTbl));
 	}
 	
 	bool res = true;
@@ -2385,10 +2395,12 @@ bool SaveBoot(int argc, char* argv[])
 		CDiskBase::SectDescType sectors[CDiskBase::MAX_SECT_PER_TRACK];
 		res = res && fs->Disk->GetTrackInfo(trackId, headId, sectCnt, sectors);
 
-		word trkSz = sectCnt * CDiskBase::SectCode2SectSize(sectors[0].sectSizeCode);
+		word sectSize = CDiskBase::SectCode2SectSize(sectors[0].sectSizeCode);
+		word trkSz = sectCnt * sectSize;
 		byte* trkBuf = new byte[trkSz * bootTrkCnt];
 
-		res = fs->Disk->ReadSectors(trkBuf, trackId, headId, sectors[0].sectID, sectCnt);
+		for (byte sectIdx = 0; sectIdx < sectCnt && res; sectIdx++)
+			res = fs->Disk->ReadSectors(trkBuf+sectIdx*sectSize, trackId, headId, InterleaveTbl[sectIdx], 1);
 
 		if (res)									
 			fwrite(trkBuf, 1, trkSz, fout);									
@@ -2426,6 +2438,14 @@ bool LoadBoot(int argc, char* argv[])
 		cout << "Couldn't open file " << fName << "." << endl;
 		return false;
 	}
+
+	bool isCPM = theDiskDesc.fsType == FS_CPM_GENERIC;
+	byte InterleaveTbl[CDiskBase::MAX_SECT_PER_TRACK] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18 };
+	if (isCPM)
+	{
+		auto fsCPM = dynamic_cast<CFSCPM*>(fs);
+		memcpy(InterleaveTbl, fsCPM->CPM_InterleaveTbl, sizeof(InterleaveTbl));
+	}
 	
 	bool res = true;
 	for (byte trkIdx = 0; trkIdx < bootTrkCnt && res; trkIdx++)
@@ -2438,11 +2458,14 @@ bool LoadBoot(int argc, char* argv[])
 		CDiskBase::SectDescType sectors[CDiskBase::MAX_SECT_PER_TRACK];
 		res = res && fs->Disk->GetTrackInfo(trackId, headId, sectCnt, sectors);
 
-		word trkSz = sectCnt * CDiskBase::SectCode2SectSize(sectors[0].sectSizeCode);
+		word sectSize = CDiskBase::SectCode2SectSize(sectors[0].sectSizeCode);
+		word trkSz = sectCnt * sectSize;
 		byte* trkBuf = new byte[trkSz];
 			
-		res = res && fread(trkBuf, 1, trkSz, fout) > 0;					
-		res = res && fs->Disk->WriteSectors(trackId, headId, sectors[0].sectID, sectCnt, trkBuf);
+		res = res && fread(trkBuf, 1, trkSz, fout) > 0;
+		
+		for (byte sectIdx = 0; sectIdx < sectCnt && res; sectIdx++)
+			res = fs->Disk->WriteSectors(trackId, headId, InterleaveTbl[sectIdx], 1, trkBuf + sectIdx * sectSize);
 
 		delete[] trkBuf;
 	}
@@ -2776,6 +2799,15 @@ bool BitMirror(int argc, char* argv[])
 	return FileUtil::BitMirror(fnameIn, fnameOut);
 }
 
+bool BitXor(int argc, char* argv[])
+{
+	char* fnameIn = argv[0];
+	char* fnameOut = argv[1];
+	char* mode = argc >= 2 ? argv[2] : nullptr;
+
+	return FileUtil::BitXor(fnameIn, fnameOut, mode);
+}
+
 bool BasImport(int argc, char* argv[])
 {
 	string name = FileUtil::GetNameWithoutExtension(argv[0]);
@@ -2808,19 +2840,13 @@ bool CreateAutorun(int argc, char* argv[])
 		return false;
 }
 
-bool Snap2BAS(int argc, char* argv[])
+bool Snap2Tap(int argc, char* argv[])
 {
 	string nameSNA = argv[0];
 	string nameTAP = argv[1];
 
-	CSnapshotSNA sna;
-	if (!sna.Read(nameSNA.c_str()))
-	{
-		cout << "Couln't open '" << nameSNA << "' as 48K SNA snapshot." << endl;
-		return false;
-	}
-
-	return true;
+	SNA2Tap sna2tap;
+	return sna2tap.Convert(nameSNA, nameTAP);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2878,8 +2904,8 @@ static const Command theCommands[] =
 		},
 		CopyFS},
 	{{"put"}, "Copy PC file to file system", 
-		"copy <source file name> [-n newName] [-d CP/M folder] [-s start] [-t type] [-turbo baud]", 
-		{"copy dizzy.scr -t b -s 16384", "copy 1.COM -d 1", "copy game.bin -t b -turbo 6000"},
+		"put <source file name> [-n newName] [-d CP/M folder] [-s start] [-t type] [-turbo baud]", 
+		{"put dizzy.scr -t b -s 16384", "put 1.COM -d 1", "put game.bin -t b -turbo 6000"},
 		{
 			{"source file", true, "the file to copy"},
 			{"-n newname", false, "name for destination file"},
@@ -2903,7 +2929,8 @@ static const Command theCommands[] =
 	{{"tapplay"}, "Play the tape into a wav file","tapplay [-w]",{"tapplay", "tapplay -w"},
 		{{"-w", false, "play to a .wav file instead of realtime"}},
 		PlayTape},
-	{{"tapexp"}, "Exports the files to a tape image","tapexp <new TAP> [filemask] [-convldr]",{"tapexp NEW.TAP", "tapexp Dizzy* Dizzy.tap", "tapexp Dizzy* Dizzy.tap -convldr"},
+	{{"tapexp"}, "Exports the files to a tape image",
+		"tapexp <new TAP> [filemask] [-convldr]",{"tapexp NEW.TAP", "tapexp Dizzy.tap Dizzy*", "tapexp name.tap * -convldr"},
 		{{".tap name", true, "the TAP file name"},
 		{"file mask", false, "the file name mask"},
 		{"-convldr", false, "convert BASIC loader synthax, file names"}
@@ -3013,18 +3040,27 @@ static const Command theCommands[] =
 			{"output file", true, "output file name"},
 		},
 		BitMirror },
+	{ {"bitxor"}, "XOR bytes in file",
+		"bitxor <input> <output> [byte constant]",
+		{"bitxor original.bin xored.bin 255"},
+		{
+			{"input file", true, "input file name"},
+			{"output file", true, "output file name"},
+			{"mode", false, "byte to XOR with, or empty for 0-based index XOR"}
+		},
+		BitXor },
 	{ {"autorun"}, "Creates autorun program for the current disk, with BASIC synthax specific to current file system",
 		"autorun", {},
 		{},
 		CreateAutorun },
-	{ {"snap2bas"}, "Converts a snapshot emulator file to a compressed BASIC Program in a TAP file",
-		"snap2bas <input.sna> <output.tap>", 
-		{"snap2bas dizzy1.sna dizzy1.tap"},
+	{ {"snap2tap"}, "Converts a snapshot emulator file to a compressed BASIC Program in a TAP file",
+		"snap2tap <input.sna> <output.tap>", 
+		{"snap2tap dizzy1.sna dizzy1.tap"},
 		{
 			{"input.sna", true, "input SNA file"},
 			{"output.tap", true, "output TAP file"},
 		},
-		Snap2BAS },
+		Snap2Tap },
 	{ {"exit", "quit"}, "Exit program", 
 		"exit",{},
 		{},

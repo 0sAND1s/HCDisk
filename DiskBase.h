@@ -119,10 +119,10 @@ public:
 
 	DiskDescType DiskDefinition;
 	char* diskCmnt;
+	byte InterlaveTbl[MAX_SECT_PER_TRACK];
 
 protected:		
-	byte m_Skew;			//Sector IDs for hardware interleave
-	byte InterlaveTbl[MAX_SECT_PER_TRACK];
+	byte m_Skew;			//Sector IDs for hardware interleave	
 	static char* ERROR_TYPE_MSG[];
 	ErrorType LastError;	
 	bool continueOnError = true;

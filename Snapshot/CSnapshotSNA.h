@@ -2,7 +2,6 @@
 #pragma once
 
 #include "..\types.h"
-#include "..\FileConverters\Screen.h"
 
 class CSnapshotSNA
 {
@@ -20,7 +19,7 @@ public:
 		word HL;
 		word DE;
 		word BC;
-
+		
 		word IY;
 		word IX;
 
@@ -36,8 +35,8 @@ public:
 
 	struct
 	{				
-		ScreenType SNASCR;
-		byte SNANonSCR[48 * 1024 - sizeof(ScreenType)];		
+		byte SNASCR[6912];
+		byte SNAMainMem[48 * 1024 - sizeof(SNASCR)];
 	} SNAMemory;	
 #pragma pack()
 
