@@ -457,40 +457,46 @@ bitmirror - Reverses bits in each byte of PC file; Example: bits 0001 become 100
 - \<output file>: output file name
 
 -----------------------------------------------------------------------------------------------------------------------
-bitxor  : XOR bytes in file; Synthax: bitxor <input> <output> [byte constant]
+bitxor -  XOR bytes in file; Synthax: bitxor \<input\> \<output\> [byte constant]
         - param. 1: input file: input file name (mandatory)
         - param. 2: output file: output file name (mandatory)
         - param. 3: mode: byte to XOR with, or empty for 0-based index XOR
         - Example 1: "bitxor original.bin xored.bin 255";
 	
 -----------------------------------------------------------------------------------------------------------------------
-autorun         : Creates autorun program for the current disk, with BASIC synthax specific to current file system; Synthax: autorun
+autorun - Creates autorun program for the current disk, with BASIC synthax specific to current file system; Synthax: autorun
 The generated autorun program has the name and loading synthax specific to each platform: Spectrum +3, TRDOS, HC.
 
 -----------------------------------------------------------------------------------------------------------------------
-snap2tap        : Converts a snapshot emulator file to a compressed BASIC Program in a TAP file; Synthax: snap2tap <input.sna> <output.tap>
-        - param. 1: input.sna: input SNA file (mandatory)
-        - param. 2: output.tap: output TAP file (mandatory)
-        - Example 1: "snap2tap dizzy1.sna dizzy1.tap";
+snap2tap - Converts a snapshot emulator file to a compressed BASIC Program in a TAP file;
+
+Synthax: snap2tap \<input.sna\> \<output.tap\>
+- param. 1: input.sna: input SNA file (mandatory)
+- param. 2: output.tap: output TAP file (mandatory)
+- Example 1: "snap2tap dizzy1.sna dizzy1.tap";
+	
+This command allows converting a game for disk storage even when the tape loader is too complex for manual conversion. Load the game in an emulator, save the SNA snapshot, convert to compressed TAP with this command, store to disk.
 Compared to other similar tools, the advantages are that 
-	- the generated TAP file is the smallest, due to the ZX0 compression now integrated in HCDisk
-	- there's a single block, no custom loader involved, so the resulting TAP file can be stored as is to any disk format or loaded from tape
+	- the generated TAP file is the smallest, due to the ZX0 compression now integrated in HCDisk. This helps with faster loading and minimal storage requirements.
+	- there's a single block in the TAP file, no custom loader involved, so the resulting TAP file can be stored as is to any disk format, or loaded from tape
 	- the screen image is completely restored, even if it's temporarly used to store running code.
+	
 -----------------------------------------------------------------------------------------------------------------------
 exit quit  - Exit program
 
 -----------------------------------------------------------------------------------------------------------------------
-	Commands can be concatenated using the ":" character. Example: "open -t 1 : ls : close" .
-	The same commands can be entered interactively, or on the program command line, making it easier to use it in batch programs:
+
+Commands can be concatenated using the ":" character. Example: "open -t 1 : ls : close" .
+  The same commands can be entered interactively, or on the program command line, making it easier to use it in batch programs:
 "hcdisk2.exe open plus3.dsk -t 1 : cat run : exit >> run.bas" - will open the disk plus3.dsk, specifying the type of file system
 to be preselected, as the first in the list (1), display the basic program named "run", and then exit. 
 Because the output is redirected into the file run.bas, the result is the BASIC program into a text file.
 	
 ## 6. What about the source code?
 
-	The program is written in C++, and it's using the Standard Template Library (STL). I used Visual Studio 2008 for development,
-but I made sure a free compiler can also be used, and I tested with Borland C++ 5.5 free compiler, that can be downloaded from here:
-http://edn.embarcadero.com/article/20633 .
+  The program is written in C++, and it's using the Standard Template Library (STL). I used Visual Studio for development (currently using Visual Studio 2022 comunity edition, free),
+but I made sure a free compiler can also be used, and I tested with Borland C++ v7 free compiler, that can be downloaded from here:
+https://www.embarcadero.com/free-tools/ccompiler .
 	Most of the code is written by me, from scratch, but some components are used, as follows:
 - SCREEN$ to GIF code is written by M. van der Heide; I had my own implementation, with the added functionality of saving to 
 other formats besides GIF, but it used the GDI+ library, which is harder to use with the Borland compiler.
@@ -514,8 +520,7 @@ the original author and include the changes you added to the code, when you rele
 - Add file system configuration in external config. file, to be able to add varations of a file system without recompiling
 - Add write support for the current read-only file systems, if usefull.
 - Audio tape signal digitisation.
-- COM port transfer speed improvement using 19200 baud for HC computers, from 4800/9600 baud currently supported.
-- Create a GUI using MFC or QT.
+- Create a GUI using MFC or QT or WxWidgets or TurboVision.
 
 ## 8. What are the system requirements?
 - For best compatibility for floppy disk access, an older PC is recomended, with a floppy controller on the motherboard. These were produced up until about 2003-2004. 

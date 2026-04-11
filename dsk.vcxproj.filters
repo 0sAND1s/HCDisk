@@ -347,16 +347,10 @@
     <None Include="FileConverters\dzx0_standard_back.asm">
       <Filter>FileConverters\sna2tap</Filter>
     </None>
-    <None Include="FileConverters\scr_draw.asm">
-      <Filter>FileConverters\sna2tap</Filter>
-    </None>
     <None Include="FileConverters\sna2tapldr.asm">
       <Filter>FileConverters\sna2tap</Filter>
     </None>
     <None Include="FileConverters\sna2tapldr.bin">
-      <Filter>FileConverters\sna2tap</Filter>
-    </None>
-    <None Include="FileConverters\dzx0_standard.asm">
       <Filter>FileConverters\sna2tap</Filter>
     </None>
     <None Include="FileConverters\sna2tapldr.lst">

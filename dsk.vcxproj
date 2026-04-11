@@ -217,9 +217,7 @@ $(ProjectDir)\bin2h.exe sna2tapldr &lt; fileconverters\sna2tapldr.bin &gt; filec
     <Text Include="README.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="FileConverters\dzx0_standard.asm" />
     <None Include="FileConverters\dzx0_standard_back.asm" />
-    <None Include="FileConverters\scr_draw.asm" />
     <None Include="FileConverters\sna2tapldr.asm" />
     <None Include="FileConverters\sna2tapldr.bin" />
     <None Include="FileConverters\sna2tapldr.lst" />

@@ -1,7 +1,7 @@
 //TODO:
 //-restore last 6 bytes of screen overwritten because of compressor gap
 //-restore first part of screen where the restore code resides using the gap buffer; where to move the running code? in the stack?
-//Restore code must be less than 257 bytes, since most games have the interrupt table buffer of 257 used as gap buffer.
+//Restore code must be less than 257 bytes, since most games have the interrupt table buffer of 257 used as gap buffer. Reducing to 255 bytes, to keep the lenght on a single byte and siplify code.
 
 #include <string>
 #include <iostream>
@@ -45,13 +45,14 @@ word SNA2Tap::FindMemGap(byte* mem, word memLen, const word minLenReq)
 	return gapCnt > 1 ? idx - gapCnt : 0xFFFF;
 }
 
+
 bool SNA2Tap::Convert(string nameSNA, string nameTAP)
 {
 #pragma pack(1)
-	const byte stackEntries = 3;
+	const byte stackEntries = 5;
 	struct LoaderParams
 	{
-		word compressedLenTotal;
+		word compressedLenScr;
 		word compressedLenMain;
 		word gapAddr;
 		byte gapLen;
@@ -70,12 +71,16 @@ bool SNA2Tap::Convert(string nameSNA, string nameTAP)
 		return false;
 	}
 
-	const byte ldrPrefix = 32;
+	const byte ldrPrefix = 103; //Loader has a routine that moves the code to fixed address and it's not needed anymore.
+	const byte scrDelta = 5; //Exclude x bytes of screen for screen compression delta.
+	const byte mainDelta = 6;
 	const word ldrSize = sizeof(sna2tapldr) - ldrPrefix;
-	word gapAddr = 0;	
+	const word gapLen = ldrSize + scrDelta; //Include screen delta in gap, as uncompressed data.
+	word gapAddr = 0;
 	byte gapValue = 0;
-	word gapLen = ldrSize;
-	word gapOffset = FindMemGap(sna.SNAMemory.SNAMainMem, sizeof(sna.SNAMemory.SNAMainMem), gapLen);//exclude first part that moves the code, but include the reserved stack
+
+	//Exclude first part that moves the code, but include the reserved stack.
+	word gapOffset = FindMemGap(sna.SNAMemory.SNAMainMem, sizeof(sna.SNAMemory.SNAMainMem), gapLen);
 	if (gapOffset != 0xFFFF)
 	{
 		gapAddr = 16384 + sizeof(sna.SNAMemory.SNASCR) + gapOffset;
@@ -84,7 +89,7 @@ bool SNA2Tap::Convert(string nameSNA, string nameTAP)
 	}
 	else
 	{
-		cout << "Couldn't find memory gap of lenght " << ldrSize << "." << endl;
+		cout << "Couldn't find memory gap of lenght " << gapLen << "." << endl;
 		return false;
 	}
 
@@ -100,26 +105,23 @@ bool SNA2Tap::Convert(string nameSNA, string nameTAP)
 	int delta = 0;
 	const bool compressBackwards = true;
 
-	//Copy last 6 bytes of screen.
-	const byte deltaScr = 6;
-	memcpy(sna.SNAMemory.SNAMainMem + gapOffset, sna.SNAMemory.SNASCR + sizeof(sna.SNAMemory.SNASCR) - deltaScr, deltaScr);
-
-	//Save screen without first part, which will be used for restore code.
-	word lenOutScr = comp.Compress(sna.SNAMemory.SNASCR + gapLen, sizeof(sna.SNAMemory.SNASCR) - gapLen - deltaScr, &scrCompressed, compressBackwards, quickMode, &delta);
-	cout << "Screen compressed " << (compressBackwards ? "backwards" : "forward") << " to " << lenOutScr << ", delta " << delta << "." << endl;
+	//Compress screen without first part, which will be used for code. Include screen compression delta and main block delta.
+	word lenOutScr = comp.Compress(sna.SNAMemory.SNASCR + gapLen, sizeof(sna.SNAMemory.SNASCR) - gapLen + mainDelta, &scrCompressed, compressBackwards, quickMode, &delta);
+	cout << "Screen compressed to " << lenOutScr << ", delta " << delta << "." << endl;
 
 	//Copy first part of screen$ to main block gap, to restore later.
-	memcpy(sna.SNAMemory.SNAMainMem + gapOffset+ deltaScr, sna.SNAMemory.SNASCR, gapLen);
+	memcpy(sna.SNAMemory.SNAMainMem + gapOffset, sna.SNAMemory.SNASCR, gapLen);
 
 	byte* mainCompressed = nullptr;
-	word lenOutMain = comp.Compress(sna.SNAMemory.SNAMainMem, sizeof(sna.SNAMemory.SNAMainMem), &mainCompressed, compressBackwards, quickMode, &delta);
-	cout << "Main block compressed " << (compressBackwards ? "backwards" : "forward") << " to " << lenOutMain << ", delta " << delta << "." << endl;
+	word lenOutMain = comp.Compress(sna.SNAMemory.SNAMainMem + mainDelta, sizeof(sna.SNAMemory.SNAMainMem) - mainDelta, &mainCompressed, compressBackwards, quickMode, &delta);
+	cout << "Main block compressed to " << lenOutMain << ", delta " << delta << "." << endl;
 	
-	//Copy from original buffer, as that one is read only.
+	//Copy the loader AND prefix code from original buffer, as the definition of byte array is read only.
 	byte* Snap2TapLoader = new byte[sizeof(sna2tapldr)];
-	memcpy(Snap2TapLoader, sna2tapldr, ldrSize);
+	memcpy(Snap2TapLoader, sna2tapldr, sizeof(sna2tapldr));
+
 	LoaderParams* ldrPrm = (LoaderParams*)&Snap2TapLoader[sizeof(sna2tapldr) - sizeof(LoaderParams)];
-	ldrPrm->compressedLenTotal = lenOutMain + lenOutScr;
+	ldrPrm->compressedLenScr = lenOutScr;
 	ldrPrm->compressedLenMain = lenOutMain;
 	ldrPrm->gapAddr = gapAddr;
 	ldrPrm->gapLen = (byte)gapLen;
@@ -136,7 +138,6 @@ bool SNA2Tap::Convert(string nameSNA, string nameTAP)
 	case 2:
 		ldrPrm->instrIM = 0x5E; //IM2
 	}
-
 	ldrPrm->SNAHdr = sna.SNAHdr;
 
 
@@ -144,8 +145,8 @@ bool SNA2Tap::Convert(string nameSNA, string nameTAP)
 	const char* blobName = "snap2tap.bin";
 	FILE* fblob = fopen(blobName, "wb");
 	fwrite(Snap2TapLoader, 1, sizeof(sna2tapldr), fblob);
-	fwrite(mainCompressed, 1, lenOutMain, fblob);
 	fwrite(scrCompressed, 1, lenOutScr, fblob);
+	fwrite(mainCompressed, 1, lenOutMain, fblob);
 	fclose(fblob);
 	free(scrCompressed);
 	free(mainCompressed);
