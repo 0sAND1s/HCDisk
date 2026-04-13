@@ -482,6 +482,14 @@ Compared to other similar tools, the advantages are that
 	- the screen image is completely restored, even if it's temporarly used to store running code.
 	
 -----------------------------------------------------------------------------------------------------------------------
+z802sna - Converts a Z80 snapshot file to a SNA snapshot file. I like SNA format better, as it's much more simple.
+
+	Synthax: snap2tap \<input.z80\> \<output.sna\>
+        - param. 1: input.z80: input Z80 file (mandatory)
+        - param. 2: output.sna: output SNA file (mandatory)
+        - Example 1: "snap2tap dizzy1.z80 dizzy1.sna";
+
+-----------------------------------------------------------------------------------------------------------------------
 exit quit  - Exit program
 
 -----------------------------------------------------------------------------------------------------------------------

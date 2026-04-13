@@ -185,6 +185,9 @@
     <ClCompile Include="TapeUtil.cpp">
       <Filter>Tape</Filter>
     </ClCompile>
+    <ClCompile Include="Snapshot\CSnapshotZ80.cpp">
+      <Filter>Snapshot</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DiskBase.h">
@@ -338,6 +341,9 @@
     </ClInclude>
     <ClInclude Include="FileConverters\sna2tapldr.h">
       <Filter>FileConverters\sna2tap</Filter>
+    </ClInclude>
+    <ClInclude Include="Snapshot\CSnapshotZ80.h">
+      <Filter>Snapshot</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

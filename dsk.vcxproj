@@ -150,6 +150,7 @@ $(ProjectDir)\bin2h.exe sna2tapldr &lt; fileconverters\sna2tapldr.bin &gt; filec
     <ClCompile Include="GUIUtil.cpp" />
     <ClCompile Include="sna2tap.cpp" />
     <ClCompile Include="Snapshot\CSnapshotSNA.cpp" />
+    <ClCompile Include="Snapshot\CSnapshotZ80.cpp" />
     <ClCompile Include="TapeUtil.cpp" />
     <ClCompile Include="Tape\tap.cpp" />
     <ClCompile Include="Tape\Tape2Wave.cpp" />
@@ -204,6 +205,7 @@ $(ProjectDir)\bin2h.exe sna2tapldr &lt; fileconverters\sna2tapldr.bin &gt; filec
     <ClInclude Include="GUIUtil.h" />
     <ClInclude Include="sna2tap.h" />
     <ClInclude Include="Snapshot\CSnapshotSNA.h" />
+    <ClInclude Include="Snapshot\CSnapshotZ80.h" />
     <ClInclude Include="TapeUtil.h" />
     <ClInclude Include="Tape\tap.h" />
     <ClInclude Include="Tape\Tape2Wave.h" />

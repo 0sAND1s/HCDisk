@@ -1,10 +1,10 @@
 #pragma once
 #include "types.h"
 
-class SNA2Tap
+class SNAP2TAP
 {
 public:
-	SNA2Tap();
+	SNAP2TAP();
 	word FindMemGap(byte* mem, word memLen, const word minLenReq);
 	bool Convert(std::string nameSNA, std::string nameTAP);	
 

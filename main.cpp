@@ -46,6 +46,7 @@
 #include "Tape\Tape2Wave.h"
 #include "COMIF1.h"
 #include "Snapshot/CSnapshotSNA.h"
+#include "Snapshot/CSnapshotZ80.h"
 #include "sna2tap.h"
 
 #include "BASICUtil.h"
@@ -86,6 +87,8 @@ typedef enum
 	STOR_TAP,
 	STOR_TZX,	
 	STOR_TD0,
+	STOR_SNA,
+	STOR_Z80,
 
 	STOR_LAST
 } StorageType;
@@ -104,7 +107,9 @@ static char* StorageTypeNames[] =
 	"MGT - Miles Gordon Tech DISK IMAGE (RO)",
 	"TAP - TAPE IMAGE (RW)",
 	"TZX - TAPE IMAGE (RW)",
-	"TD0 - Sydex Teledisk DISK IMAGE (RO)"
+	"TD0 - Sydex Teledisk DISK IMAGE (RO)",
+	"SNA - Snapshot 48K",
+	"Z80 - Snapshot 48K"
 };
 
 StorageType storType;
@@ -2845,8 +2850,33 @@ bool Snap2Tap(int argc, char* argv[])
 	string nameSNA = argv[0];
 	string nameTAP = argv[1];
 
-	SNA2Tap sna2tap;
+	SNAP2TAP sna2tap;
 	return sna2tap.Convert(nameSNA, nameTAP);
+}
+
+bool Z802SNA(int argc, char* argv[])
+{
+	string nameZ80 = argv[0];
+	string nameSNA = argv[1];
+
+	CSnapshotZ80 z80;
+	CSnapshotSNA sna;
+	bool res = z80.Read(nameZ80.c_str());
+	if (res)
+	{
+		sna = z80;
+		res = sna.Write(nameSNA.c_str());
+		if (res)
+		{
+			cout << "Converted " << nameZ80 << " to " << nameSNA << "." << endl;
+		}
+	}
+	else
+	{
+		cout << "Could not open " << nameZ80 << " as a 48K Z80 snapshot file." << endl;
+	}
+
+	return res;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3049,11 +3079,11 @@ static const Command theCommands[] =
 			{"mode", false, "byte to XOR with, or empty for 0-based index XOR"}
 		},
 		BitXor },
-	{ {"autorun"}, "Creates autorun program for the current disk, with BASIC synthax specific to current file system",
+	{ {"autorun"}, "Creates autorun program for the current disk & file system",
 		"autorun", {},
 		{},
 		CreateAutorun },
-	{ {"snap2tap"}, "Converts a snapshot emulator file to a compressed BASIC Program in a TAP file",
+	{ {"snap2tap"}, "Converts a SNA or Z80 snapshot to a compressed BASIC program as TAP file",
 		"snap2tap <input.sna> <output.tap>", 
 		{"snap2tap dizzy1.sna dizzy1.tap"},
 		{
@@ -3061,6 +3091,14 @@ static const Command theCommands[] =
 			{"output.tap", true, "output TAP file"},
 		},
 		Snap2Tap },
+	{ {"z802sna"}, "Converts a Z80 snapshot file to a SNA snapshot file",
+		"snap2tap <input.z80> <output.sna>",
+		{"snap2tap dizzy1.z80 dizzy1.sna"},
+		{
+			{"input.z80", true, "input Z80 file"},
+			{"output.sna", true, "output SNA file"},
+		},
+		Z802SNA },
 	{ {"exit", "quit"}, "Exit program", 
 		"exit",{},
 		{},
@@ -3075,7 +3113,7 @@ void PrintHelpCmd(Command theCommand)
 		if (theAlias != nullptr)
 			printf("%s ", theAlias);
 	}
-	printf("\t: %s; ", theCommand.desc);
+	printf(": %s; ", theCommand.desc);
 
 	if (strlen(theCommand.synthax) > 0)
 		printf("Synthax: %s\n", theCommand.synthax);

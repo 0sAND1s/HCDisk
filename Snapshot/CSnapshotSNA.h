@@ -33,15 +33,21 @@ public:
 		byte BorderClr;
 	} SNAHdr;
 
-	struct
-	{				
-		byte SNASCR[6912];
-		byte SNAMainMem[48 * 1024 - sizeof(SNASCR)];
-	} SNAMemory;	
+	union
+	{
+		byte AllMem[48 * 1024];
+		struct
+		{
+			byte SNASCR[6912];
+			byte SNAMainMem[48 * 1024 - sizeof(SNASCR)];
+		};
+	} SNAMemory;
+	
+
 #pragma pack()
 
-	bool CSnapshotSNA::Read(const char* path);
-	bool CSnapshotSNA::Write(const char* path);
+	virtual bool CSnapshotSNA::Read(const char* path);
+	virtual bool CSnapshotSNA::Write(const char* path);
 
 protected:
 	bool IsOpened = false;

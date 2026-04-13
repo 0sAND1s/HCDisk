@@ -8,21 +8,27 @@
 
 #include "sna2tap.h"
 #include "Snapshot/CSnapshotSNA.h"
+#include "Snapshot/CSnapshotZ80.h"
 #include "Compression/Compression.h"
 #include "CFileArchiveTape.h"
 #include "FileUtil.h"
 #include "BASICUtil.h"
+#pragma warning(push)
+#pragma warning(disable: 4838)
+#pragma warning(disable: 4309)
 #include "FileConverters\sna2tapldr.h"
+#pragma warning(pop)
+#include <algorithm>
 
 using namespace std;
 
-SNA2Tap::SNA2Tap()
+SNAP2TAP::SNAP2TAP()
 {
 
 }
 
 //Find a memory gap of identical values with minLenReq lenght
-word SNA2Tap::FindMemGap(byte* mem, word memLen, const word minLenReq)
+word SNAP2TAP::FindMemGap(byte* mem, word memLen, const word minLenReq)
 {
 	word idx = 1;
 	word gapCnt = 1;
@@ -46,7 +52,7 @@ word SNA2Tap::FindMemGap(byte* mem, word memLen, const word minLenReq)
 }
 
 
-bool SNA2Tap::Convert(string nameSNA, string nameTAP)
+bool SNAP2TAP::Convert(string nameSnap, string nameTAP)
 {
 #pragma pack(1)
 	const byte stackEntries = 5;
@@ -65,11 +71,29 @@ bool SNA2Tap::Convert(string nameSNA, string nameTAP)
 #pragma pack()
 
 	CSnapshotSNA sna;
-	if (!sna.Read(nameSNA.c_str()))
+	string ext = FileUtil::GetExtension(nameSnap);
+	transform(ext.begin(), ext.end(), ext.begin(), toupper);
+
+	if (ext == "SNA")
 	{
-		cout << "Couln't open '" << nameSNA << "' as 48K SNA snapshot." << endl;
-		return false;
+		if (!sna.Read(nameSnap.c_str()))
+		{
+			cout << "Couln't open '" << nameSnap << "' as 48K SNA snapshot." << endl;
+			return false;
+		}
 	}
+	else if (ext == "Z80")
+	{
+		CSnapshotZ80 z80;
+		if (!z80.Read(nameSnap.c_str()))
+		{
+			cout << "Couln't open '" << nameSnap << "' as 48K Z80 snapshot." << endl;
+			return false;
+		}
+
+		sna = z80;
+	}
+	
 
 	const byte ldrPrefix = 103; //Loader has a routine that moves the code to fixed address and it's not needed anymore.
 	const byte scrDelta = 5; //Exclude x bytes of screen for screen compression delta.
