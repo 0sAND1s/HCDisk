@@ -21,7 +21,7 @@ public:
 
 	~CDiskImgRaw();
 		
-	virtual bool Open(char* imgName, DiskOpenMode openMode = OPEN_MODE_EXISTING);
+	virtual bool Open(const char* imgName, DiskOpenMode openMode = OPEN_MODE_EXISTING);
 	virtual bool ReadSectors(byte * buff, byte track, byte side, byte sector, byte sectCnt);
 	virtual bool WriteSectors(byte track, byte side, byte sector, byte sectCnt, byte * buff);
 	virtual bool FormatTrack(byte track, byte side);

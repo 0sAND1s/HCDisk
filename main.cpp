@@ -889,7 +889,7 @@ void PrintLastErrMsg()
 	printf("Windows reports an error: %s", buf);
 }
 
-CDiskBase* InitDisk(char* path, CDiskBase::DiskDescType* dd = NULL)
+CDiskBase* InitDisk(const char* path, CDiskBase::DiskDescType* dd = NULL)
 {
 	CDiskBase* disk = NULL;
 
@@ -2488,32 +2488,45 @@ bool FormatDisk(int argc, char* argv[])
 	if (argc == 0)
 		res = false;
 
-	char* path = argv[0];
-	strupr(path);	
+	string path = argv[0];		
 
 	byte selGeom = 0xFF;
 	if (argc >= 3 && strcmp(argv[1], "-t") == 0)
 		selGeom = atoi(argv[2])-1;	
 
 	auto ext = FileUtil::GetExtension(path);
-	bool formatWithoutConfirmationRequested = (ext == "TAP" || ext == "TZX" ? (argc >= 2 && stricmp(argv[1], "-y") == 0) : (argc >= 4 && stricmp(argv[3], "-y") == 0));
-	struct stat statRes;	
-	if (!formatWithoutConfirmationRequested && stat(path, &statRes) == 0 && !GUIUtil::Confirm("The format operation will erase existing data. Are you sure?"))
+	bool isTAPFile = stricmp(ext.c_str(), "TAP") == 0;
+	bool isTZXFile = stricmp(ext.c_str(), "TZX") == 0;
+	bool isDiskDriveSpecified = (stricmp(path.c_str(), "A:") == 0 || stricmp(path.c_str(), "B:") == 0);	 //Assume A: or B:
+	
+	if (isDiskDriveSpecified && !CDiskWin32Native::IsFloppyDrive(path.c_str()))
+	{				
+		cout << "The specified drive " << path << " is not a floppy drive." << endl;
+		return false;		
+	}
+	
+	bool formatWithoutConfirmationRequested = false;
+	for (byte argIdx = 0; argIdx < argc && !formatWithoutConfirmationRequested; argIdx++)
+		formatWithoutConfirmationRequested = (stricmp(argv[argIdx], "-y") == 0);
+	bool doesDestFileExist = !isDiskDriveSpecified ? FileUtil::fsize(path.c_str()) > 0 : false;
+	if (!formatWithoutConfirmationRequested &&
+		(isDiskDriveSpecified ? true : doesDestFileExist) &&
+		!GUIUtil::Confirm("The format operation will erase existing data. Are you sure?"))
 	{
 		return false;
 	}
 	
-	if (ext == "TAP")
+	if (isTAPFile)
 	{
 		ofstream tapFile(path);
 		res = tapFile.good();
 		tapFile.close();		
 		return res;
 	}
-	else if (ext == "TZX")
+	else if (isTZXFile)
 	{		
 		CTZXFile* tzx = new CTZXFile();
-		bool res = tzx->Open(path, CTapFile::TAP_OPEN_NEW);
+		bool res = tzx->Open(path.c_str(), CTapFile::TAP_OPEN_NEW);
 		tzx->Close();
 		delete tzx;
 		return res;
@@ -2536,14 +2549,14 @@ bool FormatDisk(int argc, char* argv[])
 	{
 		dd = DISK_TYPES[selGeom].diskDef;
 
-		disk = InitDisk(path, &dd);
+		disk = InitDisk(path.c_str(), &dd);
 	}	
 
 	if (res)
 		res = (disk != NULL);
 
 	if (res)
-		res = disk->Open((char*)path, CDiskBase::OPEN_MODE_CREATE);
+		res = disk->Open(path.c_str(), CDiskBase::OPEN_MODE_CREATE);
 
 	CFileSystem* fs = NULL;
 

@@ -7,7 +7,7 @@ CDiskImgRaw::~CDiskImgRaw()
 		fclose(fileImg);
 }
 
-bool CDiskImgRaw::Open(char* imgName, DiskOpenMode openMode)
+bool CDiskImgRaw::Open(const char* imgName, DiskOpenMode openMode)
 {
 	fileImg = fopen(imgName, openMode == OPEN_MODE_EXISTING ? "rb+" : "wb+");
 	if (fileImg != NULL)

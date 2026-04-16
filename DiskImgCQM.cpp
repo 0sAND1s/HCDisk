@@ -33,7 +33,7 @@ const unsigned long CDiskImgCQM::crc32r_table[256] = {
 	0xB40BBE37UL,0xC30C8EA1UL,0x5A05DF1BUL,0x2D02EF8DUL,
 };
 
-bool CDiskImgCQM::Open(char* imgName, DiskOpenMode openMode)
+bool CDiskImgCQM::Open(const char* imgName, DiskOpenMode openMode)
 {
 	if (openMode != OPEN_MODE_EXISTING)
 		return false;
@@ -378,7 +378,7 @@ void CDiskImgCQM::drv_qm_dump_sector_hex(unsigned char* buf,int sz)
 
 
 
-int CDiskImgCQM::qmOpen(char* imgName) 
+int CDiskImgCQM::qmOpen(const char* imgName) 
 {
     FILE* fp;
     char header[QM_HEADER_SIZE];

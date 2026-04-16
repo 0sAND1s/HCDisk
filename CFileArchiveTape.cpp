@@ -79,7 +79,7 @@ bool CFileArchiveTape::Init()
 	return res;
 }
 
-bool CFileArchiveTape::Open(char* name, bool create)
+bool CFileArchiveTape::Open(const char* name, bool create)
 {
 	char nameUp[_MAX_PATH];
 	strncpy(nameUp, name, sizeof(nameUp));

@@ -55,7 +55,7 @@ public:
 	TapeBlkReadStatus m_CurBlkStts;
 	long m_FileSz;
 
-	char * fileName;
+	const char * fileName;
 protected:
 	
 	FILE * tapFile;			
@@ -65,7 +65,7 @@ public:
 	CTapFile();	
 	virtual ~CTapFile();
 
-	virtual bool Open(char * fileName, TapeOpenMode mode = TAP_OPEN_EXISTING);
+	virtual bool Open(const char * fileName, TapeOpenMode mode = TAP_OPEN_EXISTING);
 	virtual bool Close();
 	
 	virtual bool GetFirstBlock(CTapeBlock* tb);

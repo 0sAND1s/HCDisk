@@ -20,7 +20,7 @@ public:
 		DiskDefinition.Filler = 0xE5;
 	}
 
-	virtual bool Open(char* imgName, DiskOpenMode openMode = OPEN_MODE_EXISTING);
+	virtual bool Open(const char* imgName, DiskOpenMode openMode = OPEN_MODE_EXISTING);
 	virtual bool ReadSectors(byte * buff, byte track, byte side, byte sector, byte sectCnt);	
 	virtual bool Seek(byte trackNo);		
 	virtual bool GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescType sectors[]);	

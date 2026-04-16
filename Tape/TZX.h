@@ -189,7 +189,7 @@ public:
 	CTZXFile();
 	virtual ~CTZXFile();
 
-	virtual bool Open(char * fileName, TapeOpenMode mode = TAP_OPEN_EXISTING);
+	virtual bool Open(const char * fileName, TapeOpenMode mode = TAP_OPEN_EXISTING);
 	virtual bool GetFirstBlock(CTapeBlock* tb);
 	virtual bool GetNextBlock(CTapeBlock* tb);
 	virtual bool IndexTape();

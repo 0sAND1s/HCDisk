@@ -98,7 +98,7 @@ public:
 	virtual bool FormatDisk();
 	virtual bool Seek(byte trackNo)=0;		
 	virtual bool GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescType sectors[])=0;
-	virtual bool Open(char* src, DiskOpenMode)=0;
+	virtual bool Open(const char* src, DiskOpenMode)=0;
 
 	virtual bool ReadTrack(byte* buff, byte track, byte head);
 	virtual bool WriteTrack(byte track, byte head, byte* buff);	

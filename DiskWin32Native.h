@@ -22,7 +22,7 @@ public:
 	CDiskWin32Native();
 	CDiskWin32Native(DiskDescType dd);
 	~CDiskWin32Native();	
-	bool Open(char* drive, DiskOpenMode mode = OPEN_MODE_EXISTING);
+	bool Open(const char* drive, DiskOpenMode mode = OPEN_MODE_EXISTING);
 	bool ReadSectors(byte* buf, byte track, byte head, byte sect, byte sectNO);
 	bool WriteSectors(byte track, byte side, byte sector, byte sectCnt, byte* buff);
 	bool Seek(byte track);	
@@ -30,6 +30,6 @@ public:
 	bool GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescType sectorsInfo[]);
 	bool FormatTrack(byte track, byte side);
 
-	static bool IsUSBVolume(char* drive);
-	static bool IsFloppyDrive(char* path);
+	static bool IsUSBVolume(const char* drive);
+	static bool IsFloppyDrive(const char* path);
 };

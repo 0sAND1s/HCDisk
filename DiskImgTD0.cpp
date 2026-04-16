@@ -8,7 +8,7 @@
 const char* CDiskImgTD0::TD0_SIG_NORMAL = "TD";    // Normal compression (RLE)
 const char* CDiskImgTD0::TD0_SIG_ADVANCED = "td";    // Huffman compression also used for everything after TD0_HEADER
 
-bool CDiskImgTD0::Open(char* imgName, DiskOpenMode openMode)
+bool CDiskImgTD0::Open(const char* imgName, DiskOpenMode openMode)
 {
 	LastError = ERR_OPEN;
 

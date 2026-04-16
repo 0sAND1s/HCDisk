@@ -23,7 +23,7 @@ public:
 	CDiskWin32LowLevel();
 	~CDiskWin32LowLevel();
 	static DWORD GetDriverVersion();
-	bool Open(char* drive, DiskOpenMode mode = OPEN_MODE_EXISTING);
+	bool Open(const char* drive, DiskOpenMode mode = OPEN_MODE_EXISTING);
 	bool ReadSectors(byte *buf,byte track,byte head,byte sect,byte sectNO);
 	bool WriteSectors(byte track, byte side, byte sector, byte sectCnt, byte * buff);
 	bool Seek(byte track);

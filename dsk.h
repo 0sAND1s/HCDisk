@@ -95,7 +95,7 @@ public:
 	CDSK(const CDSK& src);
 	virtual ~CDSK();
 	
-	virtual bool Open(char * dskName, DiskOpenMode mode = OPEN_MODE_EXISTING);
+	virtual bool Open(const char * dskName, DiskOpenMode mode = OPEN_MODE_EXISTING);
 	virtual bool Seek(byte trackNo);
 	virtual bool ReadSectors(byte * buff, byte track, byte side, byte sector, byte sectCnt);
 	virtual bool WriteSectors(byte track, byte side, byte sector, byte sectCnt, byte * buff);

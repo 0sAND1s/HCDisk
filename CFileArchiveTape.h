@@ -35,7 +35,7 @@ public:
 	virtual bool Init();
 	virtual CFile* NewFile(const char* name, long len = 0, byte* data = NULL);
 	virtual bool WriteFile(CFile*);
-	virtual bool Open(char* name, bool create = false);
+	virtual bool Open(const char* name, bool create = false);
 	virtual CFile* FindFirst(char* pattern);
 	virtual CFile* FindNext();		
 	virtual bool AddFile(CFileSpectrumTape* fSpec, CTapeBlock::TapeTimings* customTimings = nullptr);

@@ -45,7 +45,7 @@ public:
 		qm_self = &qm;
 	}
 
-	virtual bool Open(char* imgName, DiskOpenMode openMode = OPEN_MODE_EXISTING);
+	virtual bool Open(const char* imgName, DiskOpenMode openMode = OPEN_MODE_EXISTING);
 	virtual bool ReadSectors(byte * buff, byte track, byte side, byte sector, byte sectCnt);	
 	virtual bool Seek(byte trackNo);		
 	virtual bool GetTrackInfo(byte track, byte side, byte& sectorCnt, SectDescType sectors[]);	
@@ -107,7 +107,7 @@ private:
 	int drv_qm_load_header( QM_DSK_DRIVER* qm_self, char* header );
 	int drv_qm_get_read_ptr(QM_DSK_DRIVER *qm_self, unsigned char **buf_ptr, int cylinder, int head, int sector);
 	void drv_qm_dump_sector_hex(unsigned char* buf,int sz);
-	int qmOpen(char* imgName);
+	int qmOpen(const char* imgName);
 };
 
 #endif//CDISKCQM_H

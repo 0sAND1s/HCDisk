@@ -59,7 +59,7 @@ CTZXFile::~CTZXFile()
 	Close();
 }
 
-bool CTZXFile::Open(char* fileName, TapeOpenMode mode)
+bool CTZXFile::Open(const char* fileName, TapeOpenMode mode)
 {
 	TZXHeader hdr;
 

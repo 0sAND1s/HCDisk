@@ -116,7 +116,7 @@ bool CDSK::CreateImage()
 }
 
 
-bool CDSK::Open(char * dskName, DiskOpenMode mode)
+bool CDSK::Open(const char * dskName, DiskOpenMode mode)
 {
 	strcpy(this->dskName, dskName);
 	dskFile = fopen(dskName, (mode == OPEN_MODE_EXISTING ? "rb+" : "w+b"));	

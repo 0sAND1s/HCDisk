@@ -82,7 +82,7 @@ CTapFile::~CTapFile()
 
 
 
-bool CTapFile::Open(char* fileName, TapeOpenMode mode)
+bool CTapFile::Open(const char* fileName, TapeOpenMode mode)
 {	
 	this->fileName = fileName;	
 

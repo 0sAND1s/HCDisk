@@ -18,7 +18,6 @@
 #pragma warning(disable: 4309)
 #include "FileConverters\sna2tapldr.h"
 #pragma warning(pop)
-#include <algorithm>
 
 using namespace std;
 
@@ -71,10 +70,9 @@ bool SNAP2TAP::Convert(string nameSnap, string nameTAP)
 #pragma pack()
 
 	CSnapshotSNA sna;
-	string ext = FileUtil::GetExtension(nameSnap);
-	transform(ext.begin(), ext.end(), ext.begin(), toupper);
+	string ext = FileUtil::GetExtension(nameSnap);		
 
-	if (ext == "SNA")
+	if (stricmp(ext.c_str(), "SNA") == 0)
 	{
 		if (!sna.Read(nameSnap.c_str()))
 		{
@@ -82,7 +80,7 @@ bool SNAP2TAP::Convert(string nameSnap, string nameTAP)
 			return false;
 		}
 	}
-	else if (ext == "Z80")
+	else if (stricmp(ext.c_str(), "Z80") == 0)
 	{
 		CSnapshotZ80 z80;
 		if (!z80.Read(nameSnap.c_str()))
@@ -92,6 +90,10 @@ bool SNAP2TAP::Convert(string nameSnap, string nameTAP)
 		}
 
 		sna = z80;
+	}
+	else
+	{
+		return false;
 	}
 	
 

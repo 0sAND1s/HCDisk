@@ -46,7 +46,7 @@ CDiskWin32Native::~CDiskWin32Native()
         CloseHandle(hVol);
 }
 
-bool CDiskWin32Native::Open(char* drive, DiskOpenMode mode)
+bool CDiskWin32Native::Open(const char* drive, DiskOpenMode mode)
 {
     char path[] = "\\\\.\\A:";
     path[strlen(path) - 2] = drive[0];
@@ -270,7 +270,7 @@ BOOL GetDriveTypeAndCharacteristics(HANDLE hDevice, DEVICE_TYPE* pDeviceType, UL
 #define FILE_FLOPPY_DISKETTE                    0x00000004
 #pragma endregion
 
-bool CDiskWin32Native::IsUSBVolume(char* drive)
+bool CDiskWin32Native::IsUSBVolume(const char* drive)
 {
     bool res = false;
     bool isUSBVolume = false;
@@ -317,7 +317,7 @@ bool CDiskWin32Native::IsUSBVolume(char* drive)
     return res && isUSBVolume;
 }
 
-bool CDiskWin32Native::IsFloppyDrive(char* drive)
+bool CDiskWin32Native::IsFloppyDrive(const char* drive)
 {
     bool res = false;
     char path[] = "\\\\.\\A:";

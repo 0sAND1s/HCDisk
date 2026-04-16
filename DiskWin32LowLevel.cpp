@@ -96,7 +96,7 @@ bool CDiskWin32LowLevel::WriteSectors(byte track, byte side, byte sect, byte sec
 	return OK;
 }
 
-bool CDiskWin32LowLevel::Open(char* drive, DiskOpenMode mode)
+bool CDiskWin32LowLevel::Open(const char* drive, DiskOpenMode mode)
 {	
 	if (h != INVALID_HANDLE_VALUE)
 		CloseHandle(h);
