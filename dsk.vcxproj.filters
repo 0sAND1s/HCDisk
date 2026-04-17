@@ -31,6 +31,9 @@
     <Filter Include="FileConverters\sna2tap">
       <UniqueIdentifier>{1f5b4d60-ae26-4443-910a-4afe70bc0923}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Compression\ZX0">
+      <UniqueIdentifier>{0561857b-c0e0-4091-b801-d67b20aed52a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DiskBase.cpp">
@@ -170,15 +173,6 @@
     <ClCompile Include="Compression\Compression.cpp">
       <Filter>Compression</Filter>
     </ClCompile>
-    <ClCompile Include="Compression\compress.c">
-      <Filter>Compression</Filter>
-    </ClCompile>
-    <ClCompile Include="Compression\memory.c">
-      <Filter>Compression</Filter>
-    </ClCompile>
-    <ClCompile Include="Compression\optimize.c">
-      <Filter>Compression</Filter>
-    </ClCompile>
     <ClCompile Include="sna2tap.cpp">
       <Filter>FileConverters\sna2tap</Filter>
     </ClCompile>
@@ -187,6 +181,15 @@
     </ClCompile>
     <ClCompile Include="Snapshot\CSnapshotZ80.cpp">
       <Filter>Snapshot</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\optimize.c">
+      <Filter>Compression\ZX0</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\memory.c">
+      <Filter>Compression\ZX0</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\compress.c">
+      <Filter>Compression\ZX0</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -330,9 +333,6 @@
     <ClInclude Include="Compression\Compression.h">
       <Filter>Compression</Filter>
     </ClInclude>
-    <ClInclude Include="Compression\zx0.h">
-      <Filter>Compression</Filter>
-    </ClInclude>
     <ClInclude Include="sna2tap.h">
       <Filter>FileConverters\sna2tap</Filter>
     </ClInclude>
@@ -344,6 +344,9 @@
     </ClInclude>
     <ClInclude Include="Snapshot\CSnapshotZ80.h">
       <Filter>Snapshot</Filter>
+    </ClInclude>
+    <ClInclude Include="Compression\zx0.h">
+      <Filter>Compression\ZX0</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

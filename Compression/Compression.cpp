@@ -1,6 +1,7 @@
 #include "Compression.h"
 extern "C" {
 #include "zx0.h"
+#include <stdlib.h>
 }
 
 #define MAX_OFFSET_ZX0    32640
@@ -29,7 +30,11 @@ word Compression::Compress(byte* bufSrc, dword lenSrc, byte** bufDst, bool backw
     if (backwardsCompress)
 	    reverse(bufSrc, bufSrc + lenSrc - 1);
 
-    byte* output_data = ::compress(::optimize(bufSrc, lenSrc, 0, quickMode ? MAX_OFFSET_ZX7 : MAX_OFFSET_ZX0),
+    void* allocations[300] = { nullptr };    
+    int allocationCount = 0;    
+
+    init();
+    byte* output_data = compress(optimize(bufSrc, lenSrc, 0, quickMode ? MAX_OFFSET_ZX7 : MAX_OFFSET_ZX0, allocations, &allocationCount),
         bufSrc, lenSrc, 0, backwardsCompress ? TRUE : FALSE, backwardsCompress ? FALSE : TRUE, &outLen, &deltaOut);
 
     if (backwardsCompress)
@@ -39,6 +44,8 @@ word Compression::Compress(byte* bufSrc, dword lenSrc, byte** bufDst, bool backw
     if (delta != nullptr)
         *delta = deltaOut;
 
+    for (byte allocIdx = 0; allocIdx < allocationCount; allocIdx++)
+        free(allocations[allocIdx]);
 
 	return outLen;
 }

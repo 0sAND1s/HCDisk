@@ -41,7 +41,7 @@ int elias_gamma_bits(int value) {
     return bits;
 }
 
-BLOCK* optimize(unsigned char *input_data, int input_size, int skip, int offset_limit) {
+BLOCK* optimize(unsigned char *input_data, int input_size, int skip, int offset_limit, void** allocation, int* allocationCount) {
     BLOCK **last_literal;
     BLOCK **last_match;
     BLOCK **optimal;
@@ -55,6 +55,9 @@ BLOCK* optimize(unsigned char *input_data, int input_size, int skip, int offset_
     int bits2;
     int dots = 2;
     int max_offset = offset_ceiling(input_size-1, offset_limit);
+    int wasAllocated = 0;
+
+    *allocationCount = 0;
 
     /* allocate all main data structures at once */
     last_literal = (BLOCK **)calloc(max_offset+1, sizeof(BLOCK *));
@@ -68,9 +71,11 @@ BLOCK* optimize(unsigned char *input_data, int input_size, int skip, int offset_
     }
     if (input_size > 2)
         best_length[2] = 2;
-
-    /* start with fake block */
-    assign(&last_match[INITIAL_OFFSET], allocate(-1, skip-1, INITIAL_OFFSET, NULL));
+    
+    /* start with fake block */    
+    assign(&last_match[INITIAL_OFFSET], allocate(-1, skip-1, INITIAL_OFFSET, NULL, &allocation[*allocationCount], &wasAllocated));    
+    if (wasAllocated)
+        (*allocationCount)++;
 
     printf("[");
 
@@ -84,7 +89,12 @@ BLOCK* optimize(unsigned char *input_data, int input_size, int skip, int offset_
                 if (last_literal[offset]) {
                     length = index-last_literal[offset]->index;
                     bits = last_literal[offset]->bits + 1 + elias_gamma_bits(length);
-                    assign(&last_match[offset], allocate(bits, index, offset, last_literal[offset]));
+                    assign(&last_match[offset], allocate(bits, index, offset, last_literal[offset], &allocation[(*allocationCount)], &wasAllocated));
+                    if (wasAllocated)
+                    {
+                        (*allocationCount)++;
+                        wasAllocated = 0;
+                    }
                     if (!optimal[index] || optimal[index]->bits > bits)
                         assign(&optimal[index], last_match[offset]);
                 }
@@ -106,7 +116,12 @@ BLOCK* optimize(unsigned char *input_data, int input_size, int skip, int offset_
                     length = best_length[match_length[offset]];
                     bits = optimal[index-length]->bits + 8 + elias_gamma_bits((offset-1)/128+1) + elias_gamma_bits(length-1);
                     if (!last_match[offset] || last_match[offset]->index != index || last_match[offset]->bits > bits) {
-                        assign(&last_match[offset], allocate(bits, index, offset, optimal[index-length]));
+                        assign(&last_match[offset], allocate(bits, index, offset, optimal[index-length], &allocation[*allocationCount], &wasAllocated));
+                        if (wasAllocated)
+                        {
+                            (*allocationCount)++;
+                            wasAllocated = 0;
+                        }
                         if (!optimal[index] || optimal[index]->bits > bits)
                             assign(&optimal[index], last_match[offset]);
                     }
@@ -117,7 +132,12 @@ BLOCK* optimize(unsigned char *input_data, int input_size, int skip, int offset_
                 if (last_match[offset]) {
                     length = index-last_match[offset]->index;
                     bits = last_match[offset]->bits + 1 + elias_gamma_bits(length) + length*8;
-                    assign(&last_literal[offset], allocate(bits, index, 0, last_match[offset]));
+                    assign(&last_literal[offset], allocate(bits, index, 0, last_match[offset], &allocation[*allocationCount], &wasAllocated));
+                    if (wasAllocated)
+                    {
+                        (*allocationCount)++;
+                        wasAllocated = 0;
+                    }
                     if (!optimal[index] || optimal[index]->bits > bits)
                         assign(&optimal[index], last_literal[offset]);
                 }
@@ -135,9 +155,12 @@ BLOCK* optimize(unsigned char *input_data, int input_size, int skip, int offset_
     printf("]\n");
 
     free(last_literal);
-    free(last_match);
+    free(last_match);    
     free(match_length);
     free(best_length);
 
-    return optimal[input_size-1];
+    BLOCK* res = optimal[input_size - 1];
+    free(optimal);
+
+    return res;
 }

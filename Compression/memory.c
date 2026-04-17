@@ -34,8 +34,9 @@ BLOCK *ghost_root = NULL;
 BLOCK *dead_array = NULL;
 int dead_array_size = 0;
 
-BLOCK *allocate(int bits, int index, int offset, BLOCK *chain) {
+BLOCK *allocate(int bits, int index, int offset, BLOCK *chain, void** allocation, int* wasAllocated) {
     BLOCK *ptr;
+    *wasAllocated = 0;
 
     if (ghost_root) {
         ptr = ghost_root;
@@ -52,6 +53,9 @@ BLOCK *allocate(int bits, int index, int offset, BLOCK *chain) {
                 exit(1);
             }
             dead_array_size = QTY_BLOCKS;
+            
+            *allocation = dead_array;
+            *wasAllocated = 1;
         }
         ptr = &dead_array[--dead_array_size];
     }
@@ -61,7 +65,8 @@ BLOCK *allocate(int bits, int index, int offset, BLOCK *chain) {
     if (chain)
         chain->references++;
     ptr->chain = chain;
-    ptr->references = 0;
+    ptr->references = 0;    
+
     return ptr;
 }
 
@@ -72,4 +77,11 @@ void assign(BLOCK **ptr, BLOCK *chain) {
         ghost_root = *ptr;
     }
     *ptr = chain;
+}
+
+void init()
+{
+    ghost_root = NULL;
+    dead_array = NULL;
+    dead_array_size = 0;
 }
