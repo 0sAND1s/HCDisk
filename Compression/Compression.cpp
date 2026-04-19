@@ -44,7 +44,7 @@ word Compression::Compress(byte* bufSrc, dword lenSrc, byte** bufDst, bool backw
     if (delta != nullptr)
         *delta = deltaOut;
 
-    for (byte allocIdx = 0; allocIdx < allocationCount; allocIdx++)
+    for (word allocIdx = 0; allocIdx < allocationCount; allocIdx++)
         free(allocations[allocIdx]);
 
 	return outLen;

@@ -21,9 +21,15 @@ string FileUtil::GetExtension(string fileName)
 string FileUtil::GetNameWithoutExtension(string fileName)
 {
 	int dotIdx = fileName.find_last_of('.');
+	int startIdx = fileName.find_last_of('\\');
 	string res = "";
 	if (dotIdx != string::npos)
-		res = fileName.substr(0, dotIdx);
+	{
+		int len = dotIdx;
+		if (startIdx != string::npos)
+			len = dotIdx - startIdx-1;
+		res = fileName.substr(startIdx+1, len);
+	}
 	return res;
 }
 

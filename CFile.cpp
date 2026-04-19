@@ -133,7 +133,7 @@ bool CFile::GetFileName(char* dest, bool trim)
 { 			
 	memset(dest, ' ', sizeof(CFileArchive::FileNameType));
 	dest[sizeof(CFileArchive::FileNameType) - 1] = '\0';
-	strcpy(dest, FileName);
+	strncpy(dest, FileName, min(sizeof(CFileArchive::FileNameType) - 1, strlen(FileName)));
 
 	if (trim)
 		CFileArchive::TrimEnd(dest);
@@ -173,8 +173,10 @@ bool CFile::SetFileName(const char* src)
 	{
 		memset(Name, ' ', sizeof(Name));
 		memset(Extension, ' ', sizeof(Extension));
+		memset(FileName, ' ', sizeof(FileName));
 		Name[sizeof(Name) - 1] = '\0';
 		Extension[sizeof(Extension) - 1] = '\0';
+		FileName[sizeof(FileName) - 1] = '\0';
 
 		const char* dot = strrchr(src, '.');
 		if (dot != NULL && strlen(dot) <= 3+1 && strlen(dot) > 1)
@@ -185,8 +187,8 @@ bool CFile::SetFileName(const char* src)
 		}
 		else
 		{
-			res = memcpy(Name, src, strlen(src)) != NULL &&
-				strncpy(FileName, src, sizeof(FileName) - 1);
+			res = strncpy(Name, src, sizeof(Name) - 1) != NULL &&
+				strncpy(FileName, src, sizeof(FileName) - 1) != NULL;
 		}
 	}	
 

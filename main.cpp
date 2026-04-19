@@ -2586,6 +2586,8 @@ bool FormatDisk(int argc, char* argv[])
 	{		
 		disk->SetProgressCallback(ProgressCallbackFormat);
 		res = fs->Format();
+		if (!res)
+			PrintLastErrMsg();
 	}
 
 	if (fs != nullptr)
