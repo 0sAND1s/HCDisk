@@ -63,6 +63,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;kernel32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -92,6 +93,7 @@ $(ProjectDir)\bin2h.exe sna2tapldr &lt; fileconverters\sna2tapldr.bin &gt; filec
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;kernel32.lib;%(AdditionalDependencies)</AdditionalDependencies>

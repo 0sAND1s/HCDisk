@@ -84,8 +84,3 @@ REM Snap to tap
 cls
 release\hcdisk2 snap2tap testfiles\chronos.sna chronos.tap : open chronos.tap : dir : exit && del chronos.tap
 pause
-
-REM Snap to tap
-cls
-release\hcdisk2 snap2tap testfiles\chronos.z80 chronos.tap : open chronos.tap : dir : exit && del chronos.tap
-pause
