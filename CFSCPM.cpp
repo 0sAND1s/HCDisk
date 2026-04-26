@@ -391,7 +391,7 @@ bool CFSCPM::WriteFile(CFileCPM* file)
 		{
 			//Write file blocks.		
 			vector<word> fileAUs;
-			word auIdx = 0, auNo = GetNextFreeAllocUnit();							
+			word auIdx = 0, auNo = GetNextFreeBlock();							
 			
 			//Set EOF for the remaining file slack.
 			byte* diskBuf = new byte[reqAUCnt * FSParams.BlockSize];
@@ -410,11 +410,11 @@ bool CFSCPM::WriteFile(CFileCPM* file)
 				writeOK = WriteBlock(diskBuf + (FSParams.BlockSize*auIdx), auNo);
 				fileAUs.push_back(auNo);
 				FS_BlockMap[auNo] = true;
-				auNo = GetNextFreeAllocUnit();
+				auNo = GetNextFreeBlock();
 				auIdx++;
 			}
 
-			delete diskBuf;
+			delete[] diskBuf;
 
 			//Write file catalog entries
 			if (writeOK && fileAUs.size() > 0)
@@ -534,16 +534,6 @@ bool CFSCPM::Rename(CFileCPM* f, char* newName)
 	return res;
 }
 
-word CFSCPM::GetNextFreeAllocUnit()
-{
-	word auRes = 0;
-	vector<bool>::const_iterator i = find(FS_BlockMap.begin(), FS_BlockMap.end(), false);
-	if (i != FS_BlockMap.end())
-		auRes = (word)(i - FS_BlockMap.begin());	
-
-	return auRes;
-}
-
 
 word CFSCPM::GetAUNoFromExt(word extIdx, byte auPos)
 {
@@ -555,17 +545,6 @@ word CFSCPM::GetAUNoFromExt(word extIdx, byte auPos)
 		auNo = DirEntries[extIdx].AllocUnits.wordIdx[auPos];
 
 	return auNo;
-}
-
-
-word CFSCPM::GetNextFreeDirEntryIdx()
-{
-	word dirEntRes = -1;
-	vector<bool>::const_iterator i = find(FS_DirEntryMap.begin(), FS_DirEntryMap.end(), false);
-	if (i != FS_DirEntryMap.end())
-		dirEntRes = (word)(i - FS_DirEntryMap.begin());	
-
-	return dirEntRes;	
 }
 
 CFSCPM::FileAttributes CFSCPM::GetAttributes(CFileCPM* file)

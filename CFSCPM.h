@@ -119,12 +119,9 @@ protected:
 
 	//Translate a linear sector count to head/track/sector.
 	bool LinearSect2HTS(word sectCnt, byte & head, byte & track, byte & sect);			
-	word GetLastExtRecCnt(CFileCPM* file);	
-	//Returns the next free alloc unit.
-	word GetNextFreeAllocUnit();
+	word GetLastExtRecCnt(CFileCPM* file);		
 	//Returns the allocation unit number from the specified directory entry.
-	word GetAUNoFromExt(word extIdx, byte auPos);
-	word GetNextFreeDirEntryIdx();		
+	word GetAUNoFromExt(word extIdx, byte auPos);	
 	virtual bool ReadDirectory();	
 	virtual bool WriteDirectory();
 	virtual bool CreateFSName(CFile* file, char* fNameOut);

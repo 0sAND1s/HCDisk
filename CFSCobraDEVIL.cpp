@@ -23,6 +23,11 @@ CFSCobraDEVIL::CFSCobraDEVIL(CDiskBase* disk, char* name): CFileSystem(disk, nam
 bool CFSCobraDEVIL::Init()
 {
 	bool res = true;
+	DEVIL_Dir.clear();
+	FS_BlockMap.clear();
+	FS_DirEntryMap.clear();
+	DEVIL_FileList.clear();
+
 	byte* dirBuf = new byte[RESERVED_TRACKS * Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize];
 	for (byte trkIdx = 0; trkIdx < RESERVED_TRACKS && res; trkIdx++)
 		res = Disk->ReadTrack(dirBuf + (Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize) * trkIdx, 
@@ -39,9 +44,10 @@ bool CFSCobraDEVIL::Init()
 		while (dirIdx < FSParams.BlockCount)		
 		{
 			dirEnt = (DirEntryType*)(dirBuf + (dirIdx * sizeof(DirEntryType)));
+			DEVIL_Dir.push_back(*dirEnt);
+
 			if (dirEnt->Flag != FLAG_DELETE)
-			{	
-				DEVIL_Dir.push_back(*dirEnt);
+			{					
 				FS_BlockMap.push_back(true);
 				FS_DirEntryMap[dirIdx] = true;
 
@@ -76,13 +82,19 @@ bool CFSCobraDEVIL::Init()
 							dword fileBlockCount = (dword)ceil((float)hdrlessLen / FSParams.BlockSize);
 							dword fileBlockIdx = 0;
 							
+							if (hdrlessLen == 0)
+							{
+								dirIdx++;
+								break;
+							}
+							
 							CFileDevil* fh = new CFileDevil();
 							fh->Length = hdrlessLen;
 							fh->fs = this;
 
 							FileNameType fn{};
 							snprintf(fn, NAME_LENGHT, "%s", dirEnt->Name);
-							char blockIdxStr[2];
+							char blockIdxStr[3];
 							itoa(hdrLessIdx, blockIdxStr, 10);
 							strcat(fn, blockIdxStr);
 							CreateFileName(fn, fh);							
@@ -210,17 +222,35 @@ dword CFSCobraDEVIL::GetFileSize(CFile* file, bool onDisk)
 bool CFSCobraDEVIL::ReadBlock(byte* buf, word blkIdx, byte sectCnt)
 {
 	byte tracksPerBloc = FSParams.BlockSize/(Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize);
+	bool res = true;
 	
-	for (byte trackIdx = 0; trackIdx < tracksPerBloc; trackIdx++)
+	for (byte trackIdx = 0; trackIdx < tracksPerBloc && res; trackIdx++)
 	{
 		byte absTrack = RESERVED_TRACKS + (blkIdx * tracksPerBloc) + trackIdx;
 		byte track = absTrack / Disk->DiskDefinition.SideCnt;
 		byte side = absTrack % Disk->DiskDefinition.SideCnt;
 
-		Disk->ReadTrack(buf + (FSParams.BlockSize/tracksPerBloc) * trackIdx, track, side);
+		res = Disk->ReadTrack(buf + (FSParams.BlockSize/tracksPerBloc) * trackIdx, track, side);
 	}		
 	
-	return true;
+	return res;
+}
+
+bool CFSCobraDEVIL::WriteBlock(word blkIdx, byte* buf)
+{
+	byte tracksPerBloc = FSParams.BlockSize / (Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize);
+	bool res = true;
+
+	for (byte trackIdx = 0; trackIdx < tracksPerBloc && res; trackIdx++)
+	{
+		byte absTrack = RESERVED_TRACKS + (blkIdx * tracksPerBloc) + trackIdx;
+		byte track = absTrack / Disk->DiskDefinition.SideCnt;
+		byte side = absTrack % Disk->DiskDefinition.SideCnt;
+
+		res = Disk->WriteTrack(track, side, buf + (FSParams.BlockSize / tracksPerBloc) * trackIdx);
+	}
+
+	return res;
 }
 
 
@@ -240,6 +270,85 @@ bool CFSCobraDEVIL::ReadFile(CFile* file)
 	return res;
 }
 
+bool CFSCobraDEVIL::WriteFile(CFile* file)
+{
+	CFileDevil* f = (CFileDevil*)file;
+	bool res = true;
+
+	LastError = ERR_NONE;
+
+	if (FindFirst(f->FileName) != NULL)
+	{
+		LastError = ERR_FILE_EXISTS;
+		return false;
+	}
+
+	const word reqAUCnt = (word)ceil((float)f->Length / FSParams.BlockSize);
+	const word freeAUCnt = GetFreeBlockCount();
+	const word reqDirEnt = (word)ceil((float)reqAUCnt / FSParams.BlockSize);
+
+	if (reqAUCnt > freeAUCnt)
+	{
+		LastError = ERR_NO_SPACE_LEFT;
+		return false;
+	}
+	
+	if (GetFreeDirEntriesCount() < reqDirEnt)
+	{
+		LastError = ERR_NO_CATALOG_LEFT;
+		return false;
+	}
+
+	//Write file blocks.		
+	vector<word> fileAUs;
+	word auIdx = 0, auNo = GetNextFreeBlock();
+	
+	byte* diskBuf = new byte[reqAUCnt * FSParams.BlockSize];
+	memcpy(diskBuf, f->buffer, f->Length);	
+	
+	while (auIdx < reqAUCnt && auNo > 0 && res)
+	{
+		res = WriteBlock(auNo, diskBuf + (FSParams.BlockSize * auIdx));
+		fileAUs.push_back(auNo);
+		FS_BlockMap[auNo] = true;
+		auNo = GetNextFreeBlock();
+		auIdx++;
+	}
+	delete[] diskBuf;
+
+	if (res)
+	{
+		for (byte dirEntIdx = 0; dirEntIdx < reqDirEnt; dirEntIdx++)
+		{
+			word freeDirEnt = GetNextFreeDirEntryIdx();
+			DirEntryType* dirEnt = &DEVIL_Dir[freeDirEnt];
+			
+			dirEnt->Length = f->Length;			
+			f->GetFileName(dirEnt->Name);
+			
+			if (dirEntIdx >= 1)
+				dirEnt->Flag = FLAG_EXTENT;
+			else
+				dirEnt->Flag = f->SpectrumType;
+			
+			dirEnt->Length = f->SpectrumLength;
+			dirEnt->Param1 = f->SpectrumStart;
+			if (f->SpectrumType == CFileSpectrum::SPECTRUM_PROGRAM)
+				dirEnt->Param2 = dirEnt->Length - f->SpectrumVarLength;
+			else
+				f->SpectrumVarLength = 0;
+		}
+	}	
+
+	if (!WriteCatalog())
+		LastError = ERR_PHYSICAL;
+	else
+		Init();
+
+	return res;
+}
+
+
 
 dword CFSCobraDEVIL::GetDiskMaxSpace() 
 { 
@@ -247,10 +356,6 @@ dword CFSCobraDEVIL::GetDiskMaxSpace()
 		Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize; 
 };
 
-dword CFSCobraDEVIL::GetDiskLeftSpace() 
-{ 
-	return GetDiskMaxSpace() - DEVIL_Dir.size() * FSParams.BlockSize; 
-};	
 
 CFileSystem::FileAttributes CFSCobraDEVIL::GetAttributes(CFile* file)
 {
@@ -271,6 +376,87 @@ CFileSystem::FileAttributes CFSCobraDEVIL::GetAttributes(CFile* file)
 	}	
 
 	return (FileAttributes)res;
+}
+
+bool CFSCobraDEVIL::SetAttributes(char* filespec, CFileSystem::FileAttributes toSet, CFileSystem::FileAttributes toClear)
+{
+	bool res = true;
+
+	if (filespec == NULL)
+	{
+		res = false;
+		LastError = ERR_BAD_PARAM;
+	}
+
+	CFileDevil* file = res ? (CFileDevil*)this->FindFirst(filespec) : NULL;
+
+	while (res && file != NULL)
+	{		
+		for (byte feIdx = 0; feIdx < file->FileDirEntries.size(); feIdx++)
+		{
+			if ((toSet & (byte)ATTR_SYSTEM) == (byte)ATTR_SYSTEM)
+				DEVIL_Dir[file->FileDirEntries[feIdx]].Attributes |= 1;
+			if ((toClear & (byte)ATTR_SYSTEM) == (byte)ATTR_SYSTEM)
+				DEVIL_Dir[file->FileDirEntries[feIdx]].Attributes &= 0xFF ^ 0x01;
+
+			if ((toSet & (byte)ATTR_READ_ONLY) == (byte)ATTR_READ_ONLY)
+				DEVIL_Dir[file->FileDirEntries[feIdx]].Attributes |= 2;
+			if ((toClear & (byte)ATTR_READ_ONLY) == (byte)ATTR_READ_ONLY)
+				DEVIL_Dir[file->FileDirEntries[feIdx]].Attributes &= 0xFF ^ 0x02;
+
+			
+		}
+
+		file = (CFileDevil*)this->FindNext();
+	}
+
+	if (res)
+		res = this->WriteCatalog();
+
+	return res;
+}
+
+
+bool CFSCobraDEVIL::Delete(char* fnames)
+{
+	bool res = true;
+	CFileDevil* f = dynamic_cast<CFileDevil*>(FindFirst(fnames));
+
+	while (f != NULL)
+	{
+		for (word entIdx = 0; entIdx < f->FileDirEntries.size(); entIdx++)
+			this->DEVIL_Dir[f->FileDirEntries[entIdx]].Flag = FLAG_DELETE;
+
+		f = dynamic_cast<CFileDevil*>(FindNext());
+	}	
+
+	res = WriteCatalog();
+
+	//Read directory.
+	if (res)
+		res = Init();
+
+	return res;
+}
+
+bool CFSCobraDEVIL::WriteCatalog()
+{
+	bool res = true;
+	//Write directory.
+	byte* dirBuf = new byte[RESERVED_TRACKS * Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize];
+	memset(dirBuf, FLAG_DELETE, RESERVED_TRACKS * Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize);
+
+	for (int dirIdx = 0; dirIdx < DEVIL_Dir.size(); dirIdx++)
+	{
+		DirEntryType dirEnt = DEVIL_Dir[dirIdx];
+		*(DirEntryType*)(dirBuf + dirIdx * sizeof(DirEntryType)) = dirEnt;
+	}
+
+	for (byte trkIdx = 0; trkIdx < RESERVED_TRACKS && res; trkIdx++)
+		res = Disk->WriteTrack(trkIdx / 2, trkIdx % 2, dirBuf + (Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize) * trkIdx);
+	delete[] dirBuf;
+
+	return res;
 }
 
 //////////////////////////////////////////////////////////////////////////

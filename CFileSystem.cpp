@@ -73,3 +73,23 @@ dword CFileSystem::GetFileSize(CFile* file, bool onDisk)
 	else
 		return file->GetLength();
 }
+
+word CFileSystem::GetNextFreeBlock()
+{	
+	word auRes = 0;
+	vector<bool>::const_iterator i = find(FS_BlockMap.begin(), FS_BlockMap.end(), false);
+	if (i != FS_BlockMap.end())
+		auRes = (word)(i - FS_BlockMap.begin());
+
+	return auRes;	
+}
+
+word CFileSystem::GetNextFreeDirEntryIdx()
+{
+	word dirEntRes = -1;
+	vector<bool>::const_iterator i = find(FS_DirEntryMap.begin(), FS_DirEntryMap.end(), false);
+	if (i != FS_DirEntryMap.end())
+		dirEntRes = (word)(i - FS_DirEntryMap.begin());
+
+	return dirEntRes;
+}

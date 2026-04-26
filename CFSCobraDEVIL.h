@@ -43,8 +43,7 @@ public:
 	virtual ~CFSCobraDEVIL() {} ;
 
 	bool Init();	
-	dword GetDiskMaxSpace();
-	dword GetDiskLeftSpace();
+	dword GetDiskMaxSpace();	
 
 	virtual dword GetFileSize(CFile* file, bool onDisk = false);
 	CFile* NewFile(const char* name, long len = 0, byte* data = NULL);
@@ -53,8 +52,12 @@ public:
 	virtual bool OpenFile(CFile*) { return true; };
 	virtual bool CloseFile(CFile*) { return true; };
 	virtual bool ReadBlock(byte* buf, word blkIdx, byte sectCnt = 0);
+	virtual bool WriteBlock(word blkIdx, byte* buf);
 	virtual bool ReadFile(CFile* file);
+	virtual bool WriteFile(CFile* file);
 	virtual FileAttributes GetAttributes(CFile* file);
+	virtual bool Delete(char* fnames);
+	virtual bool SetAttributes(char* filespec, FileAttributes toSet, FileAttributes toClear);
 
 	//bool ReadFile(CFile*);	
 	bool IsCharValidForFilename(char c)
@@ -70,6 +73,8 @@ protected:
 	std::vector<DirEntryType> DEVIL_Dir;
 	std::vector<CFileDevil> DEVIL_FileList;
 	char DEVIL_FindPattern[CFileSystem::MAX_FILE_NAME_LEN];
+
+	bool WriteCatalog();
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -85,5 +90,5 @@ public:
 	virtual ~CFileDevil();
 	virtual CFileDevil& operator= (const CFileDevil&);		
 protected:	
-	CFSCobraDEVIL* fs;
+	CFSCobraDEVIL* fs;	
 };
