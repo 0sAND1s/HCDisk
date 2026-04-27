@@ -83,6 +83,8 @@ class CFileDevil: public CFile, public CFileSpectrum
 {
 	friend class CFSCobraDEVIL;
 public:		
+	bool isPartOfHeaderlessFile = false;
+	word blockOffset = 0;
 
 	CFileDevil();
 	CFileDevil(const CFileDevil&);

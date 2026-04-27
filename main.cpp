@@ -108,8 +108,8 @@ static char* StorageTypeNames[] =
 	"TAP - TAPE IMAGE (RW)",
 	"TZX - TAPE IMAGE (RW)",
 	"TD0 - Sydex Teledisk DISK IMAGE (RO)",
-	"SNA - Snapshot 48K",
-	"Z80 - Snapshot 48K"
+	"SNA - Snapshot 48K (RW)",
+	"Z80 - Snapshot 48K (RW)"
 };
 
 StorageType storType;
@@ -331,7 +331,8 @@ const FileSystemDescription DISK_TYPES[] =
 		"CoBra Devil", FS_COBRA_DEVIL,
 		{80, 2, 18, CDiskBase::SECT_SZ_256, 0xE5, 20, CDiskBase::DISK_DATARATE_DD_3_5, 1},
 		{9216, 77, 108},
-		{1, 0}
+		{1, 0},
+		true
 	},	
 	
 	{
@@ -448,7 +449,7 @@ bool ShowKnownFS(int argc, char* argv[])
 	puts("-----------------------------------------------------------------------------------------");
 	for (byte fsIdx = 0; fsIdx < sizeof(DISK_TYPES)/sizeof(DISK_TYPES[0]); fsIdx++)
 	{
-		printf("%2d. %-20s\t|%dx%dx%dx%d\t", fsIdx+1, DISK_TYPES[fsIdx].Name, 			
+		printf("%2d. %-20s\t|%02dx%02dx%02dx%03d\t", fsIdx+1, DISK_TYPES[fsIdx].Name, 			
 			DISK_TYPES[fsIdx].diskDef.TrackCnt, DISK_TYPES[fsIdx].diskDef.SideCnt, 
 			DISK_TYPES[fsIdx].diskDef.SPT, DISK_TYPES[fsIdx].diskDef.SectSize);
 		printf("|%d\t|%d\t|%d\t|%d\t|%s\n", DISK_TYPES[fsIdx].fsParams.BlockSize, DISK_TYPES[fsIdx].fsParams.BlockCount, 
