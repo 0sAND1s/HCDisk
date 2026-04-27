@@ -1,0 +1,373 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Disk">
+      <UniqueIdentifier>{faf9fd4f-553d-4085-af30-dfc718da9953}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tape">
+      <UniqueIdentifier>{904ffdd7-c369-486a-993d-60c9c9ad707d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileSystem">
+      <UniqueIdentifier>{febb152e-32fb-4fee-b0ea-184704fef92c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Snapshot">
+      <UniqueIdentifier>{0fbea63b-1799-42bf-a503-6f17f13ab51c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Compression">
+      <UniqueIdentifier>{35e33537-9c87-4ab7-b34d-a4e2f1819073}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Compression\ZX0">
+      <UniqueIdentifier>{0561857b-c0e0-4091-b801-d67b20aed52a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileSystem\Utils">
+      <UniqueIdentifier>{047ca390-7a72-4f50-835b-60e0a170a1d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{61c338a4-8565-4b41-a130-1f8dcfde082b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Disk\FileConverters">
+      <UniqueIdentifier>{5fee4693-1d56-4f52-ac5e-de9ff5845ec0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Disk\FileConverters\dz80">
+      <UniqueIdentifier>{2d577fa9-dc7a-4ea2-8d3f-0d274c4e7295}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Disk\FileConverters\sna2tap">
+      <UniqueIdentifier>{1f5b4d60-ae26-4443-910a-4afe70bc0923}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="FileConverters\BasicDecoder.cpp">
+      <Filter>Disk\FileConverters</Filter>
+    </ClCompile>
+    <ClCompile Include="FileConverters\scr2gif.cpp">
+      <Filter>Disk\FileConverters</Filter>
+    </ClCompile>
+    <ClCompile Include="FileConverters\dz80\dissz80.c">
+      <Filter>Disk\FileConverters\dz80</Filter>
+    </ClCompile>
+    <ClCompile Include="FileConverters\dz80\loadfile.c">
+      <Filter>Disk\FileConverters\dz80</Filter>
+    </ClCompile>
+    <ClCompile Include="FileConverters\dz80\noscript.c">
+      <Filter>Disk\FileConverters\dz80</Filter>
+    </ClCompile>
+    <ClCompile Include="FileConverters\dz80\tables.c">
+      <Filter>Disk\FileConverters\dz80</Filter>
+    </ClCompile>
+    <ClCompile Include="Tape\tap.cpp">
+      <Filter>Tape</Filter>
+    </ClCompile>
+    <ClCompile Include="Tape\Tape2Wave.cpp">
+      <Filter>Tape</Filter>
+    </ClCompile>
+    <ClCompile Include="Tape\TapeBlock.cpp">
+      <Filter>Tape</Filter>
+    </ClCompile>
+    <ClCompile Include="Tape\TZX.cpp">
+      <Filter>Tape</Filter>
+    </ClCompile>
+    <ClCompile Include="Tape\Wave.cpp">
+      <Filter>Tape</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="FileConverters\bas2tap.c">
+      <Filter>Disk\FileConverters</Filter>
+    </ClCompile>
+    <ClCompile Include="FileConverters\Screen.cpp">
+      <Filter>Disk\FileConverters</Filter>
+    </ClCompile>
+    <ClCompile Include="Snapshot\CSnapshotSNA.cpp">
+      <Filter>Snapshot</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\Compression.cpp">
+      <Filter>Compression</Filter>
+    </ClCompile>
+    <ClCompile Include="Snapshot\CSnapshotZ80.cpp">
+      <Filter>Snapshot</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\optimize.c">
+      <Filter>Compression\ZX0</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\memory.c">
+      <Filter>Compression\ZX0</Filter>
+    </ClCompile>
+    <ClCompile Include="Compression\compress.c">
+      <Filter>Compression\ZX0</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\BASICUtil.cpp">
+      <Filter>FileSystem\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFile.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFileArchive.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFileArchiveTape.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFileCPM.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFileHC.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFilePlus3.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFileSpectrum.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFileSystem.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFileTRD.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFSBASICPlus3.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFSCobraDEVIL.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFSCPM.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFSHCBasic.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFSMGT.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFSOpus.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFSTRD.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\CFSTRDSCL.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystem\COMIF1.cpp">
+      <Filter>FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\CRC.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\DiskBase.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\DiskImgCQM.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\DiskImgRaw.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\DiskImgTD0.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\DiskWin32LowLevel.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\DiskWin32Native.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\dsk.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\edsk.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\FileUtil.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\GUIUtil.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\TapeUtil.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="FileConverters\sna2tap.cpp">
+      <Filter>Disk\FileConverters</Filter>
+    </ClCompile>
+    <ClCompile Include="Disk\td0_lzss.cpp">
+      <Filter>Disk</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FileConverters\BasicDecoder.h">
+      <Filter>Disk\FileConverters</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\dz80\dissz80.h">
+      <Filter>Disk\FileConverters\dz80</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\dz80\dissz80p.h">
+      <Filter>Disk\FileConverters\dz80</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\dz80\dz80.h">
+      <Filter>Disk\FileConverters\dz80</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\dz80\types.h">
+      <Filter>Disk\FileConverters\dz80</Filter>
+    </ClInclude>
+    <ClInclude Include="Tape\tap.h">
+      <Filter>Tape</Filter>
+    </ClInclude>
+    <ClInclude Include="Tape\Tape2Wave.h">
+      <Filter>Tape</Filter>
+    </ClInclude>
+    <ClInclude Include="Tape\TapeBlock.h">
+      <Filter>Tape</Filter>
+    </ClInclude>
+    <ClInclude Include="Tape\TZX.h">
+      <Filter>Tape</Filter>
+    </ClInclude>
+    <ClInclude Include="Tape\Wave.h">
+      <Filter>Tape</Filter>
+    </ClInclude>
+    <ClInclude Include="types.h" />
+    <ClInclude Include="FileConverters\bas2tap.h">
+      <Filter>Disk\FileConverters</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\Screen.h">
+      <Filter>Disk\FileConverters</Filter>
+    </ClInclude>
+    <ClInclude Include="Snapshot\CSnapshotSNA.h">
+      <Filter>Snapshot</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\scr2gif.h">
+      <Filter>Disk\FileConverters</Filter>
+    </ClInclude>
+    <ClInclude Include="Compression\Compression.h">
+      <Filter>Compression</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\sna2tapldr.h">
+      <Filter>Disk\FileConverters\sna2tap</Filter>
+    </ClInclude>
+    <ClInclude Include="Snapshot\CSnapshotZ80.h">
+      <Filter>Snapshot</Filter>
+    </ClInclude>
+    <ClInclude Include="Compression\zx0.h">
+      <Filter>Compression\ZX0</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\BASICUtil.h">
+      <Filter>FileSystem\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFile.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\CFileArchive.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\CFileArchiveTape.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFileCPM.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFileHC.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFileIF1.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFilePlus3.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFileSpectrum.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFileSystem.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFileTRD.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFSBASICPlus3.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFSCobraDEVIL.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFSCPM.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFSHCBasic.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFSMGT.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFSOpus.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFSTRD.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFSTRDSCL.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\COMIF1.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\CRC.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\DiskBase.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\DiskImgCQM.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\DiskImgRaw.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\DiskImgTD0.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\DiskWin32LowLevel.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\DiskWin32Native.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\dsk.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\edsk.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\FileUtil.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\GUIUtil.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\TapeUtil.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConverters\sna2tap.h">
+      <Filter>Disk\FileConverters</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\td0_lzss.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FileConverters\dzx0_standard_back.asm">
+      <Filter>Disk\FileConverters\sna2tap</Filter>
+    </None>
+    <None Include="FileConverters\sna2tapldr.asm">
+      <Filter>Disk\FileConverters\sna2tap</Filter>
+    </None>
+    <None Include="FileConverters\sna2tapldr.bin">
+      <Filter>Disk\FileConverters\sna2tap</Filter>
+    </None>
+    <None Include="FileConverters\sna2tapldr.lst">
+      <Filter>Disk\FileConverters\sna2tap</Filter>
+    </None>
+  </ItemGroup>
+</Project>

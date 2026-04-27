@@ -541,7 +541,7 @@ The resulting WAV file can be digitized using MakeTZX from Ramsoft or using audi
 
 
 ## Class Diagram
-![ScreenShot](https://raw.githubusercontent.com/0sAND1s/HCDisk/master/HCDisk_ClassDiagram.png)
+![ScreenShot](https://raw.githubusercontent.com/0sAND1s/HCDisk/master/Doc/HCDisk_ClassDiagram.png)
 
 Example class usage:
 1. Accessing ZXSpectrum+3 floppy disks on PC floppy drive. CDiskBase is instantiated with CDiskFloppy class. CFileSystem is ZXSpectrum+3 BASIC. CFile class is instantiated with CFileSpectrum.

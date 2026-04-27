@@ -1,6 +1,6 @@
 #include "CSnapshotZ80.h"
 #include <stdio.h>
-#include "..\FileUtil.h"
+#include "../Utils/FileUtil.h"
 #include <algorithm>
 
 using namespace std;
