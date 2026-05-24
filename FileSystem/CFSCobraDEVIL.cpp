@@ -33,162 +33,163 @@ bool CFSCobraDEVIL::Init()
 		res = Disk->ReadTrack(dirBuf + (Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize) * trkIdx, 
 			trkIdx/2, trkIdx % 2);
 
+	if (!res)
+	{
+		LastError = ERR_PHYSICAL;
+		return res;
+	}
+
 	//Initialize dir. entry map.
 	for (word dirEntIdx = 0; dirEntIdx < FSParams.DirEntryCount; dirEntIdx++)
 		FS_DirEntryMap.push_back(false);
 
-	if (res)
-	{		
-		DirEntryType* dirEnt;
-		word dirIdx = 0; 
-		while (dirIdx < FSParams.BlockCount)		
+	
+	DirEntryType* dirEnt;
+	word dirIdx = 0; 
+	while (dirIdx < FSParams.BlockCount)		
+	{
+		dirEnt = (DirEntryType*)(dirBuf + (dirIdx * sizeof(DirEntryType)));
+		DEVIL_Dir.push_back(*dirEnt);
+
+		if (dirEnt->Flag == FLAG_DELETE)			
 		{
-			dirEnt = (DirEntryType*)(dirBuf + (dirIdx * sizeof(DirEntryType)));
-			DEVIL_Dir.push_back(*dirEnt);
-
-			if (dirEnt->Flag == FLAG_DELETE)			
-			{
-				FS_BlockMap.push_back(false);
-				FS_DirEntryMap[dirIdx] = false;
-				dirIdx++;
-				continue;
-			}			
+			FS_BlockMap.push_back(false);
+			FS_DirEntryMap[dirIdx] = false;
+			dirIdx++;
+			continue;
+		}			
 				
-			FS_BlockMap.push_back(true);
-			FS_DirEntryMap[dirIdx] = true;
+		FS_BlockMap.push_back(true);
+		FS_DirEntryMap[dirIdx] = true;
 
-			CFileDevil* f = new CFileDevil();
-			FileNameType fn{};
-			strncpy(fn, dirEnt->Name, sizeof(dirEnt->Name));
-			CreateFileName(fn, f);				
+		CFileDevil* f = new CFileDevil();
+		FileNameType fn{};
+		strncpy(fn, dirEnt->Name, sizeof(dirEnt->Name));
+		CreateFileName(fn, f);				
 
-			if (dirEnt->Flag < CFileSpectrum::SPECTRUM_UNTYPED)
-			{
-				f->Length = dirEnt->Length;
-				f->FileDirEntries.push_back(dirIdx);
-				f->FileBlocks.push_back(dirIdx);
-				f->fs = this;
+		if (dirEnt->Flag < CFileSpectrum::SPECTRUM_UNTYPED)
+		{
+			f->Length = dirEnt->Length;
+			f->FileDirEntries.push_back(dirIdx);
+			f->FileBlocks.push_back(dirIdx);
+			f->fs = this;
 
-				f->SpectrumType = (dirEnt->Flag < CFileSpectrum::SPECTRUM_UNTYPED ? (CFileSpectrum::SpectrumFileType)dirEnt->Flag : CFileSpectrum::SPECTRUM_UNTYPED);
-				f->SpectrumLength = dirEnt->Length;
-				f->SpectrumStart = dirEnt->Param1;
-				if (f->SpectrumType == CFileSpectrum::SPECTRUM_PROGRAM)
-					f->SpectrumVarLength = dirEnt->Length - dirEnt->Param2;
-				else
-					f->SpectrumVarLength = 0;
+			f->SpectrumType = (dirEnt->Flag < CFileSpectrum::SPECTRUM_UNTYPED ? (CFileSpectrum::SpectrumFileType)dirEnt->Flag : CFileSpectrum::SPECTRUM_UNTYPED);
+			f->SpectrumLength = dirEnt->Length;
+			f->SpectrumStart = dirEnt->Param1;
+			if (f->SpectrumType == CFileSpectrum::SPECTRUM_PROGRAM)
+				f->SpectrumVarLength = dirEnt->Length - dirEnt->Param2;
+			else
+				f->SpectrumVarLength = 0;
 
-				DEVIL_FileList.push_back(*f);
+			DEVIL_FileList.push_back(*f);
 
-				delete f;
-
-				dirIdx++;
-				continue;
-			}			
-				
-			if (dirEnt->Flag == FLAG_EXTENT)	
-			{	
-				delete f;
-				f = &DEVIL_FileList[DEVIL_FileList.size() - 1];
-				
-				if (dirEnt->hdrlBlockLen[0] == 0) //Regular file
-				{
-					f->FileDirEntries.push_back(dirIdx);
-					f->FileBlocks.push_back(dirIdx);
-
-					dirIdx++;
-					continue;
-				}
-				else //Headerless blocks follow after the main block. Determine how many dir entries and lenght of each headerless file.
-				{
-					//Read block lenghts from first dir entry. Remaning ones should be identical.
-					vector<word> hdrFileLenghts;
-					byte blockIdx = 0;
-					while (dirEnt->hdrlBlockLen[blockIdx] != 0)
-					{
-						hdrFileLenghts.push_back(dirEnt->hdrlBlockLen[blockIdx]);
-						blockIdx++;
-					}
-
-					//Count the remaining dir entries.
-					vector<word> blocksHdrLess = f->FileBlocks;
-					while (dirIdx < FSParams.BlockCount && dirEnt->Flag == FLAG_EXTENT)
-					{	
-						DEVIL_Dir.push_back(*dirEnt);
-						FS_BlockMap.push_back(true);
-						FS_DirEntryMap[dirIdx] = true;
-
-						blocksHdrLess.push_back(dirIdx);
-
-						dirIdx++;						
-						dirEnt = (DirEntryType*)(dirBuf + (dirIdx * sizeof(DirEntryType)));
-					}
-					dirIdx--;
-
-					//Split files by headerless block lenght and block size.
-					word currBlockOffset = 0;
-					byte currBlockIdx = 1;	//Count past the first block.
-					dword totalFileSize = 0;
-
-					for (byte fileIdx = 0; fileIdx < hdrFileLenghts.size(); fileIdx++)
-					{						
-						word fileLen = hdrFileLenghts[fileIdx];
-						totalFileSize += fileLen;
-						word fileBlocksCountLessFirst = (word)ceill((float)fileLen / FSParams.BlockSize) - 1;	
-						CFileDevil* fh = nullptr;						
-
-						if (fileIdx == 0)
-						{
-							fh = f;												
-						}
-						else
-						{
-							fh = new CFileDevil();
-							fh->Length = fileLen;
-							fh->fs = this;
-
-							FileNameType fn{};
-							snprintf(fn, NAME_LENGHT, "%s", f->Name);
-							char blockIdxStr[4]; //accomodate up to 118 possible block numbers.
-							itoa(fileIdx, blockIdxStr, 10);
-							strcat(fn, blockIdxStr);
-							CreateFileName(fn, fh);
-
-							fh->SpectrumType = CFileSpectrum::SPECTRUM_UNTYPED;
-							fh->SpectrumLength = fileLen;		
-
-							fh->FileBlocks.push_back(blocksHdrLess[currBlockIdx]);
-							fh->FileDirEntries.push_back(blocksHdrLess[currBlockIdx]);
-						}
-												
-						while (fileBlocksCountLessFirst > 0 && currBlockIdx < blocksHdrLess.size())
-						{														
-							fh->FileBlocks.push_back(blocksHdrLess[currBlockIdx]);
-							fh->FileDirEntries.push_back(blocksHdrLess[currBlockIdx]);							
-
-							currBlockIdx++;
-							fileBlocksCountLessFirst--;							
-						}			
-
-						fh->blockOffset = currBlockOffset;									
-						fh->isPartOfHeaderlessFile = true;
-
-						currBlockOffset += totalFileSize % FSParams.BlockSize;	
-
-						if (fileIdx > 0)
-						{
-							DEVIL_FileList.push_back(*fh);
-							delete fh;
-						}
-					}
-				}
-			}			
-								
+			delete f;
 
 			dirIdx++;
-		}
+			continue;
+		}			
+				
+		if (dirEnt->Flag == FLAG_EXTENT)	
+		{	
+			delete f;
+			f = &DEVIL_FileList[DEVIL_FileList.size() - 1];
+				
+			if (dirEnt->hdrlBlockLen[0] == 0) //Regular file
+			{
+				f->FileDirEntries.push_back(dirIdx);
+				f->FileBlocks.push_back(dirIdx);
 
-		
-	}
+				dirIdx++;
+				continue;
+			}
+				
+			//Headerless blocks follow after the main block. Determine how many dir entries and lenght of each headerless file.				
+			//Read block lenghts from first dir entry. Remaning ones should be identical.
+			vector<word> hdrFileLenghts;
+			byte blockIdx = 0;
+			while (dirEnt->hdrlBlockLen[blockIdx] != 0 && blockIdx < sizeof(dirEnt->hdrlBlockLen)/sizeof(word))
+			{
+				hdrFileLenghts.push_back(dirEnt->hdrlBlockLen[blockIdx]);
+				blockIdx++;
+			}
+
+			//Count the remaining dir entries.
+			vector<word> blocksHdrLess = f->FileBlocks;
+			while (dirIdx < FSParams.BlockCount && dirEnt->Flag == FLAG_EXTENT)
+			{	
+				DEVIL_Dir.push_back(*dirEnt);
+				FS_BlockMap.push_back(true);
+				FS_DirEntryMap[dirIdx] = true;
+
+				blocksHdrLess.push_back(dirIdx);
+
+				dirIdx++;						
+				dirEnt = (DirEntryType*)(dirBuf + (dirIdx * sizeof(DirEntryType)));
+			}
+			dirIdx--;
+
+			//Split files by headerless block lenght and block size.
+			word currBlockOffset = 0;
+			byte currBlockIdx = 1;	//Count past the first block.
+			dword totalFileSize = 0;
+
+			for (byte fileIdx = 0; fileIdx < hdrFileLenghts.size(); fileIdx++)
+			{						
+				word fileLen = hdrFileLenghts[fileIdx];
+				totalFileSize += fileLen;
+				word fileBlocksCountLessFirst = (word)ceill((float)fileLen / FSParams.BlockSize) - 1;	
+				CFileDevil* fh = nullptr;						
+
+				if (fileIdx == 0)
+				{
+					fh = f;												
+				}
+				else
+				{
+					fh = new CFileDevil();
+					fh->Length = fileLen;
+					fh->fs = this;
+
+					FileNameType fn{};
+					snprintf(fn, NAME_LENGHT, "%s", f->Name);
+					char blockIdxStr[4]; //accomodate up to 118 possible block numbers.
+					itoa(fileIdx, blockIdxStr, 10);
+					strcat(fn, blockIdxStr);
+					CreateFileName(fn, fh);
+
+					fh->SpectrumType = CFileSpectrum::SPECTRUM_UNTYPED;
+					fh->SpectrumLength = fileLen;		
+
+					fh->FileBlocks.push_back(blocksHdrLess[currBlockIdx]);
+					fh->FileDirEntries.push_back(blocksHdrLess[currBlockIdx]);
+				}
+												
+				while (fileBlocksCountLessFirst > 0 && currBlockIdx < blocksHdrLess.size())
+				{														
+					fh->FileBlocks.push_back(blocksHdrLess[currBlockIdx]);
+					fh->FileDirEntries.push_back(blocksHdrLess[currBlockIdx]);							
+
+					currBlockIdx++;
+					fileBlocksCountLessFirst--;							
+				}			
+
+				fh->blockOffset = currBlockOffset;									
+				fh->isPartOfHeaderlessFile = true;
+
+				currBlockOffset += totalFileSize % FSParams.BlockSize;	
+
+				if (fileIdx > 0)
+				{
+					DEVIL_FileList.push_back(*fh);
+					delete fh;
+				}
+			}				
+		}			
+								
+
+		dirIdx++;
+	}			
 
 	delete[] dirBuf;
 	return res;
@@ -357,7 +358,7 @@ bool CFSCobraDEVIL::WriteFile(CFile* file)
 			word freeDirEnt = GetNextFreeDirEntryIdx();
 			DirEntryType* dirEnt = &DEVIL_Dir[freeDirEnt];
 			
-			dirEnt->Length = f->Length;			
+			dirEnt->Length = (word)f->Length;			
 			f->GetFileName(dirEnt->Name);
 			
 			if (dirEntIdx >= 1)
@@ -480,7 +481,7 @@ bool CFSCobraDEVIL::WriteCatalog()
 	byte* dirBuf = new byte[RESERVED_TRACKS * Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize];
 	memset(dirBuf, FLAG_DELETE, RESERVED_TRACKS * Disk->DiskDefinition.SPT * Disk->DiskDefinition.SectSize);
 
-	for (int dirIdx = 0; dirIdx < DEVIL_Dir.size(); dirIdx++)
+	for (word dirIdx = 0; dirIdx < DEVIL_Dir.size(); dirIdx++)
 	{
 		DirEntryType dirEnt = DEVIL_Dir[dirIdx];
 		*(DirEntryType*)(dirBuf + dirIdx * sizeof(DirEntryType)) = dirEnt;

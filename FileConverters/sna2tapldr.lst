@@ -6,68 +6,73 @@
   5   0000              StackEntries	EQU 5
   6   0000
   7   0000              	ORG	Loader - (StartFixed-Start)
-  8   3F99
-  9   3F99              Start:
- 10   3F99              	;Clear screen to hide our code.
- 11   3F99 C5           	push	bc
- 12   3F9A 21 00 58     		ld		hl, 16384+6144
- 13   3F9D 54           		ld		d, h
- 14   3F9E 5D           		ld		e, l
- 15   3F9F 13           		inc		de
- 16   3FA0 AF           		xor		a
- 17   3FA1 77           		ld		(hl), a
- 18   3FA2 01 FF 02     		ld		bc, 767
- 19   3FA5 ED B0        		ldir
- 20   3FA7 D3 FE        		out		($fe), a
- 21   3FA9 C1           	pop		bc
- 22   3FAA C5           	push	bc
- 23   3FAB C5           		push	bc
- 24   3FAC AF           			xor		a
- 25   3FAD CD 01 16     			call	$1601
- 26   3FB0 C1           		pop		bc
- 27   3FB1 21 27 00     		ld		hl, Msg - Start
- 28   3FB4 09           		add		hl, bc
- 29   3FB5 06 25        		ld		b, MsgLen
- 30   3FB7              PrintMsgLoop:
- 31   3FB7 7E           		ld		a, (hl)
- 32   3FB8 D7           		rst		$10
- 33   3FB9 23           		inc		hl
- 34   3FBA 76           		halt
- 35   3FBB 10 FA        		djnz	PrintMsgLoop
- 36   3FBD C1           	pop		bc
- 37   3FBE 18 25        	jr		Msg + MsgLen
- 38   3FC0 0D 10 00 11  Msg	defb	13, 16, 0, 17, 2, " -=SNAP2TAP/HCDisk/0s&1s/2026=- "
- 38   3FC4 02 20 2D 3D
- 38   3FC8 53 4E 41 50
- 38   3FCC 32 54 41 50
- 38   3FD0 2F 48 43 44
- 38   3FD4 69 73 6B 2F
- 38   3FD8 30 73 26 31
- 38   3FDC 73 2F 32 30
- 38   3FE0 32 36 3D 2D
- 38   3FE4 20
- 39   3FE5              MsgLen equ	$ - Msg
- 40   3FE5
- 41   3FE5 F3           	di
- 42   3FE6 31 F1 40     	ld		sp, Stack
- 43   3FE9
- 44   3FE9              	;Copy fixed code to start of screen.
- 45   3FE9 21 67 00     	ld		hl, StartFixed-Start
- 46   3FEC 09           	add		hl, bc				;BC = randomize usr address from BASIC
- 47   3FED 11 00 40     	ld		de, StartFixed
- 48   3FF0 01 F1 00     	ld		bc, End-StartFixed
- 49   3FF3 ED B0        	ldir
- 50   3FF5
- 51   3FF5              	;HL = start of screen compressed block
- 52   3FF5 ED 4B C2 40  	ld		bc, (PackedLenScr)
- 53   3FF9 ED B0        	ldir
- 54   3FFB 1B           	dec		de
- 55   3FFC D5           	push	de			;Save end of compressed screen
- 56   3FFD C3 45 40     		jp		Unpack
- 57   4000
- 58   4000              StartFixed:
- 59   4000              Decompress:
- 60   4000              	include "dzx0_standard_back.asm"
+  8   3F97
+  9   3F97              Start:
+ 10   3F97              	;Clear screen to hide our code.
+ 11   3F97 C5           	push	bc
+ 12   3F98 21 00 58     		ld		hl, 16384+6144
+ 13   3F9B 54           		ld		d, h
+ 14   3F9C 5D           		ld		e, l
+ 15   3F9D 13           		inc		de
+ 16   3F9E AF           		xor		a
+ 17   3F9F 77           		ld		(hl), a
+ 18   3FA0 01 FF 02     		ld		bc, 767
+ 19   3FA3 ED B0        		ldir
+ 20   3FA5 D3 FE        		out		($fe), a
+ 21   3FA7 C1           	pop		bc
+ 22   3FA8
+ 23   3FA8 00           	nop
+ 24   3FA9 00           	nop
+ 25   3FAA
+ 26   3FAA C5           	push	bc
+ 27   3FAB C5           		push	bc
+ 28   3FAC AF           			xor		a
+ 29   3FAD CD 01 16     			call	$1601
+ 30   3FB0 C1           		pop		bc
+ 31   3FB1 21 29 00     		ld		hl, Msg - Start
+ 32   3FB4 09           		add		hl, bc
+ 33   3FB5 06 25        		ld		b, MsgLen
+ 34   3FB7              PrintMsgLoop:
+ 35   3FB7 7E           		ld		a, (hl)
+ 36   3FB8 D7           		rst		$10
+ 37   3FB9 23           		inc		hl
+ 38   3FBA 76           		halt
+ 39   3FBB 10 FA        		djnz	PrintMsgLoop
+ 40   3FBD C1           	pop		bc
+ 41   3FBE 18 25        	jr		Msg + MsgLen
+ 42   3FC0 0D 10 00 11  Msg	defb	13, 16, 0, 17, 2, " -=SNAP2TAP/HCDisk/0s&1s/2026=- "
+ 42   3FC4 02 20 2D 3D
+ 42   3FC8 53 4E 41 50
+ 42   3FCC 32 54 41 50
+ 42   3FD0 2F 48 43 44
+ 42   3FD4 69 73 6B 2F
+ 42   3FD8 30 73 26 31
+ 42   3FDC 73 2F 32 30
+ 42   3FE0 32 36 3D 2D
+ 42   3FE4 20
+ 43   3FE5              MsgLen equ	$ - Msg
+ 44   3FE5
+ 45   3FE5              NoMsg:
+ 46   3FE5 F3           	di
+ 47   3FE6 31 F1 40     	ld		sp, Stack
+ 48   3FE9
+ 49   3FE9              	;Copy fixed code to start of screen.
+ 50   3FE9 21 69 00     	ld		hl, StartFixed-Start
+ 51   3FEC 09           	add		hl, bc				;BC = randomize usr address from BASIC
+ 52   3FED 11 00 40     	ld		de, StartFixed
+ 53   3FF0 01 F1 00     	ld		bc, End-StartFixed
+ 54   3FF3 ED B0        	ldir
+ 55   3FF5
+ 56   3FF5              	;HL = start of screen compressed block
+ 57   3FF5 ED 4B C2 40  	ld		bc, (PackedLenScr)
+ 58   3FF9 ED B0        	ldir
+ 59   3FFB 1B           	dec		de
+ 60   3FFC D5           	push	de			;Save end of compressed screen
+ 61   3FFD C3 45 40     		jp		Unpack
+ 62   4000
+ 63   4000              StartFixed:
+ 64   4000              Decompress:
+ 65   4000              	include "dzx0_standard_back.asm"
 # file opened: dzx0_standard_back.asm
   1+  4000              ; -----------------------------------------------------------------------------
   2+  4000              ; ZX0 decoder by Einar Saukas
@@ -133,140 +138,140 @@
  62+  4045              ; -----------------------------------------------------------------------------
  63+  4045
 # file closed: dzx0_standard_back.asm
- 61   4045
- 62   4045              Unpack:
- 63   4045              		;Move main block lower in RAM to avoid overwriting when unpacking.
- 64   4045              		;HL = start of main compressed block
- 65   4045 ED 4B C4 40  		ld		bc, (PackedLenMain)
- 66   4049 11 00 5B     		ld		de, $5B00		;Start main block after screen area, to avoid visible artefacts during decompression.
- 67   404C ED B0        		ldir
- 68   404E EB           		ex		de, hl
- 69   404F 2B           		dec		hl
- 70   4050 11 FF FF     		ld		de, $FFFF
- 71   4053 CD 00 40     		call	Decompress
- 72   4056
- 73   4056              	;Unpack screen
- 74   4056 E1           	pop		hl
- 75   4057 11 05 5B     	ld		de, $5B00 + 5		;Include main block delta.
- 76   405A CD 00 40     	call	Decompress
- 77   405D
- 78   405D              ;-----------------------------------------------------------------------------
- 79   405D
- 80   405D              ; 0s&1s: Snapshot state restore implementation is based on the implementation specified below.
- 81   405D              ; Snapshot loader for the Spectrum +3
- 82   405D              ; Copyright 2005 John Elliott <jce@seasip.demon.co.uk>
- 83   405D
+ 66   4045
+ 67   4045              Unpack:
+ 68   4045              		;Move main block lower in RAM to avoid overwriting when unpacking.
+ 69   4045              		;HL = start of main compressed block
+ 70   4045 ED 4B C4 40  		ld		bc, (PackedLenMain)
+ 71   4049 11 00 5B     		ld		de, $5B00		;Start main block after screen area, to avoid visible artefacts during decompression.
+ 72   404C ED B0        		ldir
+ 73   404E EB           		ex		de, hl
+ 74   404F 2B           		dec		hl
+ 75   4050 11 FF FF     		ld		de, $FFFF
+ 76   4053 CD 00 40     		call	Decompress
+ 77   4056
+ 78   4056              	;Unpack screen
+ 79   4056 E1           	pop		hl
+ 80   4057 11 05 5B     	ld		de, $5B00 + 5		;Include main block delta.
+ 81   405A CD 00 40     	call	Decompress
+ 82   405D
+ 83   405D              ;-----------------------------------------------------------------------------
  84   405D
- 85   405D              ;restore registers
- 86   405D              ; Load the registers from the SNA header. Do this by pointing SP at HL' and
- 87   405D              ; popping them off.
+ 85   405D              ; 0s&1s: Snapshot state restore implementation is based on the implementation specified below.
+ 86   405D              ; Snapshot loader for the Spectrum +3
+ 87   405D              ; Copyright 2005 John Elliott <jce@seasip.demon.co.uk>
  88   405D
- 89   405D 31 CD 40     	ld	sp, REG_HL1
- 90   4060 E1           	pop	hl
- 91   4061 D1           	pop	de
- 92   4062 C1           	pop	bc
- 93   4063 F1           	pop	af
- 94   4064 08           	ex	af,af'
- 95   4065 D9           	exx			;Alternates done
- 96   4066 E1           	pop	hl
- 97   4067 D1           	pop	de
- 98   4068 C1           	pop	bc
- 99   4069 FD E1        	pop	iy
-100   406B DD E1        	pop	ix
-101   406D F1           	pop	af		;IFF and R ignore.
-102   406E
-103   406E 3A E6 40     	ld	a, (REG_BDR)
-104   4071 D3 FE        	out	($FE), a
-105   4073
-106   4073 3A CA 40     	ld	a, (InstrIM)
-107   4076 32 7A 40     	ld	(SetIM), a
-108   4079              SetIM EQU $+1
-109   4079 ED 46        	im	0
-110   407B
-111   407B 3A CC 40     	ld	a,(REG_I)	;Retrieve I and R
-112   407E ED 47        	ld	i,a
-113   4080 3A E0 40     	ld	a,(REG_R)
-114   4083 ED 4F        	ld	r,a
-115   4085
-116   4085 3A CB 40     	ld	a, (InstrDIEI)
-117   4088 32 BF 40     	ld	(finalDIEI),a	;Stored interrupt state
-118   408B
-119   408B F1           	pop		af
-120   408C ED 7B E3 40  	ld		sp, (REG_SP)
-121   4090
-122   4090              ;---------------------------------------------------------------------------
-123   4090
-124   4090              	;Move final stage code to game stack and restore screen part used by code.
-125   4090 E5           	push	hl
-126   4091 D5           	push	de
-127   4092 C5           	push	bc
-128   4093 F5           	push	af
-129   4094
-130   4094 2A E3 40     	ld		hl, (REG_SP)
-131   4097 01 DA FF     	ld		bc, FinalStageStart - FinalStageEnd - 5*2
-132   409A 09           	add		hl, bc
-133   409B EB           	ex		de, hl
-134   409C 21 A6 40     	ld		hl, FinalStageStart
-135   409F D5           	push	de
-136   40A0 01 1C 00     	ld		bc, FinalStageEnd - FinalStageStart
-137   40A3 ED B0        	ldir
-138   40A5 C9           	ret
-139   40A6
-140   40A6              FinalStageStart:
-141   40A6 2A C6 40     	ld		hl, (GapAddr)
-142   40A9 3A C9 40     	ld		a, (GapValue)
-143   40AC 4F           	ld		c, a
-144   40AD 11 00 40     	ld		de, 16384
-145   40B0 3A C8 40     	ld		a, (GapLen)
-146   40B3 47           	ld		b, a
-147   40B4
-148   40B4              RestoreGap:
-149   40B4 7E           	ld		a, (hl)
-150   40B5 12           	ld		(de), a
-151   40B6 71           	ld		(hl), c
-152   40B7 23           	inc		hl
-153   40B8 13           	inc		de
-154   40B9 10 F9        	djnz	RestoreGap
-155   40BB
-156   40BB F1           	pop		af
-157   40BC C1           	pop		bc
-158   40BD D1           	pop		de
-159   40BE E1           	pop		hl
-160   40BF
-161   40BF              finalDIEI:
-162   40BF 00           	nop				;Is set to EI or DI by stage 2 loader.
-163   40C0 ED 45        	retn			;Retrieves snapshot PC.
-164   40C2              FinalStageEnd:
-165   40C2
-166   40C2              ;---------------------------------------------------------------------
-167   40C2
-168   40C2 00 00        PackedLenScr	DW 0
-169   40C4 00 00        PackedLenMain	DW 0
-170   40C6 00 00        GapAddr			DW 0
-171   40C8 00           GapLen			DB 0
-172   40C9 00           GapValue		DB 0
-173   40CA 00           InstrIM			DB 0
-174   40CB 00           InstrDIEI		DB 0
-175   40CC
-176   40CC 00           REG_I		DB 0
-177   40CD 00 00        REG_HL1		DW 0
-178   40CF 00 00        REG_DE1		DW 0
-179   40D1 00 00        REG_BC1		DW 0
-180   40D3 00 00        REG_AF1		DW 0
-181   40D5 00 00        REG_HL		DW 0
-182   40D7 00 00        REG_DE		DW 0
-183   40D9 00 00        REG_BC		DW 0
-184   40DB 00 00        REG_IY		DW 0
-185   40DD 00 00        REG_IX		DW 0
-186   40DF 00           REG_IFF		DB 0
-187   40E0 00           REG_R		DB 0
-188   40E1 00 00        REG_AF		DW 0
-189   40E3 00 00        REG_SP		DW 0
-190   40E5 00           REG_IM		DB 0
-191   40E6 00           REG_BDR		DB 0
-192   40E7
-193   40E7 00 00 00...  	BLOCK StackEntries * 2
-194   40F1              Stack:
-195   40F1
-196   40F1              End:
+ 89   405D
+ 90   405D              ;restore registers
+ 91   405D              ; Load the registers from the SNA header. Do this by pointing SP at HL' and
+ 92   405D              ; popping them off.
+ 93   405D
+ 94   405D 31 CD 40     	ld	sp, REG_HL1
+ 95   4060 E1           	pop	hl
+ 96   4061 D1           	pop	de
+ 97   4062 C1           	pop	bc
+ 98   4063 F1           	pop	af
+ 99   4064 08           	ex	af,af'
+100   4065 D9           	exx			;Alternates done
+101   4066 E1           	pop	hl
+102   4067 D1           	pop	de
+103   4068 C1           	pop	bc
+104   4069 FD E1        	pop	iy
+105   406B DD E1        	pop	ix
+106   406D F1           	pop	af		;IFF and R ignore.
+107   406E
+108   406E 3A E6 40     	ld	a, (REG_BDR)
+109   4071 D3 FE        	out	($FE), a
+110   4073
+111   4073 3A CA 40     	ld	a, (InstrIM)
+112   4076 32 7A 40     	ld	(SetIM), a
+113   4079              SetIM EQU $+1
+114   4079 ED 46        	im	0
+115   407B
+116   407B 3A CC 40     	ld	a,(REG_I)	;Retrieve I and R
+117   407E ED 47        	ld	i,a
+118   4080 3A E0 40     	ld	a,(REG_R)
+119   4083 ED 4F        	ld	r,a
+120   4085
+121   4085 3A CB 40     	ld	a, (InstrDIEI)
+122   4088 32 BF 40     	ld	(finalDIEI),a	;Stored interrupt state
+123   408B
+124   408B F1           	pop		af
+125   408C ED 7B E3 40  	ld		sp, (REG_SP)
+126   4090
+127   4090              ;---------------------------------------------------------------------------
+128   4090
+129   4090              	;Move final stage code to game stack and restore screen part used by code.
+130   4090 E5           	push	hl
+131   4091 D5           	push	de
+132   4092 C5           	push	bc
+133   4093 F5           	push	af
+134   4094
+135   4094 2A E3 40     	ld		hl, (REG_SP)
+136   4097 01 DA FF     	ld		bc, FinalStageStart - FinalStageEnd - 5*2
+137   409A 09           	add		hl, bc
+138   409B EB           	ex		de, hl
+139   409C 21 A6 40     	ld		hl, FinalStageStart
+140   409F D5           	push	de
+141   40A0 01 1C 00     	ld		bc, FinalStageEnd - FinalStageStart
+142   40A3 ED B0        	ldir
+143   40A5 C9           	ret
+144   40A6
+145   40A6              FinalStageStart:
+146   40A6 2A C6 40     	ld		hl, (GapAddr)
+147   40A9 3A C9 40     	ld		a, (GapValue)
+148   40AC 4F           	ld		c, a
+149   40AD 11 00 40     	ld		de, 16384
+150   40B0 3A C8 40     	ld		a, (GapLen)
+151   40B3 47           	ld		b, a
+152   40B4
+153   40B4              RestoreGap:
+154   40B4 7E           	ld		a, (hl)
+155   40B5 12           	ld		(de), a
+156   40B6 71           	ld		(hl), c
+157   40B7 23           	inc		hl
+158   40B8 13           	inc		de
+159   40B9 10 F9        	djnz	RestoreGap
+160   40BB
+161   40BB F1           	pop		af
+162   40BC C1           	pop		bc
+163   40BD D1           	pop		de
+164   40BE E1           	pop		hl
+165   40BF
+166   40BF              finalDIEI:
+167   40BF 00           	nop				;Is set to EI or DI by stage 2 loader.
+168   40C0 ED 45        	retn			;Retrieves snapshot PC.
+169   40C2              FinalStageEnd:
+170   40C2
+171   40C2              ;---------------------------------------------------------------------
+172   40C2
+173   40C2 00 00        PackedLenScr	DW 0
+174   40C4 00 00        PackedLenMain	DW 0
+175   40C6 00 00        GapAddr			DW 0
+176   40C8 00           GapLen			DB 0
+177   40C9 00           GapValue		DB 0
+178   40CA 00           InstrIM			DB 0
+179   40CB 00           InstrDIEI		DB 0
+180   40CC
+181   40CC 00           REG_I		DB 0
+182   40CD 00 00        REG_HL1		DW 0
+183   40CF 00 00        REG_DE1		DW 0
+184   40D1 00 00        REG_BC1		DW 0
+185   40D3 00 00        REG_AF1		DW 0
+186   40D5 00 00        REG_HL		DW 0
+187   40D7 00 00        REG_DE		DW 0
+188   40D9 00 00        REG_BC		DW 0
+189   40DB 00 00        REG_IY		DW 0
+190   40DD 00 00        REG_IX		DW 0
+191   40DF 00           REG_IFF		DB 0
+192   40E0 00           REG_R		DB 0
+193   40E1 00 00        REG_AF		DW 0
+194   40E3 00 00        REG_SP		DW 0
+195   40E5 00           REG_IM		DB 0
+196   40E6 00           REG_BDR		DB 0
+197   40E7
+198   40E7 00 00 00...  	BLOCK StackEntries * 2
+199   40F1              Stack:
+200   40F1
+201   40F1              End:
 # file closed: sna2tapldr.asm

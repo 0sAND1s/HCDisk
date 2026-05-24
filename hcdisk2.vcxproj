@@ -80,8 +80,8 @@
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>$(ProjectDir)\Utils\sjasmplus fileconverters/sna2tapldr.asm --raw=fileconverters/sna2tapldr.bin --lst=fileconverters/sna2tapldr.lst
-$(ProjectDir)\Utils\bin2h.exe sna2tapldr &lt; fileconverters\sna2tapldr.bin &gt; fileconverters\sna2tapldr.h</Command>
+      <Command>Utils\sjasmplus fileconverters/sna2tapldr.asm --raw=fileconverters/sna2tapldr.bin --lst=fileconverters/sna2tapldr.lst
+Utils\bin2h.exe sna2tapldr &lt; fileconverters\sna2tapldr.bin &gt; fileconverters\sna2tapldr.h</Command>
       <Message>Assemble snap2tap loader</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -163,6 +163,9 @@ $(ProjectDir)\Utils\bin2h.exe sna2tapldr &lt; fileconverters\sna2tapldr.bin &gt;
     <ClCompile Include="Disk\td0_lzss.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Disk\fdrawcmd.h" />
+    <ClInclude Include="FileSystem\CFileArchive.h" />
+    <ClInclude Include="FileSystem\CFileArchiveTape.h" />
     <ClInclude Include="Utils\BASICUtil.h" />
     <ClInclude Include="FileSystem\COMIF1.h" />
     <ClInclude Include="Compression\Compression.h" />
@@ -176,8 +179,6 @@ $(ProjectDir)\Utils\bin2h.exe sna2tapldr &lt; fileconverters\sna2tapldr.bin &gt;
     <ClInclude Include="Disk\DiskWin32LowLevel.h" />
     <ClInclude Include="Disk\dsk.h" />
     <ClInclude Include="Disk\edsk.h" />
-    <ClInclude Include="Disk\CFileArchive.h" />
-    <ClInclude Include="Disk\CFileArchiveTape.h" />
     <ClInclude Include="FileSystem\CFileSystem.h" />
     <ClInclude Include="FileSystem\CFSCobraDEVIL.h" />
     <ClInclude Include="FileSystem\CFSCPM.h" />

@@ -48,7 +48,7 @@ word SNAP2TAP::FindMemGap(byte* mem, word memLen, const word minLenReq)
 }
 
 
-bool SNAP2TAP::Convert(string nameSnap, string nameTAP)
+bool SNAP2TAP::Convert(string nameSnap, string nameTAP, bool noMsg)
 {
 #pragma pack(1)
 	const byte stackEntries = 5;
@@ -162,6 +162,15 @@ bool SNAP2TAP::Convert(string nameSnap, string nameTAP)
 		ldrPrm->instrIM = 0x5E; //IM2
 	}
 	ldrPrm->SNAHdr = sna.SNAHdr;
+
+	//Patch loader to skip message display, as for some games with complex screen, the message is overwritten by the compressed screen.
+	if (noMsg)
+	{
+		const word msgShowOffset = 17;
+		const word jmpInstr = 0x3B18;
+
+		*(word*)&Snap2TapLoader[msgShowOffset] = jmpInstr;		
+	}
 
 
 	//Create final blob with loader+main block+screen.

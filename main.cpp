@@ -929,17 +929,21 @@ CDiskBase* InitDisk(const char* path, CDiskBase::DiskDescType* dd = NULL)
 			printf("Drive %s is not a floppy drive.\n", path);
 		}		
 	}
-	else if (strstr((char*)path, ".DSK"))
-	{		
-		if (dd != NULL)
-			disk = new CDSK(*dd);
+	else		
+	{	
+		string ext = FileUtil::GetExtension(path);
+		if (stricmp((char*)path, "DSK") == 0)
+		{
+			if (dd != NULL)
+				disk = new CDSK(*dd);
+			else
+				disk = new CDSK();
+		}		
 		else
-			disk = new CDSK();
-	}
-	else
-	{
-		disk = new CDiskImgRaw(*dd);
-	}
+		{
+			disk = new CDiskImgRaw(*dd);
+		}
+	}	
 
 
 	return disk;
@@ -985,7 +989,7 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 		if (foundGeom.size() > 0)
 			srcType = STOR_REAL;
 	}	
-	else if (fileExt == "DSK") //Detect image type.
+	else if (stricmp(fileExt.c_str(), "DSK") == 0) //Detect image type.
 	{			
 		theDisk = new CDSK();
 		if (!theDisk->Open(path, CDSK::OPEN_MODE_EXISTING))
@@ -1006,7 +1010,7 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 		if (srcType == STOR_DSK || srcType == STOR_EDSK)		
 			foundGeom = GetMatchingGeometriesByGeometry(theDisk->DiskDefinition);		
 	}	
-	else if (fileExt == "TRD")
+	else if (stricmp(fileExt.c_str(), "TRD") == 0)
 	{
 		foundGeom = GetMatchingGeometriesByType(FS_TRDOS);		
 		byte foundFSIdx = 0;
@@ -1051,7 +1055,7 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 		}		
 		
 	}
-	else if (fileExt == "SCL")
+	else if (stricmp(fileExt.c_str(), "SCL") == 0)
 	{		
 		theFS = new CFSTRDSCL(path, StorageTypeNames[STOR_SCL]);				
 		if (theFS->Init())
@@ -1059,7 +1063,7 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 			srcType = STOR_SCL;						
 		}						
 	}
-	else if (fileExt == "CQM")
+	else if (stricmp(fileExt.c_str(), "CQM") == 0)
 	{
 		theDisk = new CDiskImgCQM();
 		if (theDisk->Open(path, CDSK::OPEN_MODE_EXISTING))
@@ -1069,7 +1073,7 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 				srcType = STOR_CQM;
 		}
 	}	
-	else if (fileExt == "OPD" || fileExt == "OPU")
+	else if (stricmp(fileExt.c_str(), "OPD") == 0 || stricmp(fileExt.c_str(), "OPU") == 0)
 	{
 		foundGeom = GetMatchingGeometriesByType(FS_OPUS_DISCOVERY);		
 		byte foundFSIdx = 0;
@@ -1110,19 +1114,19 @@ CDiskBase* OpenDisk(char* path, StorageType& srcType, vector<byte>& foundGeom)
 			foundGeom.push_back(foundFSIdx);
 		}		
 	}
-	else if (fileExt == "TAP")
+	else if (stricmp(fileExt.c_str(), "TAP") == 0)
 	{
 		theFS = new CFileArchiveTape(path);
 		if (theFS->Init())
 			srcType = STOR_TAP;
 	}
-	else if (fileExt == "TZX")
+	else if (stricmp(fileExt.c_str(), "TZX") == 0)
 	{
 		theFS = new CFileArchiveTape(path);
 		if (theFS->Init())
 			srcType = STOR_TZX;
 	}
-	else if (fileExt == "TD0")
+	else if (stricmp(fileExt.c_str(), "TD0") == 0)
 	{
 		theDisk = new CDiskImgTD0();
 		if (theDisk->Open(path, CDSK::OPEN_MODE_EXISTING))			
@@ -2864,10 +2868,11 @@ bool CreateAutorun(int argc, char* argv[])
 bool Snap2Tap(int argc, char* argv[])
 {
 	string nameSNA = argv[0];
-	string nameTAP = argv[1];
+	string nameTAP = argv[1];	
+	bool noMsg = argc >= 3 && stricmp(argv[2], "-nomsg") == 0;
 
 	SNAP2TAP sna2tap;
-	return sna2tap.Convert(nameSNA, nameTAP);
+	return sna2tap.Convert(nameSNA, nameTAP, noMsg);
 }
 
 bool Z802SNA(int argc, char* argv[])
@@ -3100,11 +3105,12 @@ static const Command theCommands[] =
 		{},
 		CreateAutorun },
 	{ {"snap2tap"}, "Converts a SNA or Z80 snapshot to a compressed BASIC program as TAP file",
-		"snap2tap <input.sna> <output.tap>", 
+		"snap2tap <input.sna> <output.tap> [-nomsg]", 
 		{"snap2tap dizzy1.sna dizzy1.tap"},
 		{
 			{"input.sna", true, "input SNA file"},
 			{"output.tap", true, "output TAP file"},
+			{"-nomsg", false, "don't show HCDisk message"}
 		},
 		Snap2Tap },
 	{ {"z802sna"}, "Converts a Z80 snapshot file to a SNA snapshot file",

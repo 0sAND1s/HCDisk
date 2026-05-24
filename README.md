@@ -470,9 +470,10 @@ The generated autorun program has the name and loading synthax specific to each 
 -----------------------------------------------------------------------------------------------------------------------
 snap2tap - Converts a snapshot emulator file to a compressed BASIC Program in a TAP file;
 
-Synthax: snap2tap \<input.sna\> \<output.tap\>
+Synthax: snap2tap \<input.sna\> \<output.tap\> [-noscr]
 - param. 1: input.sna: input SNA file (mandatory)
 - param. 2: output.tap: output TAP file (mandatory)
+- param. 3: -noscr: don't display HCDisk message
 - Example 1: "snap2tap dizzy1.sna dizzy1.tap";
 	
 This command allows converting a game for disk storage even when the tape loader is too complex for manual conversion. Load the game in an emulator, save the SNA snapshot, convert to compressed TAP with this command, store to disk.

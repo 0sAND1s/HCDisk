@@ -263,7 +263,7 @@ bool CSnapshotZ80::ReadHeaders(FILE* fZ80)
 
 	//Rollback 2 bytes for v1.
 	if (Z80SnapVersion == 1)
-		fseek(fZ80, -1 * sizeof(hdr2Len), SEEK_CUR);
+		fseek(fZ80, - 1 * (long)sizeof(hdr2Len), SEEK_CUR);
 
 	return true;
 }

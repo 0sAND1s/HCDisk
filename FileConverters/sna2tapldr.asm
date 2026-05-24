@@ -19,6 +19,10 @@ Start:
 		ldir
 		out		($fe), a
 	pop		bc
+
+	nop
+	nop
+
 	push	bc
 		push	bc
 			xor		a
@@ -38,6 +42,7 @@ PrintMsgLoop:
 Msg	defb	13, 16, 0, 17, 2, " -=SNAP2TAP/HCDisk/0s&1s/2026=- "	
 MsgLen equ	$ - Msg
 
+NoMsg:
 	di
 	ld		sp, Stack
 

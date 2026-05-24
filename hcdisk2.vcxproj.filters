@@ -13,46 +13,43 @@
     <Filter Include="Snapshot">
       <UniqueIdentifier>{0fbea63b-1799-42bf-a503-6f17f13ab51c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{61c338a4-8565-4b41-a130-1f8dcfde082b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileConverters">
+      <UniqueIdentifier>{5fee4693-1d56-4f52-ac5e-de9ff5845ec0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileConverters\dz80">
+      <UniqueIdentifier>{2d577fa9-dc7a-4ea2-8d3f-0d274c4e7295}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileConverters\sna2tap">
+      <UniqueIdentifier>{1f5b4d60-ae26-4443-910a-4afe70bc0923}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Compression">
       <UniqueIdentifier>{35e33537-9c87-4ab7-b34d-a4e2f1819073}</UniqueIdentifier>
     </Filter>
     <Filter Include="Compression\ZX0">
       <UniqueIdentifier>{0561857b-c0e0-4091-b801-d67b20aed52a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="FileSystem\Utils">
-      <UniqueIdentifier>{047ca390-7a72-4f50-835b-60e0a170a1d9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Utils">
-      <UniqueIdentifier>{61c338a4-8565-4b41-a130-1f8dcfde082b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Disk\FileConverters">
-      <UniqueIdentifier>{5fee4693-1d56-4f52-ac5e-de9ff5845ec0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Disk\FileConverters\dz80">
-      <UniqueIdentifier>{2d577fa9-dc7a-4ea2-8d3f-0d274c4e7295}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Disk\FileConverters\sna2tap">
-      <UniqueIdentifier>{1f5b4d60-ae26-4443-910a-4afe70bc0923}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FileConverters\BasicDecoder.cpp">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClCompile>
     <ClCompile Include="FileConverters\scr2gif.cpp">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClCompile>
     <ClCompile Include="FileConverters\dz80\dissz80.c">
-      <Filter>Disk\FileConverters\dz80</Filter>
+      <Filter>FileConverters\dz80</Filter>
     </ClCompile>
     <ClCompile Include="FileConverters\dz80\loadfile.c">
-      <Filter>Disk\FileConverters\dz80</Filter>
+      <Filter>FileConverters\dz80</Filter>
     </ClCompile>
     <ClCompile Include="FileConverters\dz80\noscript.c">
-      <Filter>Disk\FileConverters\dz80</Filter>
+      <Filter>FileConverters\dz80</Filter>
     </ClCompile>
     <ClCompile Include="FileConverters\dz80\tables.c">
-      <Filter>Disk\FileConverters\dz80</Filter>
+      <Filter>FileConverters\dz80</Filter>
     </ClCompile>
     <ClCompile Include="Tape\tap.cpp">
       <Filter>Tape</Filter>
@@ -71,10 +68,10 @@
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="FileConverters\bas2tap.c">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClCompile>
     <ClCompile Include="FileConverters\Screen.cpp">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClCompile>
     <ClCompile Include="Snapshot\CSnapshotSNA.cpp">
       <Filter>Snapshot</Filter>
@@ -93,9 +90,6 @@
     </ClCompile>
     <ClCompile Include="Compression\compress.c">
       <Filter>Compression\ZX0</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\BASICUtil.cpp">
-      <Filter>FileSystem\Utils</Filter>
     </ClCompile>
     <ClCompile Include="FileSystem\CFile.cpp">
       <Filter>FileSystem</Filter>
@@ -188,27 +182,30 @@
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="FileConverters\sna2tap.cpp">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClCompile>
     <ClCompile Include="Disk\td0_lzss.cpp">
       <Filter>Disk</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\BASICUtil.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileConverters\BasicDecoder.h">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClInclude>
     <ClInclude Include="FileConverters\dz80\dissz80.h">
-      <Filter>Disk\FileConverters\dz80</Filter>
+      <Filter>FileConverters\dz80</Filter>
     </ClInclude>
     <ClInclude Include="FileConverters\dz80\dissz80p.h">
-      <Filter>Disk\FileConverters\dz80</Filter>
+      <Filter>FileConverters\dz80</Filter>
     </ClInclude>
     <ClInclude Include="FileConverters\dz80\dz80.h">
-      <Filter>Disk\FileConverters\dz80</Filter>
+      <Filter>FileConverters\dz80</Filter>
     </ClInclude>
     <ClInclude Include="FileConverters\dz80\types.h">
-      <Filter>Disk\FileConverters\dz80</Filter>
+      <Filter>FileConverters\dz80</Filter>
     </ClInclude>
     <ClInclude Include="Tape\tap.h">
       <Filter>Tape</Filter>
@@ -227,22 +224,22 @@
     </ClInclude>
     <ClInclude Include="types.h" />
     <ClInclude Include="FileConverters\bas2tap.h">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClInclude>
     <ClInclude Include="FileConverters\Screen.h">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClInclude>
     <ClInclude Include="Snapshot\CSnapshotSNA.h">
       <Filter>Snapshot</Filter>
     </ClInclude>
     <ClInclude Include="FileConverters\scr2gif.h">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClInclude>
     <ClInclude Include="Compression\Compression.h">
       <Filter>Compression</Filter>
     </ClInclude>
     <ClInclude Include="FileConverters\sna2tapldr.h">
-      <Filter>Disk\FileConverters\sna2tap</Filter>
+      <Filter>FileConverters\sna2tap</Filter>
     </ClInclude>
     <ClInclude Include="Snapshot\CSnapshotZ80.h">
       <Filter>Snapshot</Filter>
@@ -250,16 +247,7 @@
     <ClInclude Include="Compression\zx0.h">
       <Filter>Compression\ZX0</Filter>
     </ClInclude>
-    <ClInclude Include="Utils\BASICUtil.h">
-      <Filter>FileSystem\Utils</Filter>
-    </ClInclude>
     <ClInclude Include="FileSystem\CFile.h">
-      <Filter>FileSystem</Filter>
-    </ClInclude>
-    <ClInclude Include="Disk\CFileArchive.h">
-      <Filter>FileSystem</Filter>
-    </ClInclude>
-    <ClInclude Include="Disk\CFileArchiveTape.h">
       <Filter>FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="FileSystem\CFileCPM.h">
@@ -347,10 +335,22 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="FileConverters\sna2tap.h">
-      <Filter>Disk\FileConverters</Filter>
+      <Filter>FileConverters</Filter>
     </ClInclude>
     <ClInclude Include="Disk\td0_lzss.h">
       <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Disk\fdrawcmd.h">
+      <Filter>Disk</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\BASICUtil.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFileArchive.h">
+      <Filter>FileSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystem\CFileArchiveTape.h">
+      <Filter>FileSystem</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -358,16 +358,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="FileConverters\dzx0_standard_back.asm">
-      <Filter>Disk\FileConverters\sna2tap</Filter>
+      <Filter>FileConverters\sna2tap</Filter>
     </None>
     <None Include="FileConverters\sna2tapldr.asm">
-      <Filter>Disk\FileConverters\sna2tap</Filter>
+      <Filter>FileConverters\sna2tap</Filter>
     </None>
     <None Include="FileConverters\sna2tapldr.bin">
-      <Filter>Disk\FileConverters\sna2tap</Filter>
+      <Filter>FileConverters\sna2tap</Filter>
     </None>
     <None Include="FileConverters\sna2tapldr.lst">
-      <Filter>Disk\FileConverters\sna2tap</Filter>
+      <Filter>FileConverters\sna2tap</Filter>
     </None>
   </ItemGroup>
 </Project>
