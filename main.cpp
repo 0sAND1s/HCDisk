@@ -932,7 +932,7 @@ CDiskBase* InitDisk(const char* path, CDiskBase::DiskDescType* dd = NULL)
 	else		
 	{	
 		string ext = FileUtil::GetExtension(path);
-		if (stricmp((char*)path, "DSK") == 0)
+		if (stricmp(ext.c_str(), "DSK") == 0)
 		{
 			if (dd != NULL)
 				disk = new CDSK(*dd);
