@@ -47,7 +47,7 @@ and parameter 2 holds 32768. For data files finally, the byte at position 14 dec
 #include <string.h>
 #include <ctype.h>
 
-#include "types.h"
+#include "..\types.h"
 #include "tap.h"
 
 #ifdef _MSC_VER

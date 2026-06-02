@@ -8,7 +8,7 @@
 #include <Windows.h>
 #include <Mmsystem.h>
 #include <Mmreg.h.>
-#include "types.h"
+#include "..\types.h"
 
 //Includes functionality for reading & writing WAV files.
 class CWave

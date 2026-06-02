@@ -7,7 +7,7 @@
 #define _TAP_H_
 
 #include <stdio.h>
-#include "types.h"
+#include "..\types.h"
 #include "TapeBlock.h"
 #include <map>
 #include <vector>

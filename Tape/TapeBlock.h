@@ -2,7 +2,7 @@
 #ifndef _TAPE_BLOCK_H
 #define _TAPE_BLOCK_H
 
-#include "types.h"
+#include "..\types.h"
 
 class CTapeBlock
 {

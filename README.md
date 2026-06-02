@@ -439,25 +439,25 @@ Examples:
 - screen blank 0x0x1x1 - will set to 0 the upper left character cell in the SCREEN$, for both pixels and attributes.
 
 -----------------------------------------------------------------------------------------------------------------------
-bincut  - PC file section cut, starting at offset, with size length
-- \<input file>: input file name
-- \<output file>: output file name
-- \<offset>: 0 based start offset
-- [lenght]: length of block, default: file len - offset
+	bincut  - PC file section cut, starting at offset, with size length
+	- \<input file>: input file name
+	- \<output file>: output file name
+	- \<offset>: 0 based start offset
+	- [lenght]: length of block, default: file len - offset
 
 -----------------------------------------------------------------------------------------------------------------------
-binpatch  - Patches a PC file, with content of another file, at set offset
-- \<input file>: input file name
-- \<patch file>: patch content file
-- \<offset>: 0 based start offset in input file
+	binpatch  - Patches a PC file, with content of another file, at set offset
+	- \<input file>: input file name
+	- \<patch file>: patch content file
+	- \<offset>: 0 based start offset in input file
 
 -----------------------------------------------------------------------------------------------------------------------
-bitmirror - Reverses bits in each byte of PC file; Example: bits 0001 become 1000
-- \<input file>: input file name
-- \<output file>: output file name
+	bitmirror - Reverses bits in each byte of PC file; Example: bits 0001 become 1000
+	- \<input file>: input file name
+	- \<output file>: output file name
 
 -----------------------------------------------------------------------------------------------------------------------
-bitxor -  XOR bytes in file; Synthax: bitxor \<input\> \<output\> [byte constant]
+	bitxor -  XOR bytes in file; Synthax: bitxor \<input\> \<output\> [byte constant]
         - param. 1: input file: input file name (mandatory)
         - param. 2: output file: output file name (mandatory)
         - param. 3: mode: byte to XOR with, or empty for 0-based index XOR
@@ -470,11 +470,11 @@ The generated autorun program has the name and loading synthax specific to each 
 -----------------------------------------------------------------------------------------------------------------------
 snap2tap - Converts a snapshot emulator file to a compressed BASIC Program in a TAP file;
 
-Synthax: snap2tap \<input.sna\> \<output.tap\> [-noscr]
-- param. 1: input.sna: input SNA file (mandatory)
-- param. 2: output.tap: output TAP file (mandatory)
-- param. 3: -noscr: don't display HCDisk message
-- Example 1: "snap2tap dizzy1.sna dizzy1.tap";
+	Synthax: snap2tap \<input.sna\> \<output.tap\> [-noscr]
+	- param. 1: input.sna: input SNA file (mandatory)
+	- param. 2: output.tap: output TAP file (mandatory)
+	- param. 3: -noscr: don't display HCDisk message
+	- Example 1: "snap2tap dizzy1.sna dizzy1.tap";
 	
 This command allows converting a game for disk storage even when the tape loader is too complex for manual conversion. Load the game in an emulator, save the SNA snapshot, convert to compressed TAP with this command, store to disk.
 Compared to other similar tools, the advantages are that 
@@ -483,9 +483,9 @@ Compared to other similar tools, the advantages are that
 	- the screen image is completely restored, even if it's temporarly used to store running code.
 	
 -----------------------------------------------------------------------------------------------------------------------
-z802sna - Converts a Z80 snapshot file to a SNA snapshot file. I like SNA format better, as it's much more simple.
-
-	Synthax: snap2tap \<input.z80\> \<output.sna\>
+z802sna : Converts a Z80 snapshot file to a SNA snapshot file; 
+	
+	Synthax: snap2tap <input.z80> <output.sna>
         - param. 1: input.z80: input Z80 file (mandatory)
         - param. 2: output.sna: output SNA file (mandatory)
         - Example 1: "snap2tap dizzy1.z80 dizzy1.sna";
