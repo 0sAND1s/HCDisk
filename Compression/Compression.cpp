@@ -30,7 +30,7 @@ word Compression::Compress(byte* bufSrc, dword lenSrc, byte** bufDst, bool backw
     if (backwardsCompress)
 	    reverse(bufSrc, bufSrc + lenSrc - 1);
 
-    void* allocations[500] = { nullptr };    
+    void* allocations[1024] = { nullptr };    
     int allocationCount = 0;    
 
     init();
